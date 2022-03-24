@@ -22,7 +22,7 @@ activities = {1: 'stand',
               105: 'sandwich time'
                }
 
-def read_files():
+def read_files(current_path_in_repo, path_to_opportunity_folder):
     #pick partial data from dataset
     list_of_files = ['./dataset/S1-ADL1.dat',
                      './dataset/S1-ADL2.dat',
@@ -47,8 +47,13 @@ def read_files():
                      './dataset/S3-Drill.dat',
                      './dataset/S4-Drill.dat',
                      ]
+    
+    # our path
+    list_of_files = list(map(lambda path_to_file: path_to_opportunity_folder + path_to_file[1:], list_of_files))
+    list_of_drill = list(map(lambda path_to_file: path_to_opportunity_folder + path_to_file[1:], list_of_drill))
+
     col_names = []
-    with open('col_names','r') as f:# a file with all column names was created
+    with open(current_path_in_repo + '/col_names','r') as f:# a file with all column names was created
         lines = f.read().splitlines()
         for line in lines:
             col_names.append(line)
@@ -198,7 +203,13 @@ def save_data(data,file_name): # save the data in h5 format
 
 if __name__ == "__main__":   
     window_size = 25   
-    df = read_files()
+
+    bp_path = '/dhc/groups/bp2021ba1'
+    path_to_opportunity_folder = bp_path + '/data/opportunity-dataset'
+    current_path_in_repo = 'research/jensOpportunityDeepL'
+
+    df = read_files(current_path_in_repo, path_to_opportunity_folder)
+
     df = dataCleaning(df)
     #plot_series(df, colname, act, file_index, start, end)
     #plot_series(df, "Acc-RKN^-accX", 4, 2, 100, 150)
