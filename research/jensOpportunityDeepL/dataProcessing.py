@@ -79,12 +79,33 @@ def dataCleaning(dataCollection):
                                         axis = 1)  # removal of columns not related, may include others.
     
     dataCollection = dataCollection.apply(pd.to_numeric, errors = 'coerce') #removal of non numeric data in cells
+    # data like 'k' (strings) will be converted to NaN
     
-    print(dataCollection.isna().sum().sum())#count all NaN 
-    print(dataCollection.shape)
+    print('number of NaN before interpolation', dataCollection.isna().sum().sum())#count all NaN 
+    print('shape', dataCollection.shape)
     #dataCollection = dataCollection.dropna()
     dataCollection = dataCollection.interpolate() 
-    print(dataCollection.isna().sum().sum())#count all NaN 
+    """
+    before:
+            a	b	 c	  d
+        0	1	4.0	 8.0  NaN
+        1	2	NaN	 NaN  9.0
+        2	3	6.0	 NaN  NaN
+        3	4	6.0	 7.0  8.0
+
+    after:
+            a	b	c	        d
+        0	1	4.0	8.000000	NaN
+        1	2	5.0	7.666667	9.0
+        2	3	6.0	7.333333	8.5
+        3	4	6.0	7.000000	8.0
+
+    -> standard linear interpolation
+    -> we use fillna (taking the last availble value, duplicate it)
+    -> what interpolation for what sensor makes semantic sense? quaternion? acceleration?
+
+    """
+    print('number of NaN after interpolation', dataCollection.isna().sum().sum())#count all NaN 
     #removal of any remaining NaN value cells by constructing new data points in known set of data points
     #for i in range(0,4):
     #    dataCollection["heartrate"].iloc[i]=100 # only 4 cells are Nan value, change them manually
@@ -133,10 +154,18 @@ def segment_locomotion(dataCollection, window_size): # segment the data and crea
     return {'inputs' : np.asarray(X), 'labels': np.asarray(y,dtype=int)}
 
 def segment_high_level(dataCollection, window_size): # segment the data and create a dataset with high level activities as labels
-    #remove locomotions with 0
+    #remove HL_activities with 0
     dataCollection = dataCollection.drop(dataCollection[dataCollection.HL_Activity == 0].index)
     # reset labels
-    dataCollection= reset_label(dataCollection,False)
+    dataCollection= reset_label(dataCollection, False)
+    """
+    relabeling
+        old labels: 
+            locomotion: {0, 1, 2, 4, 5} 
+            high level: {0, 101, 102, 103, 104, 105}
+        new labels:
+            mapping: {1:1, 2:2, 5:0, 4:3, 101: 0, 102:1, 103:2, 104:3, 105:4}
+    """
     #print(dataCollection.columns)
     HL_Activity_i = dataCollection.columns.get_loc("HL_Activity")
     #convert the data frame to numpy array
@@ -149,17 +178,27 @@ def segment_high_level(dataCollection, window_size): # segment the data and crea
     end = 0
     while start + window_size - 1 < n:
         end = start + window_size-1
-        if data[start][HL_Activity_i] == data[end][HL_Activity_i] and data[start][-1] == data[end][-1] : # if the frame contains the same activity and from the file
+
+        # has planned window the same activity in the beginning and the end, is from the same file in the beginning and the end
+        # what if it changes back and forth?
+        if data[start][HL_Activity_i] == data[end][HL_Activity_i] and data[start][-1] == data[end][-1] : 
+
             #print(data[start:(end+1),0:(HL_Activity_i)])
+            # first part time axis, second part sensor axis -> get window
             X.append(data[start:(end+1),0:(HL_Activity_i-1)])# slice before locomotion
-            y.append(data[start][HL_Activity_i])
-            start += window_size//2 # 50% overlap
-        else: # if the frame contains different activities or from different objects, find the next start point
+            y.append(data[start][HL_Activity_i]) # the first data point is enough
+            start += window_size//2 # 50% overlap!!!!!!!!!
+
+        # if the frame contains different activities or from different objects, find the next start point
+        # if there is a rest smaller than the window size -> skip (window small enough?)
+        else:
             while start + window_size-1 < n:
+                # find the switch point -> the next start point
+                # different file check missing! will come here again (little overhead)
                 if data[start][HL_Activity_i] != data[start+1][HL_Activity_i]:
                     break
                 start += 1
-            start += 1
+            start += 1 # dirty fix for the missing 'different file' check?
     print(np.asarray(X).shape, np.asarray(y).shape)
     return {'inputs' : np.asarray(X), 'labels': np.asarray(y,dtype=int)}
 
@@ -193,8 +232,8 @@ def plot_series(df, colname, act, file_index, start, end):
     fig.set_ylabel(unit)
     
 
-def save_data(data,file_name): # save the data in h5 format
-    f = h5py.File(file_name,'w')
+def save_data(data, file_name, current_path_in_repo): # save the data in h5 format
+    f = h5py.File(current_path_in_repo + '/' + file_name,'w')
     for key in data:
         print(key)
         f.create_dataset(key,data = data[key])       
@@ -202,25 +241,66 @@ def save_data(data,file_name): # save the data in h5 format
     print('Done.')    
 
 if __name__ == "__main__":   
-    window_size = 25   
+    window_size = 25 # very small 25 datapoints 30 Hz -> less than a second
 
     bp_path = '/dhc/groups/bp2021ba1'
     path_to_opportunity_folder = bp_path + '/data/opportunity-dataset'
     current_path_in_repo = 'research/jensOpportunityDeepL'
 
     df = read_files(current_path_in_repo, path_to_opportunity_folder)
+    """
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S1-ADL1.dat  is reading...
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S1-ADL2.dat  is reading...
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S1-ADL3.dat  is reading...
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S1-ADL4.dat  is reading...
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S2-ADL1.dat  is reading...
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S2-ADL2.dat  is reading...
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S2-ADL3.dat  is reading...
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S2-ADL4.dat  is reading...
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S3-ADL1.dat  is reading...
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S3-ADL2.dat  is reading...
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S3-ADL3.dat  is reading...
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S3-ADL4.dat  is reading...
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S4-ADL1.dat  is reading...
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S4-ADL2.dat  is reading...
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S4-ADL3.dat  is reading...
+    /dhc/groups/bp2021ba1/data/opportunity-dataset/dataset/S4-ADL4.dat  is reading...
 
-    df = dataCleaning(df)
+    -> file_index: 0-15
+
+    Dataframe:
+
+            miliseconds sensor_01 sensor_02 ... sensor_n Locomotion HL_Activity file_index
+        0       0        345.4        85.2        4.2        3          101          0       
+        1       33       ....         ...         ...      ...          ...          0
+        2       67       ....         ...         ...      ...          ...          0
+        ...
+        51115   ...       ...         ...         ...      ...          ...          0
+        51116   ...       ...         ...         ...      ...          ...          1
+        51117   ...       ...         ...         ...      ...          ...          1
+        ...
+        525k    ...       ...         ...         ...      ...          ...          15
+
+    set(df['HL_Activity'].tolist()) # {0, 101, 102, 103, 104, 105}
+    set(df['Locomotion'].tolist()) # {0, 1, 2, 4, 5}
+
+    """
+
+    df = dataCleaning(df) # drop columns, interpolate NaN
     #plot_series(df, colname, act, file_index, start, end)
     #plot_series(df, "Acc-RKN^-accX", 4, 2, 100, 150)
     
     loco_filename = "loco_2.h5" # "loco.h5" is to save locomotion dataset. 
     data_loco = segment_locomotion(df, window_size)
-    save_data(data_loco,loco_filename)
+    save_data(data_loco, loco_filename, current_path_in_repo)
     
     hl_filename = "hl_2.h5" #"hl.h5" is to save high level dataset
     data_hl = segment_high_level(df, window_size)
-    save_data(data_hl,hl_filename)
+    '''
+        data_hl['inputs'].shape # (34181, 25, 220) -> 34181 windows, 25 timestamps, 220 features (sensors)
+        data_hl['labels'].shape # (34181,) -> 34181 labels
+    '''
+    save_data(data_hl, hl_filename, current_path_in_repo)
     
     
     

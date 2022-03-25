@@ -179,7 +179,9 @@ class models():
         plt.xticks(tick_marks, classes, rotation=45)
         plt.yticks(tick_marks, classes)
         
-        fmt = '.2f' if normalize else 'd' tra
+        # this was the code: invalid syntax: fmt = '.2f' if normalize else 'd' tra
+        fmt = '.2f' if normalize else 'd'
+
         thresh = cm.max()/2.
         for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
             plt.text(j, i, format(cm[i, j], fmt),
@@ -192,7 +194,7 @@ class models():
 
 
 if __name__ == "__main__":
-    model_name = "rnn" # can be cnn/dnn/rnn
+    model_name = "cnn" # can be cnn/dnn/rnn
     loco = False # True is to use locomotion as labels. False is to use high level activities as labels
     path = ""
     if loco:
@@ -200,16 +202,24 @@ if __name__ == "__main__":
     else:
         path = "hl_2.h5"
         
-    oppo = models(path)
+    oppo = models(path) # only path
     
     print("read h5 file....")
-    oppo.read_h5()   
+    oppo.read_h5() # read, test train split
+    '''
+        oppo.X.shape # (34181, 25, 220) -> 34181 windows, 25 timestamps (under 1 sec), 220 features (sensor values)
+        oppo.y.shape # (34181,) -> 34181 labels
+        oppo.x_train.shape # (20508, 25, 220)
+        oppo.y_train.shape # (20508,)
+    '''
+
     if model_name == "cnn":
         oppo.cnn_model()
     elif model_name == "dnn":
         oppo.dnn_model()
     elif model_name == "rnn":
         oppo.rnn_model()
+
     oppo.draw()
     oppo.con_matrix()
 
