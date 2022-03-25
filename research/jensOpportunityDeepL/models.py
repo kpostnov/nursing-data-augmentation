@@ -287,7 +287,7 @@ if __name__ == "__main__":
     '''
 
     if model_name == "cnn":
-        oppo.cnn_model(n_epochs = 1) # n_epochs = 1 for testing, jens recommends 50
+        oppo.cnn_model(n_epochs = 5) # n_epochs = 1 for testing, jens recommends 50
     elif model_name == "dnn":
         oppo.dnn_model()
     elif model_name == "rnn":
