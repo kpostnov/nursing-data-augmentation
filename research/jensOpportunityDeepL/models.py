@@ -27,6 +27,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 import itertools
 
+from datetime import datetime
+import os
+
 
 class models():
     def __init__(self, path):
@@ -48,7 +51,7 @@ class models():
         print(set(self.y))
         #return X,y
     
-    def cnn_model(self):
+    def cnn_model(self, n_epochs = 50):
        # K = len(set(y_train))
         #print(K)
         K = len(set(self.y))
@@ -81,7 +84,7 @@ class models():
               metrics = ['accuracy'])
 
         #self.r = model.fit(X, y, validation_split = 0.4, epochs = 50, batch_size = 32 )
-        self.r = self.model.fit(self.x_train, self.y_train, validation_data = (self.x_test, self.y_test), epochs = 50, batch_size = 32 )
+        self.r = self.model.fit(self.x_train, self.y_train, validation_data = (self.x_test, self.y_test), epochs = n_epochs, batch_size = 32 )
         print(self.model.summary())
         # It is better than using keras do the splitting!!
         return self.r
@@ -142,29 +145,44 @@ class models():
         print(self.model.summary())
         return self.r
    
-    def draw(self):
+    def draw(self, path_to_model_folder):
         f1 = plt.figure(1)
         plt.title('Loss')
         plt.plot(self.r.history['loss'], label = 'loss')
         plt.plot(self.r.history['val_loss'], label = 'val_loss')
         plt.legend()
         f1.show()
+
+        # new: doesnt work (also not with plt) - no line in the chart
+        # f1.savefig(path_to_model_folder + '/training_loss.png')
         
         f2 = plt.figure(2)
-        plt.plot(self.r.history['acc'], label = 'accuracy')
-        plt.plot(self.r.history['val_acc'], label = 'val_accuracy')
+        plt.plot(self.r.history['accuracy'], label = 'accuracy')
+        plt.plot(self.r.history['val_accuracy'], label = 'val_accuracy')
         plt.legend()
         f2.show()
+
+        # new: doesnt work (also not with plt) - no line in the chart
+        # f2.savefig(path_to_model_folder + '/training_acc.png')
         
     # summary, confusion matrix and heatmap
-    def con_matrix(self):
+    def evaluation(self, model_folder_path):
         K = len(set(self.y_train))
         self.y_pred = self.model.predict(self.x_test).argmax(axis=1)
-        cm = confusion_matrix(self.y_test,self.y_pred)
-        self.plot_confusion_matrix(cm,list(range(K)))
+
+        # accuracy
+        accuracy = np.sum(self.y_pred == self.y_test) / len(self.y_pred)
+        print('===> Accuracy on Test: %f' % accuracy)
+        with open(model_folder_path + '/evaluation.txt', 'w') as f: 
+            f.write('Accuracy on Test: ' + str(accuracy))
+
+        # confusion matrix
+        cm = confusion_matrix(self.y_test, self.y_pred)
+        self.plot_confusion_matrix(cm, list(range(K)), model_folder_path) # jens plot function, extended
+
             
     
-    def plot_confusion_matrix(self, cm, classes, normalize = False, title='Confusion matrix', cmap=plt.cm.Blues):
+    def plot_confusion_matrix(self, cm, classes, path_to_model_folder, normalize = False, title='Confusion matrix', cmap=plt.cm.Blues):
         if normalize:
             cm = cm.astype('float') / cm.sum(axis=1)[:,np.newaxis]
             print("Normalized confusion matrix")
@@ -191,16 +209,71 @@ class models():
             plt.ylabel('True label')
             plt.xlabel('predicted label')
             f3.show()
+        
+        # new: also save
+        plt.savefig(path_to_model_folder + '/conf_matrix.png')
+    
+    def get_model_name(self) -> str:
+        if self.model_name is None:
+            currentDT = datetime.now()
+            currentDT_str = currentDT.strftime("%y-%m-%d_%H-%M-%S_%f")
+            self.model_name = currentDT_str + "---" + type(self).__name__
+        return self.model_name
+
+    def save_model(self, current_path_in_repo, model_name) -> None:
+        """
+        Saves the model to the given path
+
+        returns the model_folder_path
+        """
+        # create directory
+        currentDT = datetime.now()
+        currentDT_str = currentDT.strftime("%y-%m-%d_%H-%M-%S_%f")
+
+        model_name = currentDT_str + '-' + model_name
+
+        path_saved_models = current_path_in_repo + '/saved_models/'
+        model_folder_path = os.path.join(path_saved_models, model_name)
+        model_folder_path_internal = os.path.join(model_folder_path, "model")
+        os.makedirs(model_folder_path_internal, exist_ok=True)
+
+        # save normal model
+        self.model.save(model_folder_path_internal)
+
+        # save model as .h5
+        self.model.save(model_folder_path + "/" + model_name + ".h5", save_format='h5')
+
+        # save model as .tflite
+        converter = tf.lite.TFLiteConverter.from_keras_model(self.model)
+
+        # TODO: Optimizations for new tensorflow version
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        converter.experimental_new_converter = True
+        converter.target_spec.supported_ops = [tf.lite.OpsSet.TFLITE_BUILTINS, tf.lite.OpsSet.SELECT_TF_OPS]
+
+        tflite_model = converter.convert()
+        # converter = tf.lite.TFLiteConverter.from_saved_model(model_folder_path_internal)
+        # tflite_model = converter.convert()
+        print(f"Saving TFLite to {model_folder_path}/{model_name}.tflite")
+        with open(f"{model_folder_path}/{model_name}.tflite", 'wb') as f:
+            f.write(tflite_model)
+        
+        #  return model_folder_path + "/" + model_name + ".h5", f"{model_folder_path}/{model_name}.tflite"
+        return model_folder_path
 
 
 if __name__ == "__main__":
     model_name = "cnn" # can be cnn/dnn/rnn
     loco = False # True is to use locomotion as labels. False is to use high level activities as labels
-    path = ""
+
+    current_path_in_repo = 'research/jensOpportunityDeepL'
+    path = current_path_in_repo #  keep in mind to change it in dataProcessing.py as well 
+    # (current_path_in_repo = 'research/jensOpportunityDeepL')
+
     if loco:
-        path = "loco_2.h5"
+        path += "/loco_2.h5"
     else:
-        path = "hl_2.h5"
+        path += "/hl_2.h5"
         
     oppo = models(path) # only path
     
@@ -214,12 +287,18 @@ if __name__ == "__main__":
     '''
 
     if model_name == "cnn":
-        oppo.cnn_model()
+        oppo.cnn_model(n_epochs = 1) # n_epochs = 1 for testing, jens recommends 50
     elif model_name == "dnn":
         oppo.dnn_model()
     elif model_name == "rnn":
         oppo.rnn_model()
 
-    oppo.draw()
-    oppo.con_matrix()
+    # new
+    model_folder_path = oppo.save_model(current_path_in_repo, model_name)
+
+    oppo.draw(model_folder_path) # todo: no line visible at the moment
+
+    oppo.evaluation(model_folder_path) # plots acc and confusion matrix
+
+    
 

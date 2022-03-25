@@ -1,3 +1,10 @@
+This is a annotated subset of the jens original repo (adapted for the file structure of the dhc lab)
+execute dataProcessing.py (this will generate two .h5 files in this folder - the preprocessed, windowized data in numpy arrays)
+execute models.py (reads the .h5 files, trains the model, shows conf matrix, training history, and saves the model)
+
+Below the README from the original repo
+
+
 ## Introduction
 This repository is to apply deep learning models on Human Activity Recognition(HAR)/Activities of Daily Living(ADL) datasets. Three deep learning models, including Convolutional Neural Networks(CNN), Deep Feed Forward Neural Networks(DNN) and Recurrent Neural Networks(RNN) were applied to the datasets. Six HAR/ADL benchmark datasets were tested. The goal is to gain some experiences on handling the sensor data as well as classifying human activities using deep learning. 
 

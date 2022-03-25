@@ -75,9 +75,84 @@ def read_files(current_path_in_repo, path_to_opportunity_folder):
 def dataCleaning(dataCollection):
     dataCollection = dataCollection.loc[:,dataCollection.isnull().mean()< 0.1] #drop the columns which has NaN over 10%
     #print(list(dataCollection.columns.values))
-    dataCollection = dataCollection.drop(['MILLISEC', 'LL_Left_Arm','LL_Left_Arm_Object','LL_Right_Arm','LL_Right_Arm_Object', 'ML_Both_Arms'],
-                                        axis = 1)  # removal of columns not related, may include others.
     
+
+    """
+        TODO: continue select our subset
+
+        IMPORTANT: What data do we keep?
+
+        - jens version: keep most of it
+        - dataCollection = dataCollection.drop(['MILLISEC', 'LL_Left_Arm','LL_Left_Arm_Object','LL_Right_Arm','LL_Right_Arm_Object', 'ML_Both_Arms'], axis = 1)  # removal of columns not related, may include others.
+        - our version: keep our sensors with acc and quaterions
+        - caution: the shoe labels are different!
+
+        our subset: 
+            IMU-BACK-accX
+            IMU-BACK-accY
+            IMU-BACK-accZ
+            IMU-BACK-Quaternion1
+            IMU-BACK-Quaternion2
+            IMU-BACK-Quaternion3
+            IMU-BACK-Quaternion4
+
+            IMU-RLA-accX
+            IMU-RLA-accY
+            IMU-RLA-accZ
+            IMU-RLA-Quaternion1
+            IMU-RLA-Quaternion2
+            IMU-RLA-Quaternion3
+            IMU-RLA-Quaternion4
+
+            IMU-LLA-accX
+            IMU-LLA-accY
+            IMU-LLA-accZ
+            IMU-LLA-Quaternion1
+            IMU-LLA-Quaternion2
+            IMU-LLA-Quaternion3
+            IMU-LLA-Quaternion4
+
+            IMU-L-SHOE-EuX
+            IMU-L-SHOE-EuY
+            IMU-L-SHOE-EuZ
+            IMU-L-SHOE-Nav_Ax
+            IMU-L-SHOE-Nav_Ay
+            IMU-L-SHOE-Nav_Az
+            IMU-L-SHOE-Body_Ax
+            IMU-L-SHOE-Body_Ay
+            IMU-L-SHOE-Body_Az
+            IMU-L-SHOE-AngVelBodyFrameX
+            IMU-L-SHOE-AngVelBodyFrameY
+            IMU-L-SHOE-AngVelBodyFrameZ
+            IMU-L-SHOE-AngVelNavFrameX
+            IMU-L-SHOE-AngVelNavFrameY
+            IMU-L-SHOE-AngVelNavFrameZ
+
+            IMU-R-SHOE-EuX
+            IMU-R-SHOE-EuY
+            IMU-R-SHOE-EuZ
+            IMU-R-SHOE-Nav_Ax
+            IMU-R-SHOE-Nav_Ay
+            IMU-R-SHOE-Nav_Az
+            IMU-R-SHOE-Body_Ax
+            IMU-R-SHOE-Body_Ay
+            IMU-R-SHOE-Body_Az
+            IMU-R-SHOE-AngVelBodyFrameX
+            IMU-R-SHOE-AngVelBodyFrameY
+            IMU-R-SHOE-AngVelBodyFrameZ
+            IMU-R-SHOE-AngVelNavFrameX
+            IMU-R-SHOE-AngVelNavFrameY
+            IMU-R-SHOE-AngVelNavFrameZ
+
+        must include (labels):
+            Locomotion
+            HL_Activity
+            file_index
+
+    """
+    raise NameError('Changed the drop function, update below!')
+    dataCollection = dataCollection.drop(dataCollection.columns.difference(['a','b']), 1, inplace=False)
+
     dataCollection = dataCollection.apply(pd.to_numeric, errors = 'coerce') #removal of non numeric data in cells
     # data like 'k' (strings) will be converted to NaN
     
