@@ -7,7 +7,7 @@ import pandas
 from utils.Recording import Recording
 
 
-def load_opportunity_dataset(dataset_path: str) -> 'list[Recording]':
+def load_opportunity_dataset(dataset_path: str) -> "list[Recording]":
     """
     Returns a list of Recordings from the opportunity dataset
     """
@@ -20,13 +20,15 @@ def load_opportunity_dataset(dataset_path: str) -> 'list[Recording]':
     # 38-50: BACK (13)
     # 103-118: L-SHOE (16)
     # 119-134: R-SHOE (16)
-    sensor_frame_column_indices = np.array([
-        *np.arange(38, 51),
-        *np.arange(64, 77),
-        *np.arange(90, 103),
-        *np.arange(103, 119),
-        *np.arange(119, 135)
-    ])
+    sensor_frame_column_indices = np.array(
+        [
+            *np.arange(38, 51),
+            *np.arange(64, 77),
+            *np.arange(90, 103),
+            *np.arange(103, 119),
+            *np.arange(119, 135),
+        ]
+    )
     # Convert to 0-indexed
     sensor_frame_column_indices -= 1
 
@@ -37,12 +39,12 @@ def load_opportunity_dataset(dataset_path: str) -> 'list[Recording]':
     for sub, rec in itertools.product(subject_ids, recording_ids):
         file_name = f"S{sub}-ADL{rec}.dat"
         file_path = os.path.join(dataset_path, file_name)
-        p = pandas.read_csv(file_path, delimiter=' ', header=None)
+        p = pandas.read_csv(file_path, delimiter=" ", header=None)
         recording = Recording(
             p.iloc[:, sensor_frame_column_indices],
             p.iloc[:, timeframe_column_index],
             f"{p.iloc[:, label_column_index][0]}",  # TODO: Use all, remove `[0]`
-            f"{sub}"
+            f"{sub}",
         )
 
         recordings.append(recording)
@@ -52,4 +54,6 @@ def load_opportunity_dataset(dataset_path: str) -> 'list[Recording]':
     return recordings
 
 
-load_opportunity_dataset("/Users/franz/Projects/dhc-lab/data/OpportunityUCIDataset/dataset")
+load_opportunity_dataset(
+    "/Users/franz/Projects/dhc-lab/data/OpportunityUCIDataset/dataset"
+)

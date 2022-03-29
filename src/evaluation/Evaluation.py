@@ -10,17 +10,31 @@ from functools import reduce
 
 
 class Evaluation:
-
-    def get_evaluation_test_result(self, model: 'RainbowModel', model_nickname: str, X_test, y_test, predictions_vectors) -> EvaluationTestResult:
+    def get_evaluation_test_result(
+        self,
+        model: "RainbowModel",
+        model_nickname: str,
+        X_test,
+        y_test,
+        predictions_vectors,
+    ) -> EvaluationTestResult:
 
         test_activity_distribution = self._count_unique_activities(y_test)
-        correct_classification_accuracy = self._correct_classification_accuracy(prediction_vectors, y_test)
+        correct_classification_accuracy = self._correct_classification_accuracy(
+            prediction_vectors, y_test
+        )
         average_failure_rate = self._average_failure_rate(prediction_vectors, y_test)
 
         # Calculate F1 Score
         # f1_score = Evaluation.__f1_score(model, X_test, y_test)
 
-        return EvaluationTestResult(model, model_nickname, test_activity_distribution, correct_classification_accuracy, average_failure_rate)
+        return EvaluationTestResult(
+            model,
+            model_nickname,
+            test_activity_distribution,
+            correct_classification_accuracy,
+            average_failure_rate,
+        )
 
     def _count_unique_activities(self, y_test: np.ndarray) -> dict:
         """
@@ -35,7 +49,9 @@ class Evaluation:
             unique_counts[activity_name] = unique_values[1][i]
         return unique_counts
 
-    def _average_failure_rate(self, prediction_vectors: np.ndarray, y_test: np.ndarray) -> float:
+    def _average_failure_rate(
+        self, prediction_vectors: np.ndarray, y_test: np.ndarray
+    ) -> float:
         """
         how much percent is missing to 100% for the correct activity - on the given test data
         """
@@ -49,12 +65,14 @@ class Evaluation:
 
         # sum up failure rate by calculating "1 - the prediction value of row i and expected column"
         for i in range(len(label_indices)):
-            failure_sum += (1 - prediction_vectors[i][label_indices[i]])
+            failure_sum += 1 - prediction_vectors[i][label_indices[i]]
 
         average_failure_rate = failure_sum / len(label_indices)
         return average_failure_rate
 
-    def _f1_score(self, model: 'RainbowModel', X_test: np.ndarray, y_test: np.ndarray) -> float:
+    def _f1_score(
+        self, model: "RainbowModel", X_test: np.ndarray, y_test: np.ndarray
+    ) -> float:
         """
         Calculates the f1 score of the model on the given test data
         """
@@ -71,12 +89,16 @@ class Evaluation:
 
         # sum up f1 score by calculating "2 * (prediction value of row i and expected column) / (prediction value of row i + expected column)"
         for i in range(len(label_indices)):
-            f1_sum += (2 * prediction_vecs[i][label_indices[i]]) / (prediction_vecs[i][label_indices[i]] + y_test[i][label_indices[i]])
+            f1_sum += (2 * prediction_vecs[i][label_indices[i]]) / (
+                prediction_vecs[i][label_indices[i]] + y_test[i][label_indices[i]]
+            )
 
         f1_score = f1_sum / len(label_indices)
         return f1_score
 
-    def _correct_classification_accuracy(self, prediction_vectors: np.ndarray, y_test: np.ndarray, verbose: int = 0) -> float:
+    def _correct_classification_accuracy(
+        self, prediction_vectors: np.ndarray, y_test: np.ndarray, verbose: int = 0
+    ) -> float:
         """
         returns the accuracy of the model on the test data
         """
