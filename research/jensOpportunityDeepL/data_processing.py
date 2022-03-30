@@ -23,6 +23,9 @@ activities = {
 
 
 def read_files(current_path_in_repo, path_to_opportunity_folder):
+    """
+    read_files
+    """
     # pick partial data from dataset
     list_of_files = [
         "./dataset/S1-ADL1.dat",
@@ -86,7 +89,10 @@ def read_files(current_path_in_repo, path_to_opportunity_folder):
     return data_collection
 
 
-def dataCleaning(dataCollection):
+def data_cleaning(dataCollection):
+    """
+    data cleaning
+    """
     dataCollection = dataCollection.loc[
         :, dataCollection.isnull().mean() < 0.1
     ]  # drop the columns which has NaN over 10%
@@ -472,7 +478,7 @@ if __name__ == "__main__":
 
     """
 
-    df = dataCleaning(df)  # drop columns, interpolate NaN
+    df = data_cleaning(df)  # drop columns, interpolate NaN
     # plot_series(df, colname, act, file_index, start, end)
     # plot_series(df, "Acc-RKN^-accX", 4, 2, 100, 150)
 
