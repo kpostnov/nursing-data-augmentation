@@ -1,4 +1,4 @@
-from models.LSTMModel import LSTMModel
+from models.JensModel import LSTMModel
 from tensorflow.keras.layers import Conv1D, Dense, Dropout  # type: ignore
 import tensorflow as tf  # type: ignore
 from tensorflow.keras.layers import Input, Dense, LSTM, concatenate, Activation, Masking  # type: ignore

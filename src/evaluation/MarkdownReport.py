@@ -15,7 +15,7 @@ class MarkdownReport:
         self,
         title: str,
         description: str,
-        models_evaluation_result: list[EvaluationTestResult],
+        models_evaluation_result: 'list[EvaluationTestResult]',
         has_context_accuracy=False,
         telegram: bool = True,
     ) -> None:
@@ -55,7 +55,7 @@ class MarkdownReport:
 
         report_str += markdown_table_str(comparison_table)
 
-        _create_rainbow_report(title, description, report_str)
+        self._create_rainbow_report(title, description, report_str)
 
         if telegram:
             self._send_telegram_report(title, description, report_str)
@@ -64,7 +64,7 @@ class MarkdownReport:
         self,
         title: str,
         description: str,
-        models_evaluation_results: list[list[EvaluationTestResult]],
+        models_evaluation_results: 'list[list[EvaluationTestResult]]',
         telegram: bool = True,
     ) -> None:
         """
@@ -192,7 +192,9 @@ class MarkdownReport:
 
         return markdown_table_str(markdown_array)
 
-    def _k_fold_report_str(self, evaluation_results: list[EvaluationTestResult]) -> str:
+    def _k_fold_report_str(
+        self, evaluation_results: "list[EvaluationTestResult]"
+    ) -> str:
         """
         Model1 - nickname
         {kwargs}
@@ -210,3 +212,39 @@ class MarkdownReport:
         )
         report += self._k_fold_table_str(evaluation_results)
         return report
+
+    @staticmethod
+    def markdown_table_str(input_list: list) -> str:
+
+        """
+        Input: Python list with rows of table as lists
+                First element as header.
+            Output: String to put into a .md file
+
+        Ex Input:
+            [["Name", "Age", "Height"],
+            ["Jake", 20, 5'10],
+            ["Mary", 21, 5'7]]
+        """
+
+        markdown = "\n" + str("| ")
+
+        for e in input_list[0]:
+            to_add = " " + str(e) + str(" |")
+            markdown += to_add
+        markdown += "\n"
+
+        markdown += "|"
+        for i in range(len(input_list[0])):
+            markdown += str("-------------- | ")
+        markdown += "\n"
+
+        for entry in input_list[1:]:
+            markdown += str("| ")
+            for e in entry:
+                to_add = str(e) + str(" | ")
+                markdown += to_add
+            markdown += "\n"
+
+        return markdown + "\n"
+

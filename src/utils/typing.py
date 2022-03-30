@@ -11,6 +11,6 @@ def assert_type(assertions: list):
         assert isinstance(assertion[0], assertion[1]), (
             "\nWrong type was passed! "
             + str(i + 1)
-            + "th assertion fails:\n\t-> Variable should be of type "
-            + str(assertion[1])
+            + "th assertion fails:\n\t-> Variable  should be of type "
+            + str(assertion[1]) + " but is of type " + str(type(assertion[0]))
         )

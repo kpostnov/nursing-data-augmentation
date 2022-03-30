@@ -4,7 +4,7 @@ from evaluation.EvaluationTestResult import EvaluationTestResult
 from loader.Preprocessor import Preprocessor
 from sklearn.model_selection import KFold, train_test_split
 from loader.filter_dataset import filter_acceleration
-from loader.load_dataset import load_dataset
+from archive.loader_archive.load_dataset import load_dataset
 import os
 from models.RainbowModel import RainbowModel
 from utils.Recording import Recording

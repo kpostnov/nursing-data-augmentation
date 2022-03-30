@@ -1,5 +1,5 @@
 from rainbow_test.main_rainbow_test import k_fold_test
-from models.LSTMModel import LSTMModel
+from models.JensModel import LSTMModel
 from models.RainbowModel import RainbowModel
 import utils.settings as settings
 

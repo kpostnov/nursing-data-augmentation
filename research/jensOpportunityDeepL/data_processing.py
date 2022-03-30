@@ -435,8 +435,14 @@ def save_data(data, file_name, current_path_in_repo):  # save the data in h5 for
 if __name__ == "__main__":
     window_size = 25  # very small 25 datapoints 30 Hz -> less than a second
 
-    bp_path = "/dhc/groups/bp2021ba1"
-    path_to_opportunity_folder = bp_path + "/data/opportunity-dataset"
+    """
+    dhc lab:
+        bp_path = "/dhc/groups/bp2021ba1"
+        path_to_opportunity_folder = bp_path + "/data/opportunity-dataset"
+        current_path_in_repo = "research/jensOpportunityDeepL"
+    """
+
+    path_to_opportunity_folder = "opportunity-dataset"
     current_path_in_repo = "research/jensOpportunityDeepL"
 
     df = read_files(current_path_in_repo, path_to_opportunity_folder)

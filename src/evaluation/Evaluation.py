@@ -16,7 +16,7 @@ class Evaluation:
         model_nickname: str,
         X_test,
         y_test,
-        predictions_vectors,
+        prediction_vectors,
     ) -> EvaluationTestResult:
 
         test_activity_distribution = self._count_unique_activities(y_test)

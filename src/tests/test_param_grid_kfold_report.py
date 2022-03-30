@@ -14,10 +14,10 @@ from importlib_metadata import itertools  # type: ignore
 import numpy as np
 from augmentation.rotate import append_recordings_randomly_rotated_n_times
 from loader.Preprocessor import Preprocessor
-from loader.convert_dataset import convert_quaternion_to_euler
+from archive.loader_archive.convert_dataset import convert_quaternion_to_euler
 from loader.filter_dataset import filter_acceleration
-from loader.load_dataset import load_dataset
-from models.LSTMModel import LSTMModel
+from archive.loader_archive.load_dataset import load_dataset
+from models.JensModel import LSTMModel
 import utils.settings as settings
 import tensorflow as tf
 import os

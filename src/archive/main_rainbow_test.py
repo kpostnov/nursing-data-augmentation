@@ -2,7 +2,7 @@ import os
 from evaluation.EvaluationTestResult import EvaluationTestResult
 from loader.Preprocessor import Preprocessor
 from loader.filter_dataset import filter_acceleration
-from loader.load_dataset import load_dataset
+from archive.loader_archive.load_dataset import load_dataset
 from models.RainbowModel import RainbowModel
 from rainbow_test.create_report import (
     create_rainbow_report,

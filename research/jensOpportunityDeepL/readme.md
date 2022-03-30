@@ -1,8 +1,18 @@
-This is a annotated subset of the jens original repo (adapted for the file structure of the dhc lab)
-execute dataProcessing.py (this will generate two .h5 files in this folder - the preprocessed, windowized data in numpy arrays)
-execute models.py (reads the .h5 files, trains the model, shows conf matrix, training history, and saves the model)
+# HAR Opportunity dataset CNN
+- this is a annotated subset of the jens original repo - see orginal Readme below
+- 10 Epochs CNN with sensor subset gets accuracy of 0.81
+- NO LEAVE SUBJECT OUT: Refactoring for this test is not worth it
 
-Below the README from the original repo
+How To:
+- download the opportunity dataset (put the path in .gitignore if its in this repo)
+- edit paths in dataProcessing.py, models.py
+- always execute from root (e.g. with the vscode debugger or create new main file)
+- execute dataProcessing.py (this will generate two .h5 files in this folder - the preprocessed, windowized data in numpy arrays)
+- execute models.py (reads the .h5 files, trains the model, shows conf matrix, training history, and saves the model)
+- you will find the exported model and the evaluation (accuracy, conf_matrix) in saved_models
+
+
+README from the original repo:
 
 ## Introduction
 
@@ -17,7 +27,7 @@ This repository is to apply deep learning models on Human Activity Recognition(H
 - [Sphere dataset](https://www.irc-sphere.ac.uk/sphere-challenge/home) contains the data collected from three sensing modalities (wrist-worn accelerometer, RGB-D cameras, passiva enviormental sensors). 20 ADL activities including static and transition activites were labeled.
 - [SHL dataset](http://www.shl-dataset.org/) contains multi-modal data from a body-worn camera and from 4 smartphones, carried simultaneously at typical body locations. The SHL dataset contains 750 hours of labelled locomotion data: Car (88 h), Bus (107 h), Train (115 h), Subway (89 h), Walk (127 h), Run (21 h), Bike (79 h), and Still (127 h).
 
-## Apporach
+## Approach
 
 - For each dataset, a slicing window appoarch was applied to segment the dataset. Each segment includes a series of data (usually 25 sequential data points) and two continuous windows have 50% overlapping.
 - After data preprocessing which includes reading files, data cleaning, data visualization, relabling and data segmentation, the data was saved into hdf5 files.

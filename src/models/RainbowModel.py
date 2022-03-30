@@ -57,6 +57,8 @@ class RainbowModel(ABC):
         """
         For a data efficient comparison between models, the preprocessed data for
         training and evaluation of the model only exists, while this method is running
+
+        shuffles the windows
         """
         assert_type([(recordings_train[0], Recording)])
         X_train, y_train = self.windowize_convert(recordings_train)
@@ -67,6 +69,9 @@ class RainbowModel(ABC):
     def windowize_convert(
         self, recordings_train: "list[Recording]"
     ) -> "tuple[np.ndarray,np.ndarray]":
+        """
+        shuffles the windows
+        """
         windows_train = self.windowize(recordings_train)
         shuffle(
             windows_train
@@ -112,19 +117,13 @@ class RainbowModel(ABC):
         """
         assert_type([(windows[0], Window)])
 
-        def window_sensor_array(window):
-            return window.sensor_array
-
-        sensor_arrays = list(map(window_sensor_array, windows))
-
-        def window_activity_number(window):
-            return settings.ACTIVITIES[window.activity]
-
-        activity_index_array = list(map(window_activity_number, windows))
+        sensor_arrays = list(map(lambda window: window.sensor_array, windows))
+        activities = list(map(lambda window: window.activity, windows))
 
         # to_categorical converts the activity_array to the dimensions needed
         activity_vectors = to_categorical(
-            np.array(activity_index_array), num_classes=len(settings.ACTIVITIES)
+            np.array(activities),
+            num_classes=len(settings.activity_initial_num_to_activity_str),
         )
 
         return np.array(sensor_arrays), np.array(activity_vectors)
@@ -161,76 +160,4 @@ class RainbowModel(ABC):
         """
         return self.model.predict(X_test)
 
-    # Utils --------------------------------------------------------------------------
-
-    # def add_acceleration_magnitude(self, df: pd.DataFrame) -> None:
-    #     for sensor_suffix in settings.SENSOR_SUFFIX_ORDER:
-    #         acceleration_column_names = [f"FreeAcc_{axis}_{sensor_suffix}" for axis in ['X', 'Y', 'Z']]
-    #         sq_value = 0
-    #         for acceleration_column_name in acceleration_column_names:
-    #             sq_value += df[acceleration_column_name]**2
-    #         df[f'magnitude_{sensor_suffix}'] = sqrt(sq_value)
-
-    def plot_confusion_matrix(self, X_test, y_test) -> None:
-        """
-        Plots a confusion matrix
-        """
-        assert_type(
-            [(X_test, (np.ndarray, np.generic)), (y_test, (np.ndarray, np.generic))]
-        )
-
-        predictions = self.model.predict(X_test)
-        predictions = np.argmax(predictions, axis=1)
-        y_test = np.argmax(y_test, axis=1)
-
-        self.confusion_matrix = ConfusionMatrixDisplay(
-            confusion_matrix=confusion_matrix(y_test, predictions)
-        )
-        self.confusion_matrix.plot()
-
-    def get_model_name(self) -> str:
-        if self.model_name is None:
-            currentDT = datetime.now()
-            currentDT_str = currentDT.strftime("%y-%m-%d_%H-%M-%S_%f")
-            self.model_name = currentDT_str + "---" + type(self).__name__
-        return self.model_name
-
-    def save_model(self, path: str, name_suffix: str = "") -> "tuple[str, str]":
-        """
-        Saves the model to the given path
-        """
-        assert_type([(path, str)])
-
-        # create directory
-        model_name = self.get_model_name() + name_suffix
-        model_folder_path = os.path.join(path, model_name)
-        model_folder_path_internal = os.path.join(model_folder_path, "model")
-        os.makedirs(model_folder_path_internal, exist_ok=True)
-
-        # save normal model
-        self.model.save(model_folder_path_internal)
-
-        # save model as .h5
-        self.model.save(model_folder_path + "/" + model_name + ".h5", save_format="h5")
-
-        # save model as .tflite
-        converter = tf.lite.TFLiteConverter.from_keras_model(self.model)
-
-        # TODO: Optimizations for new tensorflow version
-        converter.optimizations = [tf.lite.Optimize.DEFAULT]
-        converter.experimental_new_converter = True
-        converter.target_spec.supported_ops = [
-            tf.lite.OpsSet.TFLITE_BUILTINS,
-            tf.lite.OpsSet.SELECT_TF_OPS,
-        ]
-
-        tflite_model = converter.convert()
-        # converter = tf.lite.TFLiteConverter.from_saved_model(model_folder_path_internal)
-        # tflite_model = converter.convert()
-        print(f"Saving TFLite to {model_folder_path}/{model_name}.tflite")
-        with open(f"{model_folder_path}/{model_name}.tflite", "wb") as f:
-            f.write(tflite_model)
-        return (
-            model_folder_path + "/" + model_name + ".h5",
-            f"{model_folder_path}/{model_name}.tflite",
-        )
+    

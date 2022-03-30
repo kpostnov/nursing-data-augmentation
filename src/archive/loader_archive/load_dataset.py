@@ -1,7 +1,7 @@
 import os
 import json
 from utils.file_functions import get_subfolder_names
-from loader.XSensRecordingReader import XSensRecordingReader
+from archive.loader_archive.XSensRecordingReader import XSensRecordingReader
 import pandas as pd
 import utils.settings as settings
 from utils.Recording import Recording

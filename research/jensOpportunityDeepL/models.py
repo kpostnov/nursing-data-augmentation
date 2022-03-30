@@ -36,7 +36,7 @@ from datetime import datetime
 import os
 
 
-class models:
+class Models:
     def __init__(self, path):
         self.path = path
         self.model_name = None
@@ -348,7 +348,7 @@ if __name__ == "__main__":
     else:
         path += "/hl_2.h5"
 
-    oppo = models(path)  # only path
+    oppo = Models(path)  # only path
 
     print("read h5 file....")
     oppo.read_h5()  # read, test train split

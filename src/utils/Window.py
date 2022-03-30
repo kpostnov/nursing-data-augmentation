@@ -6,14 +6,14 @@ from utils.typing import assert_type
 
 @dataclass
 class Window:
-    def __init__(self, sensor_array: np.ndarray, activity: str, subject: str) -> None:
+    def __init__(self, sensor_array: np.ndarray, activity: int, subject: str) -> None:
         assert_type(
-            [(sensor_array, (np.ndarray, np.generic)), (activity, str), (subject, str)]
+            [(sensor_array, (np.ndarray, np.generic)), (activity, int), (subject, str)]
         )
         self.sensor_array = sensor_array
         self.activity = activity
         self.subject = subject
 
     sensor_array: np.ndarray
-    activity: str
+    activity: int
     subject: str
