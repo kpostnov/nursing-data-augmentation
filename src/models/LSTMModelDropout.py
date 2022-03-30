@@ -30,7 +30,7 @@ class LSTMModelDropout(RainbowModelLeaveRecsOut):
         self.model = self.__create_model(kwargs["n_features"], kwargs["n_outputs"])
         self.model.summary()
 
-    def squeeze_excite_block(self, input):
+    def squeeze_excite_block(self, input_layer):
         """Create a squeeze-excite block
         Args:
             input: input tensor
@@ -38,8 +38,8 @@ class LSTMModelDropout(RainbowModelLeaveRecsOut):
             k: width factor
         Returns: a keras tensor
         """
-        filters = input.shape[-1]  # channel_axis = -1 for TF
-        se = GlobalAveragePooling1D()(input)
+        filters = input_layer.shape[-1]  # channel_axis = -1 for TF
+        se = GlobalAveragePooling1D()(input_layer)
         se = Reshape((1, filters))(se)
         se = Dense(
             filters // 16,
@@ -53,7 +53,7 @@ class LSTMModelDropout(RainbowModelLeaveRecsOut):
             kernel_initializer="he_normal",
             use_bias=False,
         )(se)
-        se = multiply([input, se])
+        se = multiply([input_layer, se])
         return se
 
     def __create_model(self, n_features, n_outputs):

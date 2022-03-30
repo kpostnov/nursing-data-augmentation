@@ -1,6 +1,5 @@
-from models.RainbowModel import RainbowModel
 from models.LSTMModel import LSTMModel
-from tensorflow.keras.layers import Conv1D, MaxPooling1D, Flatten, Dense, Dropout  # type: ignore
+from tensorflow.keras.layers import Conv1D, Dense, Dropout  # type: ignore
 import tensorflow as tf  # type: ignore
 from tensorflow.keras.layers import Input, Dense, LSTM, concatenate, Activation, Masking  # type: ignore
 from tensorflow.keras.layers import Conv1D, BatchNormalization, GlobalAveragePooling1D, Permute, Dropout  # type: ignore
@@ -89,7 +88,7 @@ class LSTMModelNoWindows(LSTMModel):
         )
 
         # post-pad all sensor arrays with 0's so they all have timestep size of n_max_timesteps
-        for i in range(0, len(sensor_arrays)):
+        for i in enumerate(sensor_arrays):
             n_to_pad = n_max_timesteps - sensor_arrays[i].shape[0]
             sensor_arrays[i] = np.pad(
                 sensor_arrays[i],
@@ -102,7 +101,7 @@ class LSTMModelNoWindows(LSTMModel):
         sensor_arrays = np.swapaxes(sensor_arrays, 1, 2)
 
         # add padded arrays to list of Window objects
-        for i in range(0, len(recordings)):
+        for i in enumerate(recordings):
             recording = recordings[i]
             padded_sensor_array = sensor_arrays[i]
             recording_window = Window(
