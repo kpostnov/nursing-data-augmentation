@@ -19,24 +19,36 @@ def convert_quaternion_to_matrix(recordings: List[Recording]) -> List[Recording]
         # Iterate over all sensors - we need to convert this many quaternions
         for sensor_suffix in settings.SENSOR_SUFFIX_ORDER:
             # Build the column names, that we need to select for the quaternion
-            quaternion_cols = [f"Quat_{axis}_{sensor_suffix}" for axis in ['W', 'X', 'Y', 'Z']]
+            quaternion_cols = [
+                f"Quat_{axis}_{sensor_suffix}" for axis in ["W", "X", "Y", "Z"]
+            ]
 
             # The matrix is 3x3, so we need 5 more columns. We add these to the Quat-columns:
-            added_rotation_cols = [f"Rot_{axis}_{sensor_suffix}" for axis in ['1', '2', '3', '4', '5']]
+            added_rotation_cols = [
+                f"Rot_{axis}_{sensor_suffix}" for axis in ["1", "2", "3", "4", "5"]
+            ]
             # Insert the rows before writing to them is necessary
             for name in added_rotation_cols:
-                recording.sensor_frame.insert(recording.sensor_frame.columns.get_loc(quaternion_cols[-1]), name, np.nan)
+                recording.sensor_frame.insert(
+                    recording.sensor_frame.columns.get_loc(quaternion_cols[-1]),
+                    name,
+                    np.nan,
+                )
             # To not get an error when we try to read the quaternion, select only not nan rows
             filled_rows = recording.sensor_frame[quaternion_cols[0]].notnull()
 
             # Read all quaternions simultaneously
-            quaternions = R.from_quat(recording.sensor_frame.loc[filled_rows, quaternion_cols])
+            quaternions = R.from_quat(
+                recording.sensor_frame.loc[filled_rows, quaternion_cols]
+            )
 
             # Convert to matrix and reshape them to be an array of 9 values
             matrices = quaternions.as_matrix().reshape((-1, 9))
 
             # Write the matrices to the quat + new columns
-            recording.sensor_frame.loc[filled_rows, quaternion_cols+added_rotation_cols] = matrices
+            recording.sensor_frame.loc[
+                filled_rows, quaternion_cols + added_rotation_cols
+            ] = matrices
 
     return recordings
 
@@ -47,21 +59,27 @@ def convert_quaternion_to_euler(recordings: List[Recording]) -> List[Recording]:
     # Iterate over all recordings
     for idx, recording in enumerate(recordings):
         if idx % 10 == 0:
-            print(f"Converting quaternion to euler angles for recording {idx}", end='\r')
+            print(
+                f"Converting quaternion to euler angles for recording {idx}", end="\r"
+            )
 
         # Iterate over all sensors - we need to convert this many quaternions
         for sensor_suffix in settings.SENSOR_SUFFIX_ORDER:
             # Build the column names, that we need to select for the quaternion
-            quaternion_cols = [f"Quat_{axis}_{sensor_suffix}" for axis in ['W', 'X', 'Y', 'Z']]
+            quaternion_cols = [
+                f"Quat_{axis}_{sensor_suffix}" for axis in ["W", "X", "Y", "Z"]
+            ]
 
             # To not get an error when we try to read the quaternion, select only not nan rows
             filled_rows = recording.sensor_frame[quaternion_cols[0]].notnull()
 
             # Read all quaternions simultaneously
-            quaternions = R.from_quat(recording.sensor_frame.loc[filled_rows, quaternion_cols])
+            quaternions = R.from_quat(
+                recording.sensor_frame.loc[filled_rows, quaternion_cols]
+            )
 
             # Convert to euler angles
-            degrees = quaternions.as_euler('zyx')
+            degrees = quaternions.as_euler("zyx")
 
             # Write them and remove the leftover column
             recording.sensor_frame.loc[filled_rows, quaternion_cols[:3]] = degrees
@@ -82,13 +100,17 @@ def convert_quaternion_to_vector(recordings: List[Recording]) -> List[Recording]
         # Iterate over all sensors - we need to convert this many quaternions
         for sensor_suffix in settings.SENSOR_SUFFIX_ORDER:
             # Build the column names, that we need to select for the quaternion
-            quaternion_cols = [f"Quat_{axis}_{sensor_suffix}" for axis in ['W', 'X', 'Y', 'Z']]
+            quaternion_cols = [
+                f"Quat_{axis}_{sensor_suffix}" for axis in ["W", "X", "Y", "Z"]
+            ]
 
             # To not get an error when we try to read the quaternion, select only not nan rows
             filled_rows = recording.sensor_frame[quaternion_cols[0]].notnull()
 
             # Read all quaternions simultaneously
-            quaternions = R.from_quat(recording.sensor_frame.loc[filled_rows, quaternion_cols])
+            quaternions = R.from_quat(
+                recording.sensor_frame.loc[filled_rows, quaternion_cols]
+            )
 
             # Convert to euler angles
             vector = quaternions.apply([0, 0, 1])  # quaternions.as_rotvec()
@@ -98,6 +120,7 @@ def convert_quaternion_to_vector(recordings: List[Recording]) -> List[Recording]
             recording.sensor_frame.drop(quaternion_cols[3], axis=1, inplace=True)
 
     return recordings
+
 
 def convert_euler_to_vector(recordings: List[Recording]) -> List[Recording]:
     recordings = deepcopy(recordings)
@@ -110,13 +133,15 @@ def convert_euler_to_vector(recordings: List[Recording]) -> List[Recording]:
         # Iterate over all sensors - we need to convert this many quaternions
         for sensor_suffix in settings.SENSOR_SUFFIX_ORDER:
             # Build the column names, that we need to select for the quaternion
-            euler_cols = [f"Quat_{axis}_{sensor_suffix}" for axis in ['W', 'X', 'Y']]
+            euler_cols = [f"Quat_{axis}_{sensor_suffix}" for axis in ["W", "X", "Y"]]
 
             # To not get an error when we try to read the quaternion, select only not nan rows
             filled_rows = recording.sensor_frame[euler_cols[0]].notnull()
 
             # Read all quaternions simultaneously
-            quaternions = R.from_euler('zxy', recording.sensor_frame.loc[filled_rows, euler_cols])
+            quaternions = R.from_euler(
+                "zxy", recording.sensor_frame.loc[filled_rows, euler_cols]
+            )
 
             # Convert to euler angles
             vector = quaternions.apply([0, 0, 1])  # quaternions.as_rotvec()
@@ -133,19 +158,19 @@ def convert_euler_to_velocity(recordings: List[Recording]) -> List[Recording]:
     # Iterate over all recordings
     for idx, recording in enumerate(recordings):
         if idx % 10 == 0:
-            print(f"Converting to velocity for recording {idx}", end='\r')
+            print(f"Converting to velocity for recording {idx}", end="\r")
 
         # Iterate over all sensors - we need to convert this many quaternions
         for sensor_suffix in settings.SENSOR_SUFFIX_ORDER:
             # Build the column names, that we need to select for the quaternion
-            columns = [f"Quat_{axis}_{sensor_suffix}" for axis in ['W', 'X', 'Y']]
+            columns = [f"Quat_{axis}_{sensor_suffix}" for axis in ["W", "X", "Y"]]
 
             # To not get an error when we try to read the quaternion, select only not nan rows
             filled_rows = recording.sensor_frame[columns[0]].notnull()
 
             angles = recording.sensor_frame.loc[filled_rows, columns].values
             times = recording.time_frame.loc[filled_rows].values
-            rotations = R.from_euler('zyx', angles)
+            rotations = R.from_euler("zyx", angles)
             spline = RotationSpline(times, rotations)
 
             # Convert to euler angles
@@ -164,12 +189,12 @@ def convert_quat_to_velocity(recordings: List[Recording]) -> List[Recording]:
     # Iterate over all recordings
     for idx, recording in enumerate(recordings):
         if idx % 10 == 0:
-            print(f"Converting to velocity for recording {idx}", end='\r')
+            print(f"Converting to velocity for recording {idx}", end="\r")
 
         # Iterate over all sensors - we need to convert this many quaternions
         for sensor_suffix in settings.SENSOR_SUFFIX_ORDER:
             # Build the column names, that we need to select for the quaternion
-            columns = [f"Quat_{axis}_{sensor_suffix}" for axis in ['W', 'X', 'Y', 'Z']]
+            columns = [f"Quat_{axis}_{sensor_suffix}" for axis in ["W", "X", "Y", "Z"]]
 
             # To not get an error when we try to read the quaternion, select only not nan rows
             filled_rows = recording.sensor_frame[columns[0]].notnull()
@@ -190,16 +215,23 @@ def convert_quat_to_velocity(recordings: List[Recording]) -> List[Recording]:
     return recordings
 
 
-def convert_recording_speed(recordings: List[Recording], multiplier: float) -> List[Recording]:
+def convert_recording_speed(
+    recordings: List[Recording], multiplier: float
+) -> List[Recording]:
     recordings = deepcopy(recordings)
 
     # Iterate over all recordings
     for idx, recording in enumerate(recordings):
         if idx % 10 == 0:
-            print(f"Changing speed for recording {idx}", end='\r')
+            print(f"Changing speed for recording {idx}", end="\r")
         # Merge the time and sensor frames
-        combined_frame = pd.merge(recording.time_frame, recording.sensor_frame, left_index=True, right_index=True)
-        combined_frame.resample('12ms').interpolate(method='spline')
+        combined_frame = pd.merge(
+            recording.time_frame,
+            recording.sensor_frame,
+            left_index=True,
+            right_index=True,
+        )
+        combined_frame.resample("12ms").interpolate(method="spline")
 
     print()
     return recordings

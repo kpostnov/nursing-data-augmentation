@@ -12,8 +12,21 @@ class Recording:
     info: activiy might get a list in the future
     """
 
-    def __init__(self, sensor_frame: pd.DataFrame, time_frame: pd.Series, activity: str, subject: str) -> None:
-        assert_type([(sensor_frame, pd.DataFrame), (time_frame, pd.Series), (activity, str), (subject, str)])
+    def __init__(
+        self,
+        sensor_frame: pd.DataFrame,
+        time_frame: pd.Series,
+        activity: str,
+        subject: str,
+    ) -> None:
+        assert_type(
+            [
+                (sensor_frame, pd.DataFrame),
+                (time_frame, pd.Series),
+                (activity, str),
+                (subject, str),
+            ]
+        )
         self.sensor_frame = sensor_frame
         self.time_frame = time_frame
         self.activity = activity

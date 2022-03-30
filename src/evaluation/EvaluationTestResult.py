@@ -2,13 +2,22 @@ from dataclasses import dataclass
 
 from models.RainbowModel import RainbowModel
 
+
 @dataclass
 class EvaluationTestResult:
     """
     one model one test dataset
     """
-    
-    def __init__(self, model: RainbowModel, model_nickname: str, test_activity_distribution: dict, correct_classification_accuracy: float, average_failure_rate: float, context_accuracy: dict = None):
+
+    def __init__(
+        self,
+        model: RainbowModel,
+        model_nickname: str,
+        test_activity_distribution: dict,
+        correct_classification_accuracy: float,
+        average_failure_rate: float,
+        context_accuracy: dict = None,
+    ):
         """
         test_activity_distribution: dict with the number of occurences of each activity
         correct_classification_accuracy: float between 0 and 1
@@ -24,4 +33,7 @@ class EvaluationTestResult:
 
     def __str__(self):
         return "TestResult(test_activity_distribution={}, correct_classification_accuracy={}, average_failure_rate={})".format(
-            self.test_activity_distribution, self.correct_classification_accuracy, self.average_failure_rate)
+            self.test_activity_distribution,
+            self.correct_classification_accuracy,
+            self.average_failure_rate,
+        )

@@ -1,15 +1,14 @@
 def markdown_table_str(input_list: list) -> str:
 
-    """ Input: Python list with rows of table as lists
-               First element as header. 
-        Output: String to put into a .md file 
-        
-    Ex Input: 
+    """Input: Python list with rows of table as lists
+               First element as header.
+        Output: String to put into a .md file
+
+    Ex Input:
         [["Name", "Age", "Height"],
          ["Jake", 20, 5'10],
-         ["Mary", 21, 5'7]] 
+         ["Mary", 21, 5'7]]
     """
-
 
     markdown = "\n" + str("| ")
 
@@ -18,7 +17,7 @@ def markdown_table_str(input_list: list) -> str:
         markdown += to_add
     markdown += "\n"
 
-    markdown += '|'
+    markdown += "|"
     for i in range(len(input_list[0])):
         markdown += str("-------------- | ")
     markdown += "\n"

@@ -9,25 +9,49 @@ import os
 
 # General --------------------------------------------------------------------------------------------------------------
 
-class MarkdownReport:
 
-    def create_send_save(self, title: str, description: str, models_evaluation_result: list[EvaluationTestResult], has_context_accuracy = False, telegram: bool = True) -> None:
-        """ 
+class MarkdownReport:
+    def create_send_save(
+        self,
+        title: str,
+        description: str,
+        models_evaluation_result: list[EvaluationTestResult],
+        has_context_accuracy=False,
+        telegram: bool = True,
+    ) -> None:
+        """
         list[EvaluationTestResult]
         """
-        report_str = ''
+        report_str = ""
 
         # comparison table
-        comparison_table: 'list[list[str | int | float]]' = [["", "correct_classification_acc", "avg_failure_rate"]]
+        comparison_table: "list[list[str | int | float]]" = [
+            ["", "correct_classification_acc", "avg_failure_rate"]
+        ]
         for model_evaluation_result in models_evaluation_result:
-            cor_class_acc = round(model_evaluation_result.correct_classification_accuracy, ndigits=2)
-            avg_fail_rate = round(model_evaluation_result.average_failure_rate, ndigits=2)
-            comparison_table.append(['Model "' + model_evaluation_result.model_nickname + '" @ ' + str(model_evaluation_result.model.kwargs), cor_class_acc, avg_fail_rate])
+            cor_class_acc = round(
+                model_evaluation_result.correct_classification_accuracy, ndigits=2
+            )
+            avg_fail_rate = round(
+                model_evaluation_result.average_failure_rate, ndigits=2
+            )
+            comparison_table.append(
+                [
+                    'Model "'
+                    + model_evaluation_result.model_nickname
+                    + '" @ '
+                    + str(model_evaluation_result.model.kwargs),
+                    cor_class_acc,
+                    avg_fail_rate,
+                ]
+            )
 
         if has_context_accuracy:
             comparison_table[0].append("context_accuracy")
             for i in range(len(models_evaluation_result)):
-                comparison_table[i + 1].append(str(models_evaluation_result[i].context_accuracy))
+                comparison_table[i + 1].append(
+                    str(models_evaluation_result[i].context_accuracy)
+                )
 
         report_str += markdown_table_str(comparison_table)
 
@@ -36,23 +60,54 @@ class MarkdownReport:
         if telegram:
             self._send_telegram_report(title, description, report_str)
 
-
-    def create_send_save_kfold(self, title: str, description: str, models_evaluation_results: list[list[EvaluationTestResult]], telegram: bool = True) -> None:
+    def create_send_save_kfold(
+        self,
+        title: str,
+        description: str,
+        models_evaluation_results: list[list[EvaluationTestResult]],
+        telegram: bool = True,
+    ) -> None:
         """
         list[list[EvaluationTestResult]]
         """
 
-        report_str = ''
+        report_str = ""
 
         # comparison table
-        comparison_table: 'list[list[str | int | float]]' = [[""], ["correct_classification_acc"], ["avg_failure_rate"]]
+        comparison_table: "list[list[str | int | float]]" = [
+            [""],
+            ["correct_classification_acc"],
+            ["avg_failure_rate"],
+        ]
         for i in range(len(models_evaluation_results)):
             current_model_results = models_evaluation_results[i]
             current_model_nickname = current_model_results[0].model_nickname
 
             comparison_table[0].append('Model "' + current_model_nickname + '"')
-            comparison_table[1].append(round(sum([model_evaluation_result.correct_classification_accuracy for model_evaluation_result in current_model_results]) / len(current_model_results), ndigits=2))
-            comparison_table[2].append(round(sum([model_evaluation_result.average_failure_rate for model_evaluation_result in current_model_results]) / len(current_model_results), ndigits=2))
+            comparison_table[1].append(
+                round(
+                    sum(
+                        [
+                            model_evaluation_result.correct_classification_accuracy
+                            for model_evaluation_result in current_model_results
+                        ]
+                    )
+                    / len(current_model_results),
+                    ndigits=2,
+                )
+            )
+            comparison_table[2].append(
+                round(
+                    sum(
+                        [
+                            model_evaluation_result.average_failure_rate
+                            for model_evaluation_result in current_model_results
+                        ]
+                    )
+                    / len(current_model_results),
+                    ndigits=2,
+                )
+            )
 
         report_str += markdown_table_str(comparison_table)
 
@@ -65,44 +120,77 @@ class MarkdownReport:
         if telegram:
             self._send_telegram_report(title, description, report_str)
 
-
     def _create_rainbow_report(self, title: str, description: str, report: str) -> None:
-        base_path = os.path.join(settings.ML_RAINBOW_PATH, 'rainbow_test/report/')
-        path = os.path.join(base_path, title + '.md')
+        base_path = os.path.join(settings.ML_RAINBOW_PATH, "rainbow_test/report/")
+        path = os.path.join(base_path, title + ".md")
         if os.path.exists(path):
             num = 0
             while os.path.exists(path):
                 num += 1
-                path = os.path.join(base_path, title + '_' + str(num) + '.md')
+                path = os.path.join(base_path, title + "_" + str(num) + ".md")
 
-        with open(path, 'w') as f:
-            f.write('# ' + title + '\n' + description + '\n\n\n' + report)
-
+        with open(path, "w") as f:
+            f.write("# " + title + "\n" + description + "\n\n\n" + report)
 
     def _send_telegram_report(self, title: str, description: str, report: str) -> None:
-        send_telegram('# ' + title + '\n' + description + '\n\n\n' + report)
+        send_telegram("# " + title + "\n" + description + "\n\n\n" + report)
 
     # Specific Report str --------------------------------------------------------------------------------------------------------------
 
-
-    def _k_fold_table_str(self, test_reports: 'list[EvaluationTestResult]') -> str:
+    def _k_fold_table_str(self, test_reports: "list[EvaluationTestResult]") -> str:
         markdown_array = []
-        markdown_array.append(["k_fold_idx", "correct_classification_acc", "avg_failure_rate", "test_activity_distribution"])
+        markdown_array.append(
+            [
+                "k_fold_idx",
+                "correct_classification_acc",
+                "avg_failure_rate",
+                "test_activity_distribution",
+            ]
+        )
 
-        correct_classification_accuracies = [round(report.correct_classification_accuracy, ndigits=2) for report in test_reports]
-        avg_failure_rates = [round(report.average_failure_rate, ndigits=2) for report in test_reports]
+        correct_classification_accuracies = [
+            round(report.correct_classification_accuracy, ndigits=2)
+            for report in test_reports
+        ]
+        avg_failure_rates = [
+            round(report.average_failure_rate, ndigits=2) for report in test_reports
+        ]
 
         for i in range(len(test_reports)):
-            markdown_array.append([i, correct_classification_accuracies[i], avg_failure_rates[i], test_reports[i].test_activity_distribution])
+            markdown_array.append(
+                [
+                    i,
+                    correct_classification_accuracies[i],
+                    avg_failure_rates[i],
+                    test_reports[i].test_activity_distribution,
+                ]
+            )
 
         markdown_array.append(["", "", "", ""])
-        markdown_array.append(["min", min(correct_classification_accuracies), min(avg_failure_rates), "-"])
-        markdown_array.append(["max", max(correct_classification_accuracies), max(avg_failure_rates), "-"])
-        markdown_array.append(["mean", round(sum(correct_classification_accuracies) / len(test_reports), 2), round(sum(avg_failure_rates) / len(test_reports), 2), "-"])
-        markdown_array.append(["median", statistics.median(correct_classification_accuracies), statistics.median(avg_failure_rates), "-"])
+        markdown_array.append(
+            ["min", min(correct_classification_accuracies), min(avg_failure_rates), "-"]
+        )
+        markdown_array.append(
+            ["max", max(correct_classification_accuracies), max(avg_failure_rates), "-"]
+        )
+        markdown_array.append(
+            [
+                "mean",
+                round(sum(correct_classification_accuracies) / len(test_reports), 2),
+                round(sum(avg_failure_rates) / len(test_reports), 2),
+                "-",
+            ]
+        )
+        markdown_array.append(
+            [
+                "median",
+                statistics.median(correct_classification_accuracies),
+                statistics.median(avg_failure_rates),
+                "-",
+            ]
+        )
 
         return markdown_table_str(markdown_array)
-
 
     def _k_fold_report_str(self, evaluation_results: list[EvaluationTestResult]) -> str:
         """
@@ -110,9 +198,15 @@ class MarkdownReport:
         {kwargs}
         K_fold_table with mean and average
         """
-        report = ''
+        report = ""
 
         # Model Specification
-        report += '### Model "' + evaluation_results[0].model_nickname + '"\n\n' + str(evaluation_results[0].model.kwargs) + '\n\n'
+        report += (
+            '### Model "'
+            + evaluation_results[0].model_nickname
+            + '"\n\n'
+            + str(evaluation_results[0].model.kwargs)
+            + "\n\n"
+        )
         report += self._k_fold_table_str(evaluation_results)
         return report
