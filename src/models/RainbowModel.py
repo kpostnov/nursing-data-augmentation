@@ -1,3 +1,5 @@
+# pylint: disable=locally-disabled, multiple-statements, fixme, line-too-long, no-name-in-module, unused_import, wrong-import-order, bad-option-value
+
 from abc import ABC, abstractmethod
 from math import sqrt
 from typing import Any, Union
@@ -17,8 +19,7 @@ from tensorflow.python.saved_model.utils_impl import get_saved_model_pb_path  # 
 from utils.array_operations import split_list_by_percentage, transform_to_subarrays
 from utils.Recording import Recording
 from utils.Window import Window
-from utils.server_manager import error_after_seconds
-from utils.visualizing import visualizeAccuracy, visualizeLoss
+
 from utils.typing import assert_type
 import utils.settings as settings
 
@@ -148,7 +149,7 @@ class RainbowModel(ABC):
             epochs=self.epochs,
             batch_size=self.batch_size,
             verbose=self.verbose,
-            class_weight=self.class_weight,
+            class_weight=self.class_weight
         )
         self.history = history
 

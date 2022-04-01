@@ -6,7 +6,7 @@ from utils import settings
 
 def transform_to_subarrays(
     array: np.ndarray, subarray_size: int, stride_size: int
-) -> list[np.ndarray]:
+) -> 'list[np.ndarray]':
     """
     Transform an array into a list of subarrays.
     """

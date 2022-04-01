@@ -272,7 +272,9 @@ def data_cleaning(dataCollection):
 
 def reset_label(dataCollection, locomotion):
     # Convert original labels {1, 2, 4, 5, 101, 102, 103, 104, 105} to new labels.
-    mapping = {
+
+    # CHANGE??!! before the NULL Acitivity was filtered out!!1
+    without_null_mapping = { 
         1: 1,
         2: 2,
         5: 0,
@@ -283,16 +285,26 @@ def reset_label(dataCollection, locomotion):
         104: 3,
         105: 4,
     }  # old activity id to new activity Id
+
+    with_null_mapping = {
+        0: 0,
+        101: 1,
+        102: 2,
+        103: 3,
+        104: 4,
+        105: 5,
+    }  # old activity id to new activity Id
+
     if locomotion:  # new labels [0,1,2,3]
         for i in [5, 4]:  # reset ids in Locomotion column
-            dataCollection.loc[dataCollection.Locomotion == i, "Locomotion"] = mapping[
+            dataCollection.loc[dataCollection.Locomotion == i, "Locomotion"] = without_null_mapping[
                 i
             ]
     else:  # reset the high level activities ; new labels [0,1,2,3,4]
         for j in [101, 102, 103, 104, 105]:  # reset ids in HL_activity column
             dataCollection.loc[
                 dataCollection.HL_Activity == j, "HL_Activity"
-            ] = mapping[j]
+            ] = with_null_mapping[j]
     return dataCollection
 
 
@@ -338,9 +350,10 @@ def segment_high_level(
     dataCollection, window_size
 ):  # segment the data and create a dataset with high level activities as labels
     # remove HL_activities with 0
-    dataCollection = dataCollection.drop(
-        dataCollection[dataCollection.HL_Activity == 0].index
-    )
+    # remember to change the mapping in reset_label
+    # dataCollection = dataCollection.drop(
+    #     dataCollection[dataCollection.HL_Activity == 0].index # THIS REMOVES NULL ACTIVITIES!!!!!!!!!!!
+    # )
     # reset labels
     dataCollection = reset_label(dataCollection, False)
     """
@@ -368,13 +381,13 @@ def segment_high_level(
         # what if it changes back and forth?
         if (
             data[start][HL_Activity_i] == data[end][HL_Activity_i]
-            and data[start][-1] == data[end][-1]
+            and data[start][-1] == data[end][-1] # the last index is the file index
         ):
 
             # print(data[start:(end+1),0:(HL_Activity_i)])
             # first part time axis, second part sensor axis -> get window
             X.append(
-                data[start : (end + 1), 0 : (HL_Activity_i - 1)]
+                data[start : (end + 1), 0 : (HL_Activity_i - 1)] # data[timeaxis/row, featureaxis/column] data[1, 2] gives specific value, a:b gives you an interval
             )  # slice before locomotion
             y.append(data[start][HL_Activity_i])  # the first data point is enough
             start += window_size // 2  # 50% overlap!!!!!!!!!

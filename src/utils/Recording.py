@@ -12,6 +12,8 @@ class Recording:
     Multilabel, so expects activity pd.Series
 
     Future: 
+        - a dataclass creates the intializer automatically
+            - consider only giving the attributes as class vars -> dataclass handles this
         - add self.recorder
     """
 
@@ -30,6 +32,9 @@ class Recording:
                 (subject, str),
             ]
         )
+        assert sensor_frame.shape[0] == time_frame.shape[0], "sensor_frame and time_frame have to have the same length"
+        assert sensor_frame.shape[0] == activities.shape[0], "sensor_frame and activities have to have the same length"
+        
         self.sensor_frame = sensor_frame
         self.time_frame = time_frame
         self.activities = activities
