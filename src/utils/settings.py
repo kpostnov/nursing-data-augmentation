@@ -30,3 +30,6 @@ def init():
         105: 5,
     }
 
+    global saved_experiments_path
+    saved_experiments_path = 'saved_experiments'
+

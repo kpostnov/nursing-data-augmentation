@@ -9,5 +9,6 @@ Only import from experiments and tests
 
 # EXPERIMENTS
 # import experiments.hello_world
-import experiments.opportunity_jens_cnn
+# import experiments.opportunity_jens_cnn
 
+import tests.test_new_experiment_folder

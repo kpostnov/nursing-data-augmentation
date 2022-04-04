@@ -17,7 +17,7 @@ import numpy as np
 def k_fold_cross_validation_test(
     model: RainbowModel,
     model_nickname: str,
-    recordings_in: list[Recording],
+    recordings_in: "list[Recording]",
     k: int,
     data_augmentation_func,
 ) -> "list[EvaluationTestResult]":
@@ -25,7 +25,7 @@ def k_fold_cross_validation_test(
     - fits the model k times on different splits of the data
     - returns the EvaluationTestReports for each split
     """
-    evaluation_results: list[EvaluationTestResult] = []
+    evaluation_results: "list[EvaluationTestResult]" = []
 
     initial_weights = model.model.get_weights()
 

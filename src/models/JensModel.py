@@ -46,6 +46,7 @@ class JensModel(RainbowModel):
         # hyper params to instance vars
         super().__init__(**kwargs)
         self.window_size = kwargs["window_size"]
+        self.verbos = kwargs["verbose"]
 
         self.epochs = epochs
 
@@ -98,7 +99,7 @@ class JensModel(RainbowModel):
         model = Model(i, x)
         model.compile(
             optimizer=Adam(lr=0.001),
-            loss="sparse_categorical_crossentropy",
+            loss="CategoricalCrossentropy", # CategoricalCrossentropy (than we have to to the one hot encoding - to_categorical), before: "sparse_categorical_crossentropy"
             metrics=["accuracy"],
         )
 
@@ -182,27 +183,34 @@ class JensModel(RainbowModel):
         
         self._print_jens_windowize_monitoring(recordings)
         # Refactoring idea (speed): Mulitprocessing https://stackoverflow.com/questions/20190668/multiprocessing-a-for-loop/20192251#20192251
+        print("windowizing in progress ....")
         recording_windows = list(map(self._windowize_recording, recordings))
+        print("windowizing done")
         return list(itertools.chain.from_iterable(recording_windows)) # flatten (reduce dimension)
     
-    def fit(self, X_train: np.ndarray, y_train: np.ndarray) -> None:
-        """
-        Fit the self.model to the data
-        """
-        assert_type(
-            [(X_train, (np.ndarray, np.generic)), (y_train, (np.ndarray, np.generic))]
-        )
-        assert (
-            X_train.shape[0] == y_train.shape[0]
-        ), "X_train and y_train have to have the same length"
+    def convert(self, windows: "list[Window]") -> "tuple[np.ndarray, np.ndarray]":
+        X_train, y_train = super().convert(windows)
+        return np.expand_dims(X_train, -1), y_train
+        
+    
+    # def fit(self, X_train: np.ndarray, y_train: np.ndarray) -> None:
+    #     """
+    #     Fit the self.model to the data
+    #     """
+    #     assert_type(
+    #         [(X_train, (np.ndarray, np.generic)), (y_train, (np.ndarray, np.generic))]
+    #     )
+    #     assert (
+    #         X_train.shape[0] == y_train.shape[0]
+    #     ), "X_train and y_train have to have the same length"
 
-        history = self.model.fit(
-            np.expand_dims(X_train, -1),
-            y_train,
-            validation_split=0.2,
-            epochs=self.epochs,
-            batch_size=self.batch_size,
-            verbose=self.verbose,
-            class_weight=self.class_weight
-        )
-        self.history = history
+    #     history = self.model.fit(
+    #         np.expand_dims(X_train, -1), # this is the difference to
+    #         y_train,
+    #         validation_split=0.2,
+    #         epochs=self.epochs,
+    #         batch_size=self.batch_size,
+    #         verbose=self.verbose,
+    #         class_weight=self.class_weight
+    #     )
+    #     self.history = history
