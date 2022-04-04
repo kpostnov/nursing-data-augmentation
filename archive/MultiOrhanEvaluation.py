@@ -1,7 +1,7 @@
 from copy import deepcopy
 from unittest import TestResult
 from evaluation.Evaluation import Evaluation
-from evaluation.EvaluationTestResult import EvaluationTestResult
+from evaluation.MarkdownTestResult import MarkdownTestResult
 from models.MultiOrhan import MultiOrhan
 from models.RainbowModel import RainbowModel
 import numpy as np
@@ -19,7 +19,7 @@ class MultiOrhanEvaluator(Evaluation):
         model: "MultiOrhan",
         model_nickname: str,
         recordings_test: "list[Recording]",
-    ) -> EvaluationTestResult:
+    ) -> MarkdownTestResult:
         """
         windowizes_converts the recordings_test's to fit to the models input shape
         uses this data to test the perfomance of the model
@@ -54,7 +54,7 @@ class MultiOrhanEvaluator(Evaluation):
         # Calculate F1 Score
         # f1_score = Evaluation.__f1_score(model, X_test, y_test)
 
-        return EvaluationTestResult(
+        return MarkdownTestResult(
             model,
             model_nickname,
             test_activity_distribution,

@@ -1,5 +1,5 @@
 import os
-from evaluation.EvaluationTestResult import EvaluationTestResult
+from evaluation.MarkdownTestResult import MarkdownTestResult
 from loader.Preprocessor import Preprocessor
 from loader.filter_dataset import filter_acceleration
 from archive.loader_archive.load_dataset import load_dataset
@@ -41,9 +41,9 @@ def k_fold_test(
     recordings_all = preprocessor.preprocess(raw_recordings)
 
     # do training and testing
-    models_evaluation_results: list[list[EvaluationTestResult]] = []
+    models_evaluation_results: list[list[MarkdownTestResult]] = []
     for i in range(len(models)):
-        results: list[EvaluationTestResult] = k_fold_cross_validation_test(
+        results: list[MarkdownTestResult] = k_fold_cross_validation_test(
             models[i], recordings_all, k
         )
         models_evaluation_results.append(results)

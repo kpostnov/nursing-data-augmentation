@@ -1,3 +1,7 @@
+"""
+
+"""
+
 from utils.telegram import send_telegram
 from utils.markdown import markdown_table_str
 from utils import settings
@@ -8,7 +12,7 @@ from rainbow_test.create_report import (
     k_fold_report_str,
     send_telegram_report,
 )
-from evaluation.EvaluationTestResult import EvaluationTestResult
+from evaluation.MarkdownTestResult import MarkdownTestResult
 import random
 from importlib_metadata import itertools  # type: ignore
 import numpy as np
@@ -29,12 +33,12 @@ import os
 
 def do_k_fold(
     model: RainbowModel, model_nickname: str, recordings_in: list[Recording], k: int
-) -> "list[EvaluationTestResult]":
+) -> "list[MarkdownTestResult]":
     """
     - fits the model k times on different splits of the data
     - returns the EvaluationTestReports for each split
     """
-    evaluation_results: list[EvaluationTestResult] = []
+    evaluation_results: list[MarkdownTestResult] = []
 
     initial_weights = model.model.get_weights()
     recordings: np.ndarray = np.array(recordings_in)  # for comfortable index splitting
@@ -65,7 +69,7 @@ def do_k_fold(
 
 def param_grid_kfold_experiment(
     k_fold_k=4, telegram=True
-) -> list[list[EvaluationTestResult]]:
+) -> list[list[MarkdownTestResult]]:
 
     # load data
     raw_recordings = load_dataset(os.path.join(settings.DATA_PATH, "5-sensor-all"))
@@ -86,7 +90,7 @@ def param_grid_kfold_experiment(
 
     # kfold for each combination in param grid
     model_nicknames: list[str] = []
-    models_evaluation_results: list[list[EvaluationTestResult]] = []
+    models_evaluation_results: list[list[MarkdownTestResult]] = []
     for window_size, hyper_param_set in itertools.product(
         window_sizes, hyper_param_sets
     ):
@@ -105,7 +109,7 @@ def param_grid_kfold_experiment(
         model_nicknames.append(model_nickname)
 
         # do kfold, evaluate
-        results: list[EvaluationTestResult] = do_k_fold(
+        results: list[MarkdownTestResult] = do_k_fold(
             model, model_nickname, recordings, k_fold_k
         )
         models_evaluation_results.append(results)
@@ -137,9 +141,9 @@ def param_grid_kfold_experiment(
 # start --------------------------------------------------------------------------------------------------------------
 
 settings.init()
-models_evaluation_results: list[
-    list[EvaluationTestResult]
-] = param_grid_kfold_experiment(k_fold_k=4, telegram=False)
+models_evaluation_results: list[list[MarkdownTestResult]] = param_grid_kfold_experiment(
+    k_fold_k=4, telegram=False
+)
 
 KFoldMarkdownReport.create_send_save_kfold(
     title="test_param_grid_kfold_report",

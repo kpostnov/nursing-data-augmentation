@@ -1,4 +1,12 @@
-from evaluation.EvaluationTestResult import EvaluationTestResult
+"""
+TODO: Refactoring needed
+- out of use, at the moment (evaluation files were refactored)
+
+Together with the MardownTestResult class, this module provides a clean beautiful way to compare runs
+MardownTestResults need to be created in the experiement with the right functions from analytics.py
+"""
+
+from evaluation.MarkdownTestResult import MarkdownTestResult
 from models.RainbowModel import RainbowModel
 from utils.markdown import markdown_table_str
 import statistics
@@ -11,16 +19,17 @@ import os
 
 
 class MarkdownReport:
+
     def create_send_save(
         self,
         title: str,
         description: str,
-        models_evaluation_result: 'list[EvaluationTestResult]',
+        models_evaluation_result: "list[MarkdownTestResult]",
         has_context_accuracy=False,
         telegram: bool = True,
     ) -> None:
         """
-        list[EvaluationTestResult]
+        list[MarkdownTestResult]
         """
         report_str = ""
 
@@ -64,11 +73,11 @@ class MarkdownReport:
         self,
         title: str,
         description: str,
-        models_evaluation_results: 'list[list[EvaluationTestResult]]',
+        models_evaluation_results: "list[list[MarkdownTestResult]]",
         telegram: bool = True,
     ) -> None:
         """
-        list[list[EvaluationTestResult]]
+        list[list[MarkdownTestResult]]
         """
 
         report_str = ""
@@ -137,7 +146,7 @@ class MarkdownReport:
 
     # Specific Report str --------------------------------------------------------------------------------------------------------------
 
-    def _k_fold_table_str(self, test_reports: "list[EvaluationTestResult]") -> str:
+    def _k_fold_table_str(self, test_reports: "list[MarkdownTestResult]") -> str:
         markdown_array = []
         markdown_array.append(
             [
@@ -192,9 +201,7 @@ class MarkdownReport:
 
         return markdown_table_str(markdown_array)
 
-    def _k_fold_report_str(
-        self, evaluation_results: "list[EvaluationTestResult]"
-    ) -> str:
+    def _k_fold_report_str(self, evaluation_results: "list[MarkdownTestResult]") -> str:
         """
         Model1 - nickname
         {kwargs}

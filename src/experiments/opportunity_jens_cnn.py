@@ -37,6 +37,8 @@ from loader.Preprocessor import Preprocessor
 import utils.settings as settings
 from utils.array_operations import split_list_by_percentage
 from models.JensModel import JensModel
+from utils.folder_operations import new_saved_experiment_folder
+
 
 settings.init()
 
@@ -45,8 +47,12 @@ recordings = load_opportunity_dataset(settings.opportunity_dataset_path) # Refac
 random.seed(1678978086101)
 random.shuffle(recordings)
 
+# TODO: apply recording label filter functions
+
 # Preprocessing
 recordings = Preprocessor().jens_preprocess(recordings)
+
+# TODO: save/ load preprocessed data
 
 # Test Train Split
 test_percentage = 0.3
@@ -57,14 +63,15 @@ model = JensModel(window_size=25, n_features=recordings[0].sensor_frame.shape[1]
 model.windowize_convert_fit(recordings_train)
 
 # Test, Evaluate
-X_test, y_test = model.windowize_convert(recordings_test)
-prediction_vectors = model.predict(X_test)
+# labels are always in vector format
+X_test, y_test_true = model.windowize_convert(recordings_test)
+y_test_pred = model.predict(X_test)
+
+experiment_folder_path = new_saved_experiment_folder('opportunity_jens_cnn') # create folder to store results
+
+model.export(experiment_folder_path) # opt: export model to folder
 
 
-# TODO: Evaluate performance
+create_conf_matrix(experiment_folder_path, y_pred, y_true) # TODO: This is not implemented yet
 
-# model_folder_path = oppo.save_model(current_path_in_repo, model_name)
-
-# oppo.draw(model_folder_path)  # todo: no line visible at the moment
-
-# oppo.evaluation(model_folder_path)  # plots acc and confusion matrix
+# TODO: other metrics like accuracy

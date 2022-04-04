@@ -22,6 +22,7 @@ from utils.Window import Window
 
 from utils.typing import assert_type
 import utils.settings as settings
+from utils.folder_operations import create_folders_in_path
 
 
 class RainbowModel(ABC):
@@ -160,5 +161,38 @@ class RainbowModel(ABC):
         gets a list of windows and returns a list of prediction_vectors
         """
         return self.model.predict(X_test)
+    
+    def export(self, path: str) -> None:
+        """
+        will create an 'export' folder in the path, and save the model there in 3 different formats
+        """
+        print("Exporting model ...")
+
+        # Define, create folder structure
+        export_path = os.path.join(path, "export")
+        export_path_raw_model = os.path.join(export_path, 'raw_model')
+        create_folders_in_path(export_path_raw_model)
+
+        # 1/3 Export raw model ------------------------------------------------------------
+        self.model.save(export_path_raw_model)
+
+        # 2/3 Export .h5 model ------------------------------------------------------------
+        self.model.save(export_path + "/" + self.model_name + ".h5", save_format="h5")
+
+        # 3/3 Export .h5 model ------------------------------------------------------------
+        converter = tf.lite.TFLiteConverter.from_keras_model(self.model)
+
+        converter.optimizations = [tf.lite.Optimize.DEFAULT] # Refactoring Idea: Optimizations for new tensorflow version
+        converter.experimental_new_converter = True
+        converter.target_spec.supported_ops = [
+            tf.lite.OpsSet.TFLITE_BUILTINS,
+            tf.lite.OpsSet.SELECT_TF_OPS,
+        ]
+
+        tflite_model = converter.convert()
+        with open(f"{export_path}/{self.model_name}.tflite", "wb") as f:
+            f.write(tflite_model)
+            
+        print("Export finished")
 
     

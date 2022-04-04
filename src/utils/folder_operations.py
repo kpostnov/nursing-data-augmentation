@@ -2,6 +2,10 @@ from datetime import datetime
 import os
 import utils.settings as settings
 
+def create_folders_in_path(path: str) -> None:
+    os.makedirs(path, exist_ok=True)
+
+
 def new_saved_experiment_folder(experiment_name):
     """
     Creates a new folder in the saved_experiments
@@ -13,7 +17,6 @@ def new_saved_experiment_folder(experiment_name):
     currentDT_str = currentDT.strftime("%y-%m-%d_%H-%M-%S_%f")
     folder_name = currentDT_str + "-" + experiment_name
 
-    path_to_experiment_folder = os.path.join(settings.saved_experiments_path, folder_name)
-    os.makedirs(path_to_experiment_folder, exist_ok=True)
-    # if not os.path.exists(path_to_experiment_folder):
-    return path_to_experiment_folder
+    experiment_folder_path = os.path.join(settings.saved_experiments_path, folder_name)
+    create_folders_in_path(experiment_folder_path)
+    return experiment_folder_path

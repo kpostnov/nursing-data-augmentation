@@ -1,6 +1,6 @@
 from pyclbr import Function
 from evaluation.Evaluation import Evaluation
-from evaluation.EvaluationTestResult import EvaluationTestResult
+from evaluation.MarkdownTestResult import MarkdownTestResult
 from loader.Preprocessor import Preprocessor
 from sklearn.model_selection import KFold, train_test_split
 from loader.filter_dataset import filter_acceleration
@@ -20,12 +20,12 @@ def k_fold_cross_validation_test(
     recordings_in: "list[Recording]",
     k: int,
     data_augmentation_func,
-) -> "list[EvaluationTestResult]":
+) -> "list[MarkdownTestResult]":
     """
     - fits the model k times on different splits of the data
     - returns the EvaluationTestReports for each split
     """
-    evaluation_results: "list[EvaluationTestResult]" = []
+    evaluation_results: "list[MarkdownTestResult]" = []
 
     initial_weights = model.model.get_weights()
 
