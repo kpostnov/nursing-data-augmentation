@@ -5,6 +5,8 @@ def init():
     """
     Refactoring idea:
     - pass the mapping, that we can easily switch between datasets and labels
+    - mapping.py file (in utils) should include activity and subject mappings for the datasets
+    - the experiments loads the required ones and passes them in the init (settings.init(mappings)O
     """
 
     global opportunity_dataset_path
@@ -31,5 +33,5 @@ def init():
     }
 
     global saved_experiments_path
-    saved_experiments_path = 'saved_experiments'
+    saved_experiments_path = 'src/saved_experiments'
 

@@ -13,6 +13,8 @@ import numpy as np
 from sklearn.metrics import f1_score
 
 def f1_score(prediction_vectors: np.ndarray, y_test: np.ndarray) -> float:
+    prediction_vectors = np.argmax(prediction_vectors, axis=1)
+    y_test = np.argmax(y_test, axis=1)
     return f1_score(y_test, prediction_vectors)
 
 def accuracy(prediction_vectors: np.ndarray, y_test: np.ndarray, verbose: int = 0) -> float:

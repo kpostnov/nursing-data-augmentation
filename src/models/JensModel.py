@@ -46,7 +46,8 @@ class JensModel(RainbowModel):
         # hyper params to instance vars
         super().__init__(**kwargs)
         self.window_size = kwargs["window_size"]
-        self.verbos = kwargs["verbose"]
+        self.verbose = kwargs["verbose"]
+        self.n_epochs = kwargs["n_epochs"]
         self.model_name = "jens_model"
 
         self.epochs = epochs

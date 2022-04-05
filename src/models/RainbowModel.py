@@ -38,7 +38,7 @@ class RainbowModel(ABC):
     model: Any = None
     batch_size: Union[int, None] = None
     verbose: Union[int, None] = None
-    epochs: Union[int, None] = None
+    n_epochs: Union[int, None] = None
     kwargs = None
 
     @abstractmethod
@@ -147,7 +147,7 @@ class RainbowModel(ABC):
             X_train,
             y_train,
             validation_split=0.2,
-            epochs=self.epochs,
+            epochs=self.n_epochs,
             batch_size=self.batch_size,
             verbose=self.verbose,
             class_weight=self.class_weight
@@ -192,7 +192,7 @@ class RainbowModel(ABC):
         tflite_model = converter.convert()
         with open(f"{export_path}/{self.model_name}.tflite", "wb") as f:
             f.write(tflite_model)
-            
+
         print("Export finished")
 
     
