@@ -8,6 +8,7 @@ import pandas as pd
 import utils.settings as settings
 from utils.Recording import Recording
 from multiprocessing import Pool
+import numpy as np
 
 
 def load_dataset(dataset_path: str) -> 'list[Recording]':
@@ -45,10 +46,15 @@ def load_dataset(dataset_path: str) -> 'list[Recording]':
     recording_folder_names = get_subfolder_names(dataset_path)
     recording_folder_names = [os.path.join(dataset_path, recording_folder_name) for recording_folder_name in recording_folder_names]
 
-    pool = Pool()
-    recordings = pool.imap_unordered(read_recording_from_folder, recording_folder_names, 10)
-    pool.close()
-    pool.join()
+    # USE ONE (Multiprocessing or Single Thread)
+    # Multiprocessing:
+    # pool = Pool()
+    # recordings = pool.imap_unordered(read_recording_from_folder, recording_folder_names, 10)
+    # pool.close()
+    # pool.join()
+
+    # Single thread:
+    recordings = [read_recording_from_folder(recording_folder_name) for recording_folder_name in recording_folder_names]
 
     return list(filter(lambda x: x is not None, recordings))
 
@@ -67,34 +73,51 @@ def get_subject_folder_name(recording_folder_path: str) -> str:
 def get_activity_dataframe(time_frame, recording_folder_path: str) -> pd.DataFrame:
     with open(recording_folder_path + '/metadata.json', 'r') as f:
         data = json.load(f)
-    activities = data['activities']
-    arr = time_frame.to_frame()
-    arr['activities'] = ""
-    activity = pd.Series([], dtype=str)
-    counter = 1
+    # The activities as a list of objects with label & timeStarted
+    activities_meta = data['activities']
+    pd_time_frame = time_frame.to_frame()
+    # the objective - the activities as series, synchronized with the recording sensor_frame
+    activities_per_timestep = pd.Series(np.empty(shape=(pd_time_frame.shape[0])))
 
-    # to microseconds
-    first_activity_timestamp = int(activities[0]["timeStarted"]) * 1000
+    # Convert all timestamps to microseconds and a number
+    def timestamp_to_microseconds(timestamp: str):
+        return int(timestamp) * 1000
 
-    # normalize next activity timestamp (from metadata) by
-    # substracting with first activity timestamp (from metadata)
-    # and adding that to SampleFineTime (.csv) of first column
-    # in microseconds
-    activity_change = data['endTimestamp'] if len(activities) < 2 else activities[1]["timeStarted"]
-    next_activity_timestamp = int(activity_change) * 1000 - first_activity_timestamp + arr.iloc[0]['SampleTimeFine']
-    for idx in range(len(arr)):
-        if(len(activities) <= counter):
-            activity = pd.concat([activity, pd.Series([activities[counter-1]["label"]])])
-        else:
+    def label_timestamp_to_microseconds(label_obj: dict):
+        label_obj["timeStarted"] = timestamp_to_microseconds(label_obj["timeStarted"])
+        return label_obj
 
-            if(arr.iloc[idx]['SampleTimeFine'] < next_activity_timestamp):
-                activity = pd.concat([activity, pd.Series([activities[counter-1]["label"]])])
-            else:
-                counter += 1
-                if(len(activities) > counter):
-                    next_activity_timestamp = int(activities[counter]["timeStarted"]) * 1000 - first_activity_timestamp + arr.iloc[0]['SampleTimeFine']
-                activity = pd.concat([activity, pd.Series([activities[counter-1]["label"]])])
-    return activity
+    activities_meta = list(map(label_timestamp_to_microseconds, activities_meta))
+
+    # Now we have all timesteps in the same format (microseconds), but the label timestamps are still offset by some value
+    # To fix / work around that, we always take the duration of one label and add it to the labels current SampleTimeFine
+    # using the last labels end time repeatedly
+
+    # As the end timestamp is always excluded, we add a bit 1 to the last timestamp to get all lines
+    end_timestamp = timestamp_to_microseconds(data['endTimestamp']) + 100
+    sampletime_start = pd_time_frame.iloc[0]['SampleTimeFine']
+
+    sampletime_activity_list = []
+    for i in range(len(activities_meta)):
+        current_activity_timestamp = activities_meta[i]["timeStarted"]
+        next_activity_timestamp = activities_meta[i+1]["timeStarted"] if i < len(activities_meta) - 1 else end_timestamp
+
+        start = sampletime_start if i == 0 else sampletime_activity_list[-1][1]
+        end = start + (next_activity_timestamp - current_activity_timestamp)
+
+        sampletime_activity_list.append((start, end))
+
+    # Now we have a list of tupels which give the time and end SampleTimeFine of all activities
+    # We can now assign the activities to the timesteps by the cool pandas / numpy functions :)
+
+    for idx, (start, end) in enumerate(sampletime_activity_list):
+        # First find all indices where SampleTimeFine is in between start and end
+        matching_indices = np.where((pd_time_frame['SampleTimeFine'] >= start) & (pd_time_frame['SampleTimeFine'] < end))
+        # Now write the label for all these indices
+        activities_per_timestep.iloc[matching_indices] = activities_meta[idx]["label"]
+
+    assert(activities_per_timestep.shape[0] == pd_time_frame.shape[0])
+    return activities_per_timestep
 
 
 def create_recording(recording_folder_path: str, subject: str) -> Recording:

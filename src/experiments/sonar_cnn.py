@@ -11,11 +11,7 @@ import numpy as np
 settings.init('sonar')
 random.seed(1678978086101)
 
-recordings = None
-try:
-    recordings = load_dataset('/Users/franz/Projects/BP/new_data')
-except Exception as e:
-    print(e)
+recordings = load_dataset('/Users/franz/Projects/BP/new_data')
 
 sensors = recordings[0].sensor_frame.shape[1]
 activities = len(settings.LABELS)
