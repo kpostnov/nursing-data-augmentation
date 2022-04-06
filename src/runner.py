@@ -4,7 +4,7 @@ Only import from experiments and tests
 """
 
 # TESTS
-# import tests.test_jens_windowize
+# import tests.test_original_jens_windowize
 # import tests.test_new_experiment_folder
 
 
