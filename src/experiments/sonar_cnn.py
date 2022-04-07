@@ -1,4 +1,6 @@
 import random
+
+from sklearn.preprocessing import MinMaxScaler
 from evaluation.conf_matrix import create_conf_matrix
 from models.JensModel import JensModel
 from utils.folder_operations import new_saved_experiment_folder
@@ -21,8 +23,7 @@ def map_recording_activities_to_id(recording):
     """
     Converts the string labels of one recording to integers"
     """
-
-    recording.activities = pd.Series([settings.ACTIVITIES[activity] for activity in recording.activities])
+    recording.activities = pd.Series([settings.ACTIVITIES.get(activity) or settings.ACTIVITIES['invalid'] for activity in recording.activities])
     return recording
 
 
