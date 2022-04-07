@@ -149,6 +149,9 @@ def create_recording(recording_folder_path: str, subject: str) -> Recording:
     time4 = time.time()
     print('took: {:.3f} - {:.3f} - {:.3f}'.format((time2-time1)*1000.0, (time3-time2)*1000.0, (time4-time3)*1000.0))
 
+    if sensor_frame is None:
+        return None
+
     return Recording(sensor_frame, time_frame, activity, subject)
 
 
@@ -171,10 +174,9 @@ def reorder_sensor_columns(rec_folder_path: str, sensor_frame: pd.DataFrame) -> 
     try:
         column_names_ordered = []
         for sensor_suffix in settings.SENSOR_SUFFIX_ORDER:
-
             column_names_ordered.extend(column_suffix_dict[sensor_suffix])
 
         return sensor_frame[column_names_ordered]
     except KeyError:
         print(f"Could not find sensor suffixes in {rec_folder_path}")
-        raise KeyError()
+        return None
