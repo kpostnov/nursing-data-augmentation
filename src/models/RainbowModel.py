@@ -125,7 +125,7 @@ class RainbowModel(ABC):
         # to_categorical converts the activity_array to the dimensions needed
         activity_vectors = to_categorical(
             np.array(activities),
-            num_classes=len(settings.activity_initial_num_to_activity_str),
+            num_classes=len(settings.ACTIVITIES),
         )
 
         return np.array(sensor_arrays), np.array(activity_vectors)
@@ -161,7 +161,7 @@ class RainbowModel(ABC):
         gets a list of windows and returns a list of prediction_vectors
         """
         return self.model.predict(X_test)
-    
+
     def export(self, path: str) -> None:
         """
         will create an 'export' folder in the path, and save the model there in 3 different formats
@@ -182,7 +182,7 @@ class RainbowModel(ABC):
         # 3/3 Export .h5 model ------------------------------------------------------------
         converter = tf.lite.TFLiteConverter.from_keras_model(self.model)
 
-        converter.optimizations = [tf.lite.Optimize.DEFAULT] # Refactoring Idea: Optimizations for new tensorflow version
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]  # Refactoring Idea: Optimizations for new tensorflow version
         converter.experimental_new_converter = True
         converter.target_spec.supported_ops = [
             tf.lite.OpsSet.TFLITE_BUILTINS,
@@ -194,5 +194,3 @@ class RainbowModel(ABC):
             f.write(tflite_model)
 
         print("Export finished")
-
-    

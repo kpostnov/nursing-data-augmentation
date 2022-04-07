@@ -11,7 +11,7 @@ import numpy as np
 settings.init('sonar')
 random.seed(1678978086101)
 
-recordings = load_dataset('/Users/franz/Projects/BP/new_data')
+recordings = load_dataset('/Users/franz/Projects/BP/mach_kaputt', limit=40)
 
 sensors = recordings[0].sensor_frame.shape[1]
 activities = len(settings.LABELS)
@@ -22,14 +22,16 @@ def map_recording_activities_to_id(recording):
     Converts the string labels of one recording to integers"
     """
 
-    recording.activities = pd.Series([settings.ACTIVITIES[activity] for activity in recording.activities])
+    recording.activities = pd.Series([settings.ACTIVITIES.get(activity) for activity in recording.activities])
     return recording
 
 
 # Convert the string labels of all recordings to integers
 recordings = [map_recording_activities_to_id(recording) for recording in recordings]
 
-model = JensModel(window_size=25, n_features=sensors, n_outputs=len(settings.ACTIVITIES_ID_TO_NAME))
+n_outputs = len(settings.ACTIVITIES_ID_TO_NAME)
+
+model = JensModel(window_size=25, n_features=sensors, n_outputs=n_outputs)
 model.windowize_convert_fit(recordings)
 
 X_test, y_test_true = model.windowize_convert(recordings)
@@ -42,7 +44,7 @@ correct_counter = 0
 for pred, true in zip(y_test_pred, y_test_true):
     pred = np.argmax(pred)
     true = np.argmax(true)
-    print(f"Predicted: {pred} - True: {true}")
+    # print(f"Predicted: {pred} - True: {true}")
     if pred == true:
         correct_counter += 1
 

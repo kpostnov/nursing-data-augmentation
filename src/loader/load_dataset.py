@@ -11,7 +11,7 @@ from multiprocessing import Pool
 import numpy as np
 
 
-def load_dataset(dataset_path: str) -> 'list[Recording]':
+def load_dataset(dataset_path: str, limit: int = None) -> 'list[Recording]':
     """
     Returns a list of the raw recordings (activities, subjects included, None values) (different representaion of dataset)
     directory structure bias! not shuffled!
@@ -46,15 +46,18 @@ def load_dataset(dataset_path: str) -> 'list[Recording]':
     recording_folder_names = get_subfolder_names(dataset_path)
     recording_folder_names = [os.path.join(dataset_path, recording_folder_name) for recording_folder_name in recording_folder_names]
 
+    if limit is not None:
+        recording_folder_names = recording_folder_names[:limit]
+
     # USE ONE (Multiprocessing or Single Thread)
     # Multiprocessing:
-    # pool = Pool()
-    # recordings = pool.imap_unordered(read_recording_from_folder, recording_folder_names, 10)
-    # pool.close()
-    # pool.join()
+    pool = Pool()
+    recordings = pool.imap_unordered(read_recording_from_folder, recording_folder_names, 10)
+    pool.close()
+    pool.join()
 
     # Single thread:
-    recordings = [read_recording_from_folder(recording_folder_name) for recording_folder_name in recording_folder_names]
+    # recordings = [read_recording_from_folder(recording_folder_name) for recording_folder_name in recording_folder_names]
 
     return list(filter(lambda x: x is not None, recordings))
 
@@ -142,14 +145,14 @@ def create_recording(recording_folder_path: str, subject: str) -> Recording:
     time3 = time.time()
 
     sensor_frame = raw_recording_frame.drop([time_column_name], axis=1)
-    sensor_frame = reorder_sensor_columns(sensor_frame)
+    sensor_frame = reorder_sensor_columns(recording_folder_path, sensor_frame)
     time4 = time.time()
     print('took: {:.3f} - {:.3f} - {:.3f}'.format((time2-time1)*1000.0, (time3-time2)*1000.0, (time4-time3)*1000.0))
 
     return Recording(sensor_frame, time_frame, activity, subject)
 
 
-def reorder_sensor_columns(sensor_frame: pd.DataFrame) -> pd.DataFrame:
+def reorder_sensor_columns(rec_folder_path: str, sensor_frame: pd.DataFrame) -> pd.DataFrame:
     """
     reorders according to global settings
     """
@@ -164,8 +167,14 @@ def reorder_sensor_columns(sensor_frame: pd.DataFrame) -> pd.DataFrame:
 
     # assert list(column_suffix_dict.keys()) == settings.SENSOR_SUFFIX_ORDER ... only same elements
 
-    column_names_ordered = []
-    for sensor_suffix in settings.SENSOR_SUFFIX_ORDER:
-        column_names_ordered.extend(column_suffix_dict[sensor_suffix])
+    # Catch errors and output the file where it goes wrong
+    try:
+        column_names_ordered = []
+        for sensor_suffix in settings.SENSOR_SUFFIX_ORDER:
 
-    return sensor_frame[column_names_ordered]
+            column_names_ordered.extend(column_suffix_dict[sensor_suffix])
+
+        return sensor_frame[column_names_ordered]
+    except KeyError:
+        print(f"Could not find sensor suffixes in {rec_folder_path}")
+        raise KeyError()
