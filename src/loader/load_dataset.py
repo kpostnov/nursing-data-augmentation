@@ -63,8 +63,13 @@ def load_dataset(dataset_path: str, limit: int = None) -> 'list[Recording]':
 
 
 def read_recording_from_folder(recording_folder_path: str):
-    subject_folder_name = get_subject_folder_name(recording_folder_path)
-    return create_recording(recording_folder_path, subject_folder_name)
+    try:
+        subject_folder_name = get_subject_folder_name(recording_folder_path)
+        return create_recording(recording_folder_path, subject_folder_name)
+    except Exception as e:
+        print("Error while reading recording from folder: " + recording_folder_path)
+        print(e)
+        return None
 
 
 def get_subject_folder_name(recording_folder_path: str) -> str:
