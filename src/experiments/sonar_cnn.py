@@ -6,13 +6,12 @@ import utils.settings as settings
 from loader.load_dataset import load_dataset
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
 
 
 settings.init('sonar')
 random.seed(1678978086101)
 
-recordings = load_dataset('C:\\Users\\treyk\\OneDrive\\Desktop\\SoSe22\\BP\\mach_kaputt')
+recordings = load_dataset('/Users/franz/Projects/BP/new_data')
 
 sensors = recordings[0].sensor_frame.shape[1]
 activities = len(settings.LABELS)
