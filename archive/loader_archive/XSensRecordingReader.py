@@ -29,7 +29,7 @@ class XSensRecordingReader(object):
             # sensor_id = sensor_file_name.split('.')[0].split('_')[0]
             mac_regex = re.compile(r"(?:[0-9a-fA-F]:?){12}", re.IGNORECASE) if not settings.IS_WINDOWS else re.compile(r"(?:[0-9a-fA-F]-?){12}", re.IGNORECASE)
             sensor_mac_address = re.findall(mac_regex, sensor_file_name)[0]
-            with open(recording_folder_path + '/metadata.json', 'r') as f:
+            with open(recording_folder_path + os.path.sep + 'metadata.json', 'r') as f:
                 data = json.load(f)
             sensor_map_suffix_map = data['sensorMapping']
 

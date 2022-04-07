@@ -6,12 +6,13 @@ import utils.settings as settings
 from loader.load_dataset import load_dataset
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
 
 
 settings.init('sonar')
 random.seed(1678978086101)
 
-recordings = load_dataset('/Users/franz/Projects/BP/new_data')
+recordings = load_dataset('C:\\Users\\treyk\\OneDrive\\Desktop\\SoSe22\\BP\\mach_kaputt')
 
 sensors = recordings[0].sensor_frame.shape[1]
 activities = len(settings.LABELS)
@@ -29,7 +30,22 @@ def map_recording_activities_to_id(recording):
 # Convert the string labels of all recordings to integers
 recordings = [map_recording_activities_to_id(recording) for recording in recordings]
 
-model = JensModel(window_size=25, n_features=sensors, n_outputs=len(settings.ACTIVITIES_ID_TO_NAME))
+for recording in recordings:
+    recording.sensor_frame = recording.sensor_frame[:128000]
+    recording.activities = recording.activities[:128000]
+    recording.time_frame = recording.time_frame[:128000]
+    print(recording.sensor_frame.isnull().sum())
+for recording in recordings:
+    recording.sensor_frame = recording.sensor_frame.fillna(method='ffill')
+
+scaler = MinMaxScaler()
+for recording in recordings:
+    scaler.fit(recording.sensor_frame)
+for recording in recordings:
+    transformed_array = scaler.transform(recording.sensor_frame)
+    recording.sensor_frame = pd.DataFrame(transformed_array, columns=recording.sensor_frame.columns)
+
+model = JensModel(window_size=25, n_features=sensors, n_outputs=len(settings.ACTIVITIES_ID_TO_NAME), batch_size=128)
 model.windowize_convert_fit(recordings)
 
 X_test, y_test_true = model.windowize_convert(recordings)

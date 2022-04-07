@@ -49,13 +49,13 @@ def load_dataset(dataset_path: str) -> 'list[Recording]':
 
 
 def get_subject_folder_name(recording_folder_path: str) -> str:
-    with open(recording_folder_path + '/metadata.json', 'r') as f:
+    with open(recording_folder_path + os.path.sep + 'metadata.json', 'r') as f:
         data = json.load(f)
     return data['person']
 
 
 def get_activity_dataframe(time_frame, recording_folder_path: str) -> pd.DataFrame:
-    with open(recording_folder_path + '/metadata.json', 'r') as f:
+    with open(recording_folder_path + os.path.sep + 'metadata.json', 'r') as f:
         data = json.load(f)
     activities = data['activities']
     arr = time_frame.to_frame()

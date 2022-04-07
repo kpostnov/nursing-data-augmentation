@@ -65,13 +65,13 @@ def read_recording_from_folder(recording_folder_path: str):
 
 
 def get_subject_folder_name(recording_folder_path: str) -> str:
-    with open(recording_folder_path + '/metadata.json', 'r') as f:
+    with open(recording_folder_path + os.path.sep + 'metadata.json', 'r') as f:
         data = json.load(f)
     return data['person']
 
 
 def get_activity_dataframe(time_frame, recording_folder_path: str) -> pd.DataFrame:
-    with open(recording_folder_path + '/metadata.json', 'r') as f:
+    with open(recording_folder_path + os.path.sep + 'metadata.json', 'r') as f:
         data = json.load(f)
     # The activities as a list of objects with label & timeStarted
     activities_meta = data['activities']
