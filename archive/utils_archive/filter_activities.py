@@ -1,5 +1,6 @@
 from utils.Recording import Recording
 import pandas as pd
+import numpy as np
 
 
 def filter_short_activities(recordings: 'list[Recording]', threshhold: int = 3, strategy: int = 0) -> 'list[Recording]':
@@ -15,19 +16,15 @@ def filter_short_activities(recordings: 'list[Recording]', threshhold: int = 3, 
         raise ValueError('strategy has to be 0 or 1')
     
     for recording in recordings:
-        indizes = []
-        length = recording.activities.shape[0]
+        activities = np.array(recording.activities)
+        indices = np.where(activities[:-1] != activities[1:])[0] + 1
 
-        for i in range(length-1):
-            if recording.activities.iloc[i] != recording.activities.iloc[i+1]:
-                indizes.append(i+1)
-        
-        for i in range(len(indizes) - 1):
-            if recording.time_frame[indizes[i+1]] - recording.time_frame[indizes[i]] < (threshhold * 1000000):
+        for i in range(len(indices) - 1):
+            if recording.time_frame[indices[i+1]] - recording.time_frame[indices[i]] < (threshhold * 1000000):
                 if strategy == 0:
-                    recording.activities.iloc[indizes[i]:indizes[i+1]] = recording.activities.iloc[indizes[i-1]]
+                    recording.activities.iloc[indices[i]:indices[i+1]] = recording.activities.iloc[indices[i-1]]
                 elif strategy == 1:
-                    recording.activities.iloc[indizes[i]:indizes[i+1]] = 'null-activity'
+                    recording.activities.iloc[indices[i]:indices[i+1]] = 'null-activity'
 
     return recordings
 
