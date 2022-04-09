@@ -1,1 +1,1 @@
-# Nursing Activity Data Augmentation
+# Nursing Data Augmentation Using Generative Adversarial Networks (GANs)
