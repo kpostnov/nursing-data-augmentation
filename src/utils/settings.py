@@ -2,15 +2,15 @@ import os
 
 
 def init():
-    """
-    Refactoring idea:
-    - pass the mapping, that we can easily switch between datasets and labels
-    - mapping.py file (in utils) should include activity and subject mappings for the datasets
-    - the experiments loads the required ones and passes them in the init (settings.init(mappings)O
-    """
 
     global opportunity_dataset_path
-    opportunity_dataset_path = "opportunity-dataset"
+    opportunity_dataset_path = "../../datasets/OpportunityUCIDataset"
+
+    global pamap2_dataset_path
+    pamap2_dataset_path = "../../datasets/PAMAP2_Dataset"
+
+    global nursing_dataset_path
+    nursing_dataset_path = "../../datasets/NURSING"
 
     global activity_initial_num_to_activity_str
     activity_initial_num_to_activity_str = {
@@ -32,6 +32,15 @@ def init():
         105: 5,
     }
 
+    global pamap2_activity_map
+    pamap2_activity_map = {
+        1: "lying",
+        2: "sitting",
+        3: "standing",
+        4: "walking",
+        16: "vacuum cleaning",
+        17: "ironing"
+    }
+
     global saved_experiments_path
     saved_experiments_path = 'src/saved_experiments'
-
