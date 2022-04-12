@@ -1,17 +1,19 @@
 import os
-from random import shuffle
 import json
 import time
-from utils.file_functions import get_subfolder_names
-from loader.XSensRecordingReader import XSensRecordingReader
-import pandas as pd
-import utils.settings as settings
-from utils.Recording import Recording
 from multiprocessing import Pool
 import numpy as np
+import pandas as pd
+
+from utils.file_functions import get_subfolder_names
+from utils import settings
+from utils.Recording import Recording
+from loader.XSensRecordingReader import XSensRecordingReader
+
+settings.init("sonar")
 
 
-def load_dataset(dataset_path: str, limit: int = None) -> 'list[Recording]':
+def load_dataset(dataset_path: str, limit: int = None) -> "list[Recording]":
     """
     Returns a list of the raw recordings (activities, subjects included, None values) (different representaion of dataset)
     directory structure bias! not shuffled!
@@ -44,7 +46,10 @@ def load_dataset(dataset_path: str, limit: int = None) -> 'list[Recording]':
 
     # recording
     recording_folder_names = get_subfolder_names(dataset_path)
-    recording_folder_names = [os.path.join(dataset_path, recording_folder_name) for recording_folder_name in recording_folder_names]
+    recording_folder_names = [
+        os.path.join(dataset_path, recording_folder_name)
+        for recording_folder_name in recording_folder_names
+    ]
 
     if limit is not None:
         recording_folder_names = recording_folder_names[:limit]
@@ -52,7 +57,9 @@ def load_dataset(dataset_path: str, limit: int = None) -> 'list[Recording]':
     # USE ONE (Multiprocessing or Single Thread)
     # Multiprocessing:
     pool = Pool()
-    recordings = pool.imap_unordered(read_recording_from_folder, recording_folder_names, 10)
+    recordings = pool.imap_unordered(
+        read_recording_from_folder, recording_folder_names, 10
+    )
     pool.close()
     pool.join()
 
@@ -73,16 +80,16 @@ def read_recording_from_folder(recording_folder_path: str):
 
 
 def get_subject_folder_name(recording_folder_path: str) -> str:
-    with open(recording_folder_path + os.path.sep + 'metadata.json', 'r') as f:
+    with open(recording_folder_path + os.path.sep + "metadata.json", "r") as f:
         data = json.load(f)
-    return data['person']
+    return data["person"]
 
 
 def get_activity_dataframe(time_frame, recording_folder_path: str) -> pd.DataFrame:
-    with open(recording_folder_path + os.path.sep + 'metadata.json', 'r') as f:
+    with open(recording_folder_path + os.path.sep + "metadata.json", "r") as f:
         data = json.load(f)
     # The activities as a list of objects with label & timeStarted
-    activities_meta = data['activities']
+    activities_meta = data["activities"]
     pd_time_frame = time_frame.to_frame()
     # the objective - the activities as series, synchronized with the recording sensor_frame
     activities_per_timestep = pd.Series(np.empty(shape=(pd_time_frame.shape[0])))
@@ -102,13 +109,17 @@ def get_activity_dataframe(time_frame, recording_folder_path: str) -> pd.DataFra
     # using the last labels end time repeatedly
 
     # As the end timestamp is always excluded, we add a bit 1 to the last timestamp to get all lines
-    end_timestamp = timestamp_to_microseconds(data['endTimestamp']) + 100
-    sampletime_start = pd_time_frame.iloc[0]['SampleTimeFine']
+    end_timestamp = timestamp_to_microseconds(data["endTimestamp"]) + 100
+    sampletime_start = pd_time_frame.iloc[0]["SampleTimeFine"]
 
     sampletime_activity_list = []
     for i in range(len(activities_meta)):
         current_activity_timestamp = activities_meta[i]["timeStarted"]
-        next_activity_timestamp = activities_meta[i+1]["timeStarted"] if i < len(activities_meta) - 1 else end_timestamp
+        next_activity_timestamp = (
+            activities_meta[i + 1]["timeStarted"]
+            if i < len(activities_meta) - 1
+            else end_timestamp
+        )
 
         start = sampletime_start if i == 0 else sampletime_activity_list[-1][1]
         end = start + (next_activity_timestamp - current_activity_timestamp)
@@ -120,11 +131,14 @@ def get_activity_dataframe(time_frame, recording_folder_path: str) -> pd.DataFra
 
     for idx, (start, end) in enumerate(sampletime_activity_list):
         # First find all indices where SampleTimeFine is in between start and end
-        matching_indices = np.where((pd_time_frame['SampleTimeFine'] >= start) & (pd_time_frame['SampleTimeFine'] < end))
+        matching_indices = np.where(
+            (pd_time_frame["SampleTimeFine"] >= start)
+            & (pd_time_frame["SampleTimeFine"] < end)
+        )
         # Now write the label for all these indices
         activities_per_timestep.iloc[matching_indices] = activities_meta[idx]["label"]
 
-    assert(activities_per_timestep.shape[0] == pd_time_frame.shape[0])
+    assert activities_per_timestep.shape[0] == pd_time_frame.shape[0]
     return activities_per_timestep
 
 
@@ -136,14 +150,16 @@ def create_recording(recording_folder_path: str, subject: str) -> Recording:
 
     print(recording_folder_path)
     time1 = time.time()
-    raw_recording_frame = XSensRecordingReader.get_recording_frame(recording_folder_path)
+    raw_recording_frame = XSensRecordingReader.get_recording_frame(
+        recording_folder_path
+    )
 
     # If less than a second is recorded or
     if raw_recording_frame.shape[0] < 60:
         print(f"Dropping because less than 60 steps: {recording_folder_path}")
         return
     time2 = time.time()
-    time_column_name = 'SampleTimeFine'
+    time_column_name = "SampleTimeFine"
     time_frame = raw_recording_frame[time_column_name]
 
     activity = get_activity_dataframe(time_frame, recording_folder_path)
@@ -152,7 +168,11 @@ def create_recording(recording_folder_path: str, subject: str) -> Recording:
     sensor_frame = raw_recording_frame.drop([time_column_name], axis=1)
     sensor_frame = reorder_sensor_columns(recording_folder_path, sensor_frame)
     time4 = time.time()
-    print('took: {:.3f} - {:.3f} - {:.3f}'.format((time2-time1)*1000.0, (time3-time2)*1000.0, (time4-time3)*1000.0))
+    print(
+        "took: {:.3f} - {:.3f} - {:.3f}".format(
+            (time2 - time1) * 1000.0, (time3 - time2) * 1000.0, (time4 - time3) * 1000.0
+        )
+    )
 
     if sensor_frame is None:
         return None
@@ -160,7 +180,9 @@ def create_recording(recording_folder_path: str, subject: str) -> Recording:
     return Recording(sensor_frame, time_frame, activity, subject)
 
 
-def reorder_sensor_columns(rec_folder_path: str, sensor_frame: pd.DataFrame) -> pd.DataFrame:
+def reorder_sensor_columns(
+    rec_folder_path: str, sensor_frame: pd.DataFrame
+) -> pd.DataFrame:
     """
     reorders according to global settings
     """

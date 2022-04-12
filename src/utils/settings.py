@@ -12,7 +12,7 @@ def init(dataset: str):
     """
 
     global saved_experiments_path
-    saved_experiments_path = 'src/saved_experiments'
+    saved_experiments_path = "src/saved_experiments"
 
     # Model / Dataset specific configuration
     if dataset == "opportunity":
@@ -26,12 +26,16 @@ def init(dataset: str):
 def init_sonar():
     global LABELS
     with open("labels.json") as file:
-        categories = json.load(file)['items']
-        LABELS = list(itertools.chain.from_iterable(category['entries'] for category in categories))
+        categories = json.load(file)["items"]
+        LABELS = list(
+            itertools.chain.from_iterable(
+                category["entries"] for category in categories
+            )
+        )
         print(LABELS)
 
     global IS_WINDOWS
-    IS_WINDOWS = (os.name == 'nt')
+    IS_WINDOWS = os.name == "nt"
 
     global ACTIVITIES
     ACTIVITIES = {k: v for v, k in enumerate(LABELS)}
@@ -43,13 +47,17 @@ def init_sonar():
     activity_initial_num_to_activity_str = ACTIVITIES_ID_TO_NAME
 
     global BP_PATH
-    BP_PATH = '/dhc/groups/bp2021ba1'
+    BP_PATH = "/dhc/groups/bp2021ba1"
 
     global ML_RAINBOW_PATH
-    ML_RAINBOW_PATH = BP_PATH + '/apps/ml-rainbow'
+    ML_RAINBOW_PATH = BP_PATH + "/apps/ml-rainbow"
 
     global DATA_PATH
-    DATA_PATH = BP_PATH + '/data' if not IS_WINDOWS else os.path.dirname(os.path.abspath(__file__)) + '/../dataWindows'
+    DATA_PATH = (
+        BP_PATH + "/data"
+        if not IS_WINDOWS
+        else os.path.dirname(os.path.abspath(__file__)) + "/../dataWindows"
+    )
 
     global SENSOR_SUFFIX_ORDER
     SENSOR_SUFFIX_ORDER = ["LF", "LW", "ST", "RW", "RF"]

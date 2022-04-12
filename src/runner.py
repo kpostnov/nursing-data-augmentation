@@ -13,7 +13,7 @@ from utils import settings
 # import experiments.hello_world
 # import experiments.opportunity_jens_cnn
 
-settings.init('sonar')
+settings.init("sonar")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import experiments.sonar_cnn
