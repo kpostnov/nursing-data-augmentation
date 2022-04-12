@@ -5,7 +5,10 @@ from utils.Recording import Recording
 import utils.settings as settings
 
 
-def load_pamap2_dataset(pamap2_dataset_path: str, include_heart_rate: bool = True) -> "list[Recording]":
+def load_pamap2_dataset(
+        pamap2_dataset_path: str,
+        include_heart_rate: bool = True,
+        lin_interpolate: bool = False) -> "list[Recording]":
     """
     Returns a list of Recordings from the PAMAP2 dataset. 
     Each Recording corresponds to one subject.
@@ -47,7 +50,7 @@ def load_pamap2_dataset(pamap2_dataset_path: str, include_heart_rate: bool = Tru
         df.columns = col_names
         df = df.drop(columns=["acc_x_6", "acc_y_6", "acc_z_6"])
 
-        df = filter_data_frame(df, include_heart_rate)
+        df = filter_data_frame(df, include_heart_rate, lin_interpolate)
 
         recordings.append(Recording(
             sensor_frame=df.iloc[:, 2:],
@@ -62,16 +65,17 @@ def load_pamap2_dataset(pamap2_dataset_path: str, include_heart_rate: bool = Tru
     return recordings
 
 
-def filter_data_frame(df: pd.DataFrame, include_heart_rate: bool) -> pd.DataFrame:
+def filter_data_frame(df: pd.DataFrame, include_heart_rate: bool, lin_interpolate: bool) -> pd.DataFrame:
     """
     Filters the data frame according to the paper, 
     i.e. keep only needed activities (lying, sitting, standing, walking, vacuum cleaning, ironing),
     ffill missing values
     """
 
-    # TODO: linear interpolation optional 
-    
-    df = df.fillna(method="ffill")
+    if lin_interpolate:
+        df = df.interpolate(method="linear")
+    else:
+        df = df.fillna(method="ffill")
 
     df = df[df.activity_id.isin([1, 2, 3, 4, 16, 17])]
 
