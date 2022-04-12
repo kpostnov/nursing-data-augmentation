@@ -8,6 +8,7 @@ Created on Fri Jun 26 23:09:38 2020
 import pandas as pd
 import numpy as np
 import h5py
+from random import shuffle
 
 activities = {
     1: "stand",
@@ -25,6 +26,7 @@ activities = {
 def read_files(current_path_in_repo, path_to_opportunity_folder):
     """
     read_files
+        .dat file -> csv with whitespaces instead of commas
     """
     # pick partial data from dataset
     list_of_files = [
@@ -45,6 +47,16 @@ def read_files(current_path_in_repo, path_to_opportunity_folder):
         "./dataset/S4-ADL3.dat",
         "./dataset/S4-ADL4.dat",
     ]
+
+    # new: For some reason Jens left the 5th subject out!!!!
+    list_of_files += [
+        "./dataset/S1-ADL5.dat",
+        "./dataset/S2-ADL5.dat",
+        "./dataset/S3-ADL5.dat",
+        "./dataset/S4-ADL5.dat",
+    ]
+
+    shuffle(list_of_files) # new: to not take advantage of file order in test set
 
     list_of_drill = [
         "./dataset/S1-Drill.dat",
@@ -508,7 +520,12 @@ if __name__ == "__main__":
     hl_filename = "hl_2.h5"  # "hl.h5" is to save high level dataset
     data_hl = segment_high_level(df, window_size)
     """
-        data_hl['inputs'].shape # (34181, 25, 220) -> 34181 windows, 25 timestamps, 220 features (sensors)
-        data_hl['labels'].shape # (34181,) -> 34181 labels
+        without subject 5 and subset of sensors:
+            data_hl['inputs'].shape # (34181, 25, 220) -> 34181 windows, 25 timestamps, 220 features (sensors)
+            data_hl['labels'].shape # (34181,) -> 34181 labels
+
+        with subject 5 and subset of sensors:
+            data_hl['inputs'].shape # (49484, 25, 51)
+            data_hl['labels'].shape # (49484,)
     """
     save_data(data_hl, hl_filename, current_path_in_repo)

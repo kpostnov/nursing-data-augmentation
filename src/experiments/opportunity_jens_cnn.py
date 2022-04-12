@@ -13,20 +13,18 @@
     TODO:
         - problem before training
             Jens Repo:
-                self.x_train.shape
-                (24471, 25, 51, 1)
-                self.y_train.shape
-                (24471,)
+                data_hl['inputs'].shape # (49484, 25, 51)
+                data_hl['labels'].shape # (49484,)
+                -> found out, that in the windowize test jens plain algo skips some beginnings of recordings
+
             This:
-                X_train.shape
-                (35086, 35, 71)
-                y_train.shape
-                (35086, 6)
-        - crashes... new convert override function needed
-        - delete fit override?
-        - why different number of windows?
-        - why different number of features?
-        - why not categorial input?
+                X, y = model.windowize_convert(recordings)
+                X.shape # (53320, 25, 51, 1)
+                y.shape # (53320, 6) -> categorical
+
+        - why different number of windows? Our algo is a little bit better?!
+
+        TODO: Why dont we get the same accuracy as Jens?
 
 """
 
