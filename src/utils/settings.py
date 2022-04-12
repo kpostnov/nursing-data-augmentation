@@ -10,7 +10,7 @@ def init():
     pamap2_dataset_path = "../../datasets/PAMAP2_Dataset"
 
     global nursing_dataset_path
-    nursing_dataset_path = "../../datasets/NURSING"
+    nursing_dataset_path = "../../datasets/NURSING_2020"
 
     global activity_initial_num_to_activity_str
     activity_initial_num_to_activity_str = {

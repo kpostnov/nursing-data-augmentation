@@ -1,30 +1,21 @@
 import os
-from this import d
-from xmlrpc.client import Boolean
 import pandas as pd
 
 from utils.Recording import Recording
 import utils.settings as settings
 
-"""
-- wrist sensor
-- no null-class
-- 8 subjects: 1-8
-- 6 activities: lying, sitting, standing, walking, vacuum cleaning, ironing
-- modalities: 1-16 (probably without 1,2; 3? (heart rate), without 8,9,10)
-- preprocessing: Remove missing values (Interpolation?), no normalization
-"""
 
-
-def load_pamap2_dataset(pamap2_dataset_path: str, include_heart_rate: Boolean = True) -> "list[Recording]":
+def load_pamap2_dataset(pamap2_dataset_path: str, include_heart_rate: bool = True) -> "list[Recording]":
     """
     Returns a list of Recordings from the PAMAP2 dataset. 
+    Each Recording corresponds to one subject.
     NOTE: Returns only those subjects and recordings that were mentioned in the paper. (Hoelzmann et al., 2021)
     """
     print("Reading the PAMAP2 dataset")
     pamap2_dataset_path += "/Protocol"
     subject_ids = range(1, 9)
 
+    # acc_x_6, acc_y_6, acc_z_6 will be filtered out as they contain faulty data
     col_names = [
         "timestamp",
         "activity_id",
@@ -71,11 +62,15 @@ def load_pamap2_dataset(pamap2_dataset_path: str, include_heart_rate: Boolean = 
     return recordings
 
 
-def filter_data_frame(df: pd.DataFrame, include_heart_rate: Boolean) -> pd.DataFrame:
+def filter_data_frame(df: pd.DataFrame, include_heart_rate: bool) -> pd.DataFrame:
     """
-    Filters the data frame according to the paper. 
-    (remove not used activities, ffill missing values)
+    Filters the data frame according to the paper, 
+    i.e. keep only needed activities (lying, sitting, standing, walking, vacuum cleaning, ironing),
+    ffill missing values
     """
+
+    # TODO: linear interpolation optional 
+    
     df = df.fillna(method="ffill")
 
     df = df[df.activity_id.isin([1, 2, 3, 4, 16, 17])]
