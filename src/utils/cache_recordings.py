@@ -8,15 +8,19 @@ def save_recordings(recordings: 'list[Recording]', path: str) -> None:
     """
     if not os.path.exists(path):
         os.makedirs(path)
+
     for recording in recordings:
-        recording.activities.reset_index(drop=True, inplace=True)
-        recording_dataframe = pd.concat([recording.time_frame, recording.sensor_frame, recording.activities], axis=1)
-        recording_dataframe.rename(columns={0: 'activity'}, inplace=True)
+        recording.activities.index = recording.sensor_frame.index
+
+        recording_dataframe = recording.sensor_frame.copy()
+        recording_dataframe['SampleTimeFine'] = recording.time_frame
+        recording_dataframe['activity'] = recording.activities
 
         filename = recording.subject + '_' + str(recording_dataframe.iloc[0, 0]) + '.csv'
         recording_dataframe.to_csv(os.path.join(path, filename), index=False)
 
     print('Saved recordings to ' + path)
+
 
 def load_recordings(path: str) -> 'list[Recording]':
     """
@@ -26,9 +30,10 @@ def load_recordings(path: str) -> 'list[Recording]':
     for file in os.listdir(path):
         if file.endswith(".csv"):
             recording_dataframe = pd.read_csv(os.path.join(path, file))
-            time_frame = recording_dataframe.iloc[:, 0]
-            activities = recording_dataframe.iloc[:, -1]
-            sensor_frame = recording_dataframe.iloc[:, 1:-1]
+            time_frame = recording_dataframe.loc[:, 'SampleTimeFine']
+            activities = recording_dataframe.loc[:, 'activity']
+            sensor_frame = recording_dataframe.loc[:, 
+                recording_dataframe.columns.difference(['SampleTimeFine', 'activity'])]
             subject = file.split('_')[0]
 
             recordings.append(Recording(sensor_frame, time_frame, activities, subject))
