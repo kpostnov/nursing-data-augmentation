@@ -3,6 +3,21 @@ import pandas as pd
 import numpy as np
 
 
+def filter_activities(recordings: 'list[Recording]', activities_to_keep: list) -> 'list[Recording]':
+    """
+    Removes all activities not in activities_to_keep.
+    """
+
+    for recording in recordings:
+        recording.activities.reset_index(drop=True, inplace=True)
+
+        recording.activities = recording.activities[recording.activities.isin(activities_to_keep)]
+        recording.sensor_frame = recording.sensor_frame.loc[recording.activities.index]
+        recording.time_frame = recording.time_frame.loc[recording.activities.index]
+
+    return recordings
+
+
 def filter_short_activities(recordings: 'list[Recording]', threshhold: int = 3, strategy: int = 0) -> 'list[Recording]':
     """
     Replaces activities shorter than threshhold by [value]. [value] depends on strategy.
@@ -14,7 +29,7 @@ def filter_short_activities(recordings: 'list[Recording]', threshhold: int = 3, 
 
     if strategy != 0 and strategy != 1:
         raise ValueError('strategy has to be 0 or 1')
-    
+
     for recording in recordings:
         activities = np.array(recording.activities)
         indices = np.where(activities[:-1] != activities[1:])[0] + 1
