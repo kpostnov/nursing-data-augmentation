@@ -1,5 +1,7 @@
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import pandas as pd
+
+from utils import settings
 from utils.Recording import Recording
 from utils.typing import assert_type
 
@@ -28,8 +30,9 @@ class Preprocessor:
         1. _interpolate_ffill
         2. _normalize
         """
+        recordings = self._map_activities_to_id(recordings)
         recordings = self._interpolate_ffill(recordings)
-        recordings = self._normalize_minmaxscaler(recordings)
+        recordings = self._normalize_standardscaler(recordings)
         return recordings
 
     # Preprocess-Library ------------------------------------------------------------
@@ -71,6 +74,22 @@ class Preprocessor:
 
         return recordings
 
+    def _map_activities_to_id(self, recordings: "list[Recording]") -> "list[Recording]":
+        def map_recording_activities_to_id(recording):
+            """
+            Converts the string labels of one recording to integers"
+            """
+            recording.activities = pd.Series(
+                [
+                    settings.ACTIVITIES.get(activity) or settings.ACTIVITIES["invalid"]
+                    for activity in recording.activities
+                ]
+            )
+            return recording
+
+        # Convert the string labels of all recordings to integers
+        return [map_recording_activities_to_id(recording) for recording in recordings]
+
     def _interpolate_ffill(self, recordings: "list[Recording]") -> "list[Recording]":
         """
         the recordings have None values, this function interpolates them
@@ -79,20 +98,20 @@ class Preprocessor:
         fill_method = "ffill"
 
         for recording in recordings:
-            recording.sensor_frame = recording.sensor_frame.fillna(
-                method=fill_method
-            )
+            recording.sensor_frame = recording.sensor_frame.fillna(method=fill_method)
 
         return recordings
 
-    def _normalize_minmaxscaler(self, recordings: "list[Recording]") -> "list[Recording]":
+    def _normalize_standardscaler(
+        self, recordings: "list[Recording]"
+    ) -> "list[Recording]":
         """
         Normalizes the sensor values to be in range 0 to 1
         """
         assert_type([(recordings[0], Recording)])
 
         # First fit the scaler on all data
-        scaler = MinMaxScaler()
+        scaler = StandardScaler()
         for recording in recordings:
             scaler.fit(recording.sensor_frame)
 

@@ -1,28 +1,21 @@
 # pylint: disable=locally-disabled, multiple-statements, fixme, line-too-long, no-name-in-module, unused_import, wrong-import-order, bad-option-value
 
-from abc import ABC, abstractmethod
-from math import sqrt
-from typing import Any, Union
-from numpy.core.numeric import full
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-from tensorflow.keras.utils import to_categorical  # type: ignore
-from random import shuffle
-import numpy as np
-import pandas as pd
-import tensorflow as tf  # type: ignore
-from datetime import datetime
 import os
+from abc import ABC, abstractmethod
+from random import shuffle
+from typing import Any, Union
 
+import numpy as np
+import tensorflow as tf  # type: ignore
+from tensorflow.keras.utils import to_categorical  # type: ignore
 from tensorflow.python.saved_model.utils_impl import get_saved_model_pb_path  # type: ignore
 
-from utils.array_operations import split_list_by_percentage, transform_to_subarrays
+import utils.settings as settings
 from utils.Recording import Recording
 from utils.Window import Window
-
-from utils.typing import assert_type
-import utils.settings as settings
+from utils.array_operations import transform_to_subarrays
 from utils.folder_operations import create_folders_in_path
+from utils.typing import assert_type
 
 
 class RainbowModel(ABC):
@@ -125,7 +118,7 @@ class RainbowModel(ABC):
         # to_categorical converts the activity_array to the dimensions needed
         activity_vectors = to_categorical(
             np.array(activities),
-            num_classes=len(settings.activity_initial_num_to_activity_str),
+            num_classes=len(settings.ACTIVITIES),
         )
 
         return np.array(sensor_arrays), np.array(activity_vectors)
@@ -150,7 +143,7 @@ class RainbowModel(ABC):
             epochs=self.n_epochs,
             batch_size=self.batch_size,
             verbose=self.verbose,
-            class_weight=self.class_weight
+            class_weight=self.class_weight,
         )
         self.history = history
 
@@ -161,7 +154,7 @@ class RainbowModel(ABC):
         gets a list of windows and returns a list of prediction_vectors
         """
         return self.model.predict(X_test)
-    
+
     def export(self, path: str) -> None:
         """
         will create an 'export' folder in the path, and save the model there in 3 different formats
@@ -170,7 +163,7 @@ class RainbowModel(ABC):
 
         # Define, create folder structure
         export_path = os.path.join(path, "export")
-        export_path_raw_model = os.path.join(export_path, 'raw_model')
+        export_path_raw_model = os.path.join(export_path, "raw_model")
         create_folders_in_path(export_path_raw_model)
 
         # 1/3 Export raw model ------------------------------------------------------------
@@ -182,7 +175,9 @@ class RainbowModel(ABC):
         # 3/3 Export .h5 model ------------------------------------------------------------
         converter = tf.lite.TFLiteConverter.from_keras_model(self.model)
 
-        converter.optimizations = [tf.lite.Optimize.DEFAULT] # Refactoring Idea: Optimizations for new tensorflow version
+        converter.optimizations = [
+            tf.lite.Optimize.DEFAULT
+        ]  # Refactoring Idea: Optimizations for new tensorflow version
         converter.experimental_new_converter = True
         converter.target_spec.supported_ops = [
             tf.lite.OpsSet.TFLITE_BUILTINS,
@@ -194,5 +189,3 @@ class RainbowModel(ABC):
             f.write(tflite_model)
 
         print("Export finished")
-
-    
