@@ -83,7 +83,7 @@ def load_opportunity_dataset(opportunity_dataset_path: str) -> "list[Recording]"
     recordings = []
     for sub, rec in itertools.product(subject_ids, recording_ids):
         file_name = f"S{sub}-ADL{rec}.dat"
-        file_path = os.path.join(opportunity_dataset_path, file_name)
+        file_path = os.path.join(os.path.dirname(__file__), opportunity_dataset_path, file_name)
         print(f"Reading {file_path} ...")
         file_df = pd.read_csv(file_path, delimiter=" ", header=None)
         file_df.columns = col_names # give them the real column names
@@ -100,4 +100,3 @@ def load_opportunity_dataset(opportunity_dataset_path: str) -> "list[Recording]"
     print(f"\n => Total {len(recordings)} recordings read")
 
     return recordings
-

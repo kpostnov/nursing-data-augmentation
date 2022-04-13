@@ -48,7 +48,6 @@ def filter_short_activities(
     Replaces activities shorter than threshhold by [value]. [value] depends on strategy.
     strategy 0: replaces short activities with previous activity
     strategy 1: replaces short activities with 'null-activity'
-
     threshold: number of seconds
     """
 
