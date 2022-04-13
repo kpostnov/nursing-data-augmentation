@@ -48,6 +48,7 @@ class JensModel(RainbowModel):
         self.window_size = kwargs["window_size"]
         self.verbose = kwargs.get("verbose") or True
         self.n_epochs = kwargs.get("n_epochs") or 10
+        self.learning_rate = kwargs.get("learning_rate") or 0.001
         self.model_name = "jens_model"
 
         # create model
@@ -100,7 +101,7 @@ class JensModel(RainbowModel):
         x = Dense(n_outputs, activation="softmax")(x)
         model = Model(i, x)
         model.compile(
-            optimizer=Adam(learning_rate=0.00001),
+            optimizer=Adam(learning_rate=self.learning_rate),
             loss="categorical_crossentropy",  # CategoricalCrossentropy (than we have to to the one hot encoding - to_categorical), before: "sparse_categorical_crossentropy"
             metrics=["accuracy"],
         )
