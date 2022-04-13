@@ -56,7 +56,7 @@ recordings = Preprocessor().jens_preprocess(recordings)
 # TODO: save/ load preprocessed data
 
 # Test Train Split
-test_percentage = 0.3
+test_percentage = 0.4
 recordings_train, recordings_test = split_list_by_percentage(recordings, test_percentage)
 
 # Init, Train

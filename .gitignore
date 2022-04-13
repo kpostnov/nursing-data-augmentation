@@ -135,3 +135,17 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+/.idea/.gitignore
+/src/2.7.0
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/UnicornML.iml
+/.idea/vcs.xml
+
+# Franz Notebook :-)
+src/franz.ipynb
+
+# Mac files
+.DS_STORE

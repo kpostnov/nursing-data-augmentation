@@ -2,10 +2,11 @@
 File that gets executed!
 Only import from experiments and tests
 """
+from utils import settings
 
 # TESTS
 # import tests.test_original_jens_windowize
-# import tests.test_new_experiment_folder
+
 if __name__ == '__main__':
 	import experiments.nursing_test
 

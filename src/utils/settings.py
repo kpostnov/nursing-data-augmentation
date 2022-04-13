@@ -1,8 +1,53 @@
+import itertools
+import json
 import os
 
 
 def init():
 
+    # SONAR
+    global LABELS
+    with open("labels.json") as file:
+        categories = json.load(file)["items"]
+        LABELS = list(
+            itertools.chain.from_iterable(
+                category["entries"] for category in categories
+            )
+        )
+        print(LABELS)
+
+    global IS_WINDOWS
+    IS_WINDOWS = os.name == "nt"
+
+    global ACTIVITIES
+    ACTIVITIES = {k: v for v, k in enumerate(LABELS)}
+
+    global ACTIVITIES_ID_TO_NAME
+    ACTIVITIES_ID_TO_NAME = {v: k for k, v in ACTIVITIES.items()}
+
+    global activity_initial_num_to_activity_str
+    activity_initial_num_to_activity_str = ACTIVITIES_ID_TO_NAME
+
+    global BP_PATH
+    BP_PATH = "/dhc/groups/bp2021ba1"
+
+    global ML_RAINBOW_PATH
+    ML_RAINBOW_PATH = BP_PATH + "/apps/ml-rainbow"
+
+    global DATA_PATH
+    DATA_PATH = (
+        BP_PATH + "/data"
+        if not IS_WINDOWS
+        else os.path.dirname(os.path.abspath(__file__)) + "/../dataWindows"
+    )
+
+    global SENSOR_SUFFIX_ORDER
+    SENSOR_SUFFIX_ORDER = ["LF", "LW", "ST", "RW", "RF"]
+
+    global CSV_HEADER_SIZE
+    CSV_HEADER_SIZE = 8
+
+    # OPPORTUNITY
     global opportunity_dataset_path
     opportunity_dataset_path = "../../datasets/OpportunityUCIDataset"
 
@@ -32,6 +77,7 @@ def init():
         105: 5,
     }
 
+    # PAMAP2
     global pamap2_activity_map
     pamap2_activity_map = {
         1: "lying",
