@@ -71,7 +71,12 @@ def load_opportunity_dataset(opportunity_dataset_path: str) -> "list[Recording]"
         "IMU-R-SHOE-AngVelNavFrameY",
         "IMU-R-SHOE-AngVelNavFrameZ",
     ]
-    print(f"Selected features (n_features: {len(selected_feature_names)}):\n", "\n".join(["\t" + str(feature_name) for feature_name in selected_feature_names]))
+    print(
+        f"Selected features (n_features: {len(selected_feature_names)}):\n",
+        "\n".join(
+            ["\t" + str(feature_name) for feature_name in selected_feature_names]
+        ),
+    )
 
     # Get column names
     col_names = []
@@ -86,18 +91,19 @@ def load_opportunity_dataset(opportunity_dataset_path: str) -> "list[Recording]"
         file_path = os.path.join(opportunity_dataset_path, file_name)
         print(f"Reading {file_path} ...")
         file_df = pd.read_csv(file_path, delimiter=" ", header=None)
-        file_df.columns = col_names # give them the real column names
+        file_df.columns = col_names  # give them the real column names
 
-        recordings.append(Recording(
-            sensor_frame = file_df.loc[:, selected_feature_names], 
-            time_frame = file_df.loc[:, 'MILLISEC'],
-            activities = file_df.loc[:, 'HL_Activity'].map(
-                lambda label: settings.activity_initial_num_to_activity_idx[label]
-            ),  # Use `[0]` to get only one activity | maps 0, 101, 102, 103, 104, 105 to 0, 1, 2, 3, 4, 5
-            subject = f"{sub}",
-        ))
+        recordings.append(
+            Recording(
+                sensor_frame=file_df.loc[:, selected_feature_names],
+                time_frame=file_df.loc[:, "MILLISEC"],
+                activities=file_df.loc[:, "HL_Activity"].map(
+                    lambda label: settings.activity_initial_num_to_activity_idx[label]
+                ),  # Use `[0]` to get only one activity | maps 0, 101, 102, 103, 104, 105 to 0, 1, 2, 3, 4, 5
+                subject=f"{sub}",
+            )
+        )
 
     print(f"\n => Total {len(recordings)} recordings read")
 
     return recordings
-
