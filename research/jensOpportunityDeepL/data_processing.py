@@ -48,7 +48,7 @@ def read_files(current_path_in_repo, path_to_opportunity_folder):
         "./dataset/S4-ADL4.dat",
     ]
 
-    new: For some reason Jens left the 5th subject out!!!!
+    # new: For some reason Jens left the 5th subject out!!!!
     list_of_files += [
         "./dataset/S1-ADL5.dat",
         "./dataset/S2-ADL5.dat",
