@@ -1,33 +1,26 @@
-from pyclbr import Function
+from typing import Callable
+
+import numpy as np
+from sklearn.model_selection import KFold
+
 from evaluation.Evaluation import Evaluation
-from evaluation.MarkdownTestResult import MarkdownTestResult
-from loader.Preprocessor import Preprocessor
-from sklearn.model_selection import KFold, train_test_split
-from loader.filter_dataset import filter_acceleration
-from archive.loader_archive.load_dataset import load_dataset
-import os
+from evaluation.EvaluationTestResult import EvaluationTestResult
 from models.RainbowModel import RainbowModel
 from utils.Recording import Recording
-from utils.array_operations import split_list_by_percentage
-import utils.settings as settings
-import random
-import numpy as np
 
 
 def k_fold_cross_validation_test(
-    model: RainbowModel,
+    model_builder: Callable[[], RainbowModel],
     model_nickname: str,
     recordings_in: "list[Recording]",
     k: int,
-    data_augmentation_func,
-) -> "list[MarkdownTestResult]":
+    data_augmentation_func=None,
+) -> "(list[EvaluationTestResult], np.ndarray)":
     """
     - fits the model k times on different splits of the data
     - returns the EvaluationTestReports for each split
     """
-    evaluation_results: "list[MarkdownTestResult]" = []
-
-    initial_weights = model.model.get_weights()
+    evaluation_results: "list[EvaluationTestResult]" = []
 
     recordings: np.ndarray = np.array(recordings_in)  # for comfortable index splitting
     k_fold = KFold(n_splits=k, random_state=None)
@@ -36,6 +29,10 @@ def k_fold_cross_validation_test(
             recordings[train_index],
             recordings[test_index],
         )
+        print(f"Starting fold {idx}")
+
+        model = model_builder()
+
         if data_augmentation_func:
             recordings_tuple = (
                 data_augmentation_func(recordings[train_index]),
@@ -43,18 +40,11 @@ def k_fold_cross_validation_test(
             )
         recordings_train, recordings_test = recordings_tuple
 
-        model.windowize_convert_fit(recordings_train.tolist())
+        model.windowize_convert_fit(recordings_train)
 
-        model.save_model(
-            os.path.join(settings.ML_RAINBOW_PATH, f"saved_models"),
-            name_suffix=f"{idx}",
-        )
-
+        # Evaluate model
         evaluation_results.append(
-            Evaluation.test(model, model_nickname, recordings_test.tolist())
+            Evaluation.test(model, model_nickname, recordings_test)
         )
-
-        # reset weights to initial
-        model.model.set_weights(initial_weights)
 
     return evaluation_results

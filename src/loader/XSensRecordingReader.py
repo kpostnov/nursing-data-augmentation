@@ -7,9 +7,12 @@ import utils.settings as settings
 verbose = False
 
 if verbose:
+
     def d_print(*args):
         print(*args)
+
 else:
+
     def d_print(*args):
         pass
 
@@ -37,61 +40,66 @@ class XSensRecordingReader(object):
             # Extract the sensor ID from the filename
             mac_regex = re.compile(r"(?:[0-9a-fA-F]-?){12}", re.IGNORECASE)
             sensor_mac_address = re.findall(mac_regex, sensor_file_name)[0]
-            with open(recording_folder_path + os.path.sep + 'metadata.json', 'r') as f:
+            with open(recording_folder_path + os.path.sep + "metadata.json", "r") as f:
                 data = json.load(f)
-            sensor_map_suffix_map = data['sensorMapping']
+            sensor_map_suffix_map = data["sensorMapping"]
 
             # map from mac address to placements (LW, RW, etc.) without sensor set information
-            sensor_id = sensor_map_suffix_map[sensor_mac_address.replace("-", ":")][:2].upper()
+            sensor_id = sensor_map_suffix_map[sensor_mac_address.replace("-", ":")][
+                :2
+            ].upper()
 
             # Complete path for reading & read it
-            sensor_file_path = os.path.join(
-                recording_folder_path, sensor_file_name)
+            sensor_file_path = os.path.join(recording_folder_path, sensor_file_name)
             sensor_frame = pd.read_csv(
-                sensor_file_path, skiprows=settings.CSV_HEADER_SIZE)
+                sensor_file_path, skiprows=settings.CSV_HEADER_SIZE
+            )
 
             # Add new frame to recording_frame
             if recording_frame is None:
                 # Init the recording_frame with the dataframe, but add the respective suffix
                 # but keep SampleTimeFine
                 recording_frame = XSensRecordingReader.__prepare_dataframe(
-                    sensor_frame, sensor_id)
+                    sensor_frame, sensor_id
+                )
             else:
                 sensor_frame = XSensRecordingReader.__prepare_dataframe(
-                    sensor_frame, sensor_id)
+                    sensor_frame, sensor_id
+                )
                 recording_frame = XSensRecordingReader.__merge_frames(
-                    recording_frame, sensor_frame)
+                    recording_frame, sensor_frame
+                )
         recording_frame = XSensRecordingReader.__remove_edge_nans(recording_frame)
         return recording_frame
 
     @staticmethod
     def __prepare_dataframe(frame, identifier):
-        suffix = '_' + identifier
-        del frame['PacketCounter']
+        suffix = "_" + identifier
+        del frame["PacketCounter"]
         # Fill all values of columns that begin with Quat_ with 0
         # frame['Quat_W'] = 0
         # frame['Quat_X'] = 0
         # frame['Quat_Y'] = 0
         # frame['Quat_Z'] = 0
-        #del frame['Status']
-        frame = frame.astype({'SampleTimeFine': 'int64'})
+        # del frame['Status']
+        frame = frame.astype({"SampleTimeFine": "int64"})
         frame = XSensRecordingReader.__remove_SampleTimeFine_overflow(frame)
         return XSensRecordingReader.__add_suffix_except_SampleTimeFine(frame, suffix)
 
     @staticmethod
     def __remove_SampleTimeFine_overflow(frame):
-        vals = frame['SampleTimeFine'].values
+        vals = frame["SampleTimeFine"].values
         for idx in range(1, vals.size):
-            while vals[idx] < vals[idx-1]:
+            while vals[idx] < vals[idx - 1]:
                 vals[idx] += pow(2, 32) - 1
-        frame['SampleTimeFine'] = vals
+        frame["SampleTimeFine"] = vals
         return frame
 
     # Adds a suffix to all columns, but SampleTimeFine
     @staticmethod
     def __add_suffix_except_SampleTimeFine(frame, suffix):
         rename_dictionary = {}
-        rename_dictionary['SampleTimeFine'+suffix] = 'SampleTimeFine'
+        rename_dictionary["SampleTimeFine" + suffix] = "SampleTimeFine"
         return frame.add_suffix(suffix).rename(columns=rename_dictionary)
 
     @staticmethod
@@ -100,7 +108,9 @@ class XSensRecordingReader(object):
         d_print(frame2.describe())
 
         # frame2 = frame2.astype({'SampleTimeFine': 'int64'})
-        return pd.merge_asof(frame1, frame2, on='SampleTimeFine', tolerance=16000, direction='nearest')
+        return pd.merge_asof(
+            frame1, frame2, on="SampleTimeFine", tolerance=16000, direction="nearest"
+        )
         # return pd.merge(frame1, frame2, on='SampleTimeFine', how='outer')
 
     @staticmethod
@@ -112,7 +122,9 @@ class XSensRecordingReader(object):
 
         number_of_rows_removed = rows_before - rows_after
         if number_of_rows_removed > 10:
-            d_print(f"Warning: Removed {number_of_rows_removed} rows from the recording")
+            d_print(
+                f"Warning: Removed {number_of_rows_removed} rows from the recording"
+            )
             if number_of_rows_removed > 10000:
                 d_print("This is a very large number of rows, check the data")
 

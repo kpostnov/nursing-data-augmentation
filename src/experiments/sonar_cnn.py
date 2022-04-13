@@ -1,83 +1,66 @@
+import os
 import random
-import pandas as pd
-import numpy as np
 
-from sklearn.preprocessing import MinMaxScaler
-from models.JensModel import JensModel
-from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
+from loader.Preprocessor import Preprocessor
 from loader.load_dataset import load_dataset
+from models.JensModel import JensModel
+from training.k_fold_test import k_fold_cross_validation_test
+from utils.filter_activities import filter_activities
+from utils.folder_operations import new_saved_experiment_folder
 
-
+# Init
 settings.init("sonar")
 random.seed(1678978086101)
 
-recordings = load_dataset("/Users/franz/Projects/BP/new_data")
+print(settings.ACTIVITIES)
+# Load & Prepare data
+
+# Pass a limit to only load a few recordings (for testing)
+recordings = load_dataset("/Users/franz/Projects/BP/new_data", limit=None)
 
 sensors = recordings[0].sensor_frame.shape[1]
 activities = len(settings.LABELS)
 
+recordings = Preprocessor().our_preprocess(recordings)
 
-def map_recording_activities_to_id(recording):
-    """
-    Converts the string labels of one recording to integers"
-    """
-    recording.activities = pd.Series(
-        [
-            settings.ACTIVITIES.get(activity) or settings.ACTIVITIES["invalid"]
-            for activity in recording.activities
-        ]
-    )
-    return recording
+# Filter activities & remove all recordings which have no matching activity
 
+# 8: Wagen schieben, 15: Haare kämmen, 29: Wäsche im Bett, 35: Essen austragen
+# 39: Getränke ausschenken, 52: Rollstuhl schieben, 55: Computerarbeit
+recordings = filter_activities(recordings, [8, 15, 29, 35, 39, 52, 55])
+recordings = list(filter(lambda rec: len(rec.sensor_frame) > 60, recordings))
 
-# Convert the string labels of all recordings to integers
-recordings = [map_recording_activities_to_id(recording) for recording in recordings]
-
-for recording in recordings:
-    recording.sensor_frame = recording.sensor_frame[:128000]
-    recording.activities = recording.activities[:128000]
-    recording.time_frame = recording.time_frame[:128000]
-    print(recording.sensor_frame.isnull().sum())
-for recording in recordings:
-    recording.sensor_frame = recording.sensor_frame.fillna(method="ffill")
-
-scaler = MinMaxScaler()
-for recording in recordings:
-    scaler.fit(recording.sensor_frame)
-for recording in recordings:
-    transformed_array = scaler.transform(recording.sensor_frame)
-    recording.sensor_frame = pd.DataFrame(
-        transformed_array, columns=recording.sensor_frame.columns
-    )
-
-model = JensModel(
-    window_size=25,
+# Training / Evaluation
+n_outputs = len(settings.ACTIVITIES)
+model_builder = lambda: JensModel(
+    epochs=5,
+    window_size=100,
     n_features=sensors,
-    n_outputs=len(settings.ACTIVITIES_ID_TO_NAME),
-    batch_size=128,
+    n_outputs=n_outputs,
+    batch_size=64,
 )
-model.windowize_convert_fit(recordings)
 
-X_test, y_test_true = model.windowize_convert(recordings)
-y_test_pred = model.predict(X_test)
+evaluations = k_fold_cross_validation_test(
+    model_builder, "Jens CNN w/ our data", recordings, 5, None
+)
 
 # Create Folder, save model export and evaluations there
 experiment_folder_path = new_saved_experiment_folder(
-    "opportunity_jens_cnn"
+    "our_data_jens_cnn"
 )  # create folder to store results
 
-correct_counter = 0
-for pred, true in zip(y_test_pred, y_test_true):
-    pred = np.argmax(pred)
-    true = np.argmax(true)
-    print(f"Predicted: {pred} - True: {true}")
-    if pred == true:
-        correct_counter += 1
 
-print("-----------------------------------------------------")
-print(f"Correct: {correct_counter} of {len(y_test_pred)}")
+# Maybe use markdown report, but I'm not sure yet what we want to pass
+result_md = f"""
+# Results
 
-# model.export(experiment_folder_path)
-# create_conf_matrix(experiment_folder_path, y_test_pred, y_test_true)
-# create_text_metrics(experiment_folder_path, y_test_pred, y_test_true, [accuracy])
+| Fold | Accuracy |  | |
+|-|-|-|-|
+"""
+
+for idx, e in enumerate(evaluations):
+    result_md += f"|{idx+1}|{e.correct_classification_accuracy}||| \n"
+
+with open(os.path.join(experiment_folder_path, "results.md"), "w+") as f:
+    f.writelines(result_md)
