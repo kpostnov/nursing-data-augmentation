@@ -12,4 +12,5 @@ Only import from experiments and tests
 # import experiments.opportunity_jens_cnn
 
 if __name__ == "__main__":
-    import experiments.compare_model_input
+    import experiments.leave_subject_out
+    
