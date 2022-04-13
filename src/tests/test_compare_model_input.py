@@ -37,9 +37,7 @@ def our_X_y() -> (np.ndarray, np.ndarray):
         verbose=1,
         n_epochs=10,
     )  # random init, to get windowize func
-    windows = model.windowize(
-        recordings
-    )  # we dont use jens convert as it expands a dimension, does categorical
+    windows = model.windowize(recordings) # we dont use jens convert as it expands a dimension, does categorical
 
     # !!!! From Rainbow Model convert !!!
     X = np.array(list(map(lambda window: window.sensor_array, windows)))
@@ -59,14 +57,12 @@ def jens_X_y() -> (np.ndarray, np.ndarray):
 
     return X, y
 
-
 def n_duplicate_windows(windows: np.ndarray) -> int:
     """
     Very uneffcient!!!
     - windows.shape: (n_windows, window_size, window_size, n_features)
     """
     unique_duplicate_windows = []
-
     def already_counted_as_duplicate(window):
         for unique_duplicate_window in unique_duplicate_windows:
             if np.array_equal(window, unique_duplicate_window):
@@ -79,23 +75,18 @@ def n_duplicate_windows(windows: np.ndarray) -> int:
         print_progress_bar(i, n_windows, prefix="n_duplicate_windows")
         found_duplicate = False
         for j in range(i + 1, n_windows):
-            if np.array_equal(
-                current_window, windows[j]
-            ) and not already_counted_as_duplicate(current_window):
+            if np.array_equal(current_window, windows[j]) and not already_counted_as_duplicate(current_window):
                 found_duplicate = True
                 n_duplicate_windows += 1
         if found_duplicate:
-            unique_duplicate_windows.append(current_window)
+                unique_duplicate_windows.append(current_window)
     print_progress_bar(n_windows, n_windows, prefix="n_duplicate_windows")
 
     return n_duplicate_windows
 
-
 def test_n_duplicate_windows():
     example_array = np.array([[1, 2], [5, 6], [7, 8], [1, 2], [1, 2], [1, 2], [7, 8]])
-    assert 4 == n_duplicate_windows(
-        example_array
-    ), "n_duplicate_windows is working wrong"
+    assert 4 == n_duplicate_windows(example_array), "n_duplicate_windows is working wrong"
 
 
 def intersection_np_axis_0(A: np.ndarray, B: np.ndarray) -> np.ndarray:
@@ -123,48 +114,25 @@ def intersection_np_axis_0(A: np.ndarray, B: np.ndarray) -> np.ndarray:
 
     # # This last bit is optional if you're okay with "C" being a structured array...
     # return C.view(A.dtype).reshape(-1, ncols)
-
+    
 
 def test_intersection_np_axis_0():
     # window identifier on [0][0] => len(window_identifier) == n_windows
-    to_window_identifier = lambda windows: list(
-        map(lambda window: window[0][0], windows)
-    )
+    to_window_identifier = lambda windows: list(map(lambda window: window[0][0], windows))
 
     # example numpy array a of shape (7 (windows), 3 (window_size rows), 2 (n_features columns))
-    a = np.array(
-        [
-            [[1, 2], [3, 4], [5, 6]],
-            [[19, 20], [21, 22], [23, 24]],
-            [[7, 8], [9, 10], [11, 12]],
-            [[13, 14], [15, 16], [17, 18]],
-            [[7, 8], [9, 10], [11, 12]],
-            [[19, 20], [21, 22], [23, 24]],
-            [[7, 8], [9, 10], [11, 12]],
-        ]
-    )
+    a = np.array([[[1, 2], [3, 4], [5, 6]], [[19, 20], [21, 22], [23, 24]], [[7, 8], [9, 10], [11, 12]], [[13, 14], [15, 16], [17, 18]], [[7, 8], [9, 10], [11, 12]], [[19, 20], [21, 22], [23, 24]], [[7, 8], [9, 10], [11, 12]]])
     window_identifier_a = [1, 19, 7, 13, 7, 19, 7]
     assert window_identifier_a == to_window_identifier(a)
 
     # example numpy array b of shape (4 (windows), 3 (window_size rows), 2 (n_features columns))
-    b = np.array(
-        [
-            [[1, 2], [3, 4], [5, 6]],
-            [[7, 8], [9, 10], [11, 12]],
-            [[13, 14], [15, 16], [17, 18]],
-            [[19, 20], [21, 22], [23, 24]],
-        ]
-    )
+    b = np.array([[[1, 2], [3, 4], [5, 6]], [[7, 8], [9, 10], [11, 12]], [[13, 14], [15, 16], [17, 18]], [[19, 20], [21, 22], [23, 24]]])
     window_identifier_b = [1, 7, 13, 19]
     assert window_identifier_b == to_window_identifier(b)
 
     # Intersection
-    py_list_intersection = lambda list1, list2: list(
-        filter(lambda x: x in list2, list1)
-    )  # filter true: can stay
-    window_identifier_intersection = py_list_intersection(
-        window_identifier_a, window_identifier_b
-    )
+    py_list_intersection = lambda list1, list2: list(filter(lambda x: x in list2, list1)) # filter true: can stay
+    window_identifier_intersection = py_list_intersection(window_identifier_a, window_identifier_b)
     intersection_a_b = intersection_np_axis_0(a, b)
     assert window_identifier_intersection == to_window_identifier(intersection_a_b)
 
@@ -175,7 +143,7 @@ def test_intersection_np_axis_0():
 # # Load data
 # X_our, y_our = our_X_y() # our labels are categorical
 # print('Shape of X_our:', X_our.shape) # (53320, 25, 51)
-# X_jens, y_jens = jens_X_y()
+# X_jens, y_jens = jens_X_y() 
 # print('Shape of X_jens:', X_jens.shape) # (49484, 25, 51)
 
 # # Unique
@@ -184,7 +152,8 @@ def test_intersection_np_axis_0():
 # X_jens_set = np.unique(X_jens, axis=0)
 # print('Shape of X_jens_set:', X_jens_set.shape) # (49484, 25, 51) no duplicate windows
 
-test_intersection_np_axis_0()  # TODO: write a test_intersection_np_axis_0
+test_intersection_np_axis_0() # TODO: write a test_intersection_np_axis_0
+
 
 
 """
@@ -205,3 +174,4 @@ https://stackoverflow.com/questions/8317022/get-intersecting-rows-across-two-2d-
     # This last bit is optional if you're okay with "C" being a structured array...
     C = C.view(A.dtype).reshape(-1, ncols)
 """
+

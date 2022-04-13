@@ -56,7 +56,7 @@ def read_files(current_path_in_repo, path_to_opportunity_folder):
         "./dataset/S4-ADL5.dat",
     ]
 
-    shuffle(list_of_files)  # new: to not take advantage of file order in test set
+    shuffle(list_of_files) # new: to not take advantage of file order in test set
 
     list_of_drill = [
         "./dataset/S1-Drill.dat",
@@ -286,7 +286,7 @@ def reset_label(dataCollection, locomotion):
     # Convert original labels {1, 2, 4, 5, 101, 102, 103, 104, 105} to new labels.
 
     # CHANGE??!! before the NULL Acitivity was filtered out!!1
-    without_null_mapping = {
+    without_null_mapping = { 
         1: 1,
         2: 2,
         5: 0,
@@ -309,9 +309,9 @@ def reset_label(dataCollection, locomotion):
 
     if locomotion:  # new labels [0,1,2,3]
         for i in [5, 4]:  # reset ids in Locomotion column
-            dataCollection.loc[
-                dataCollection.Locomotion == i, "Locomotion"
-            ] = without_null_mapping[i]
+            dataCollection.loc[dataCollection.Locomotion == i, "Locomotion"] = without_null_mapping[
+                i
+            ]
     else:  # reset the high level activities ; new labels [0,1,2,3,4]
         for j in [101, 102, 103, 104, 105]:  # reset ids in HL_activity column
             dataCollection.loc[
@@ -393,15 +393,13 @@ def segment_high_level(
         # what if it changes back and forth?
         if (
             data[start][HL_Activity_i] == data[end][HL_Activity_i]
-            and data[start][-1] == data[end][-1]  # the last index is the file index
+            and data[start][-1] == data[end][-1] # the last index is the file index
         ):
 
             # print(data[start:(end+1),0:(HL_Activity_i)])
             # first part time axis, second part sensor axis -> get window
             X.append(
-                data[
-                    start : (end + 1), 0 : (HL_Activity_i - 1)
-                ]  # data[timeaxis/row, featureaxis/column] data[1, 2] gives specific value, a:b gives you an interval
+                data[start : (end + 1), 0 : (HL_Activity_i - 1)] # data[timeaxis/row, featureaxis/column] data[1, 2] gives specific value, a:b gives you an interval
             )  # slice before locomotion
             y.append(data[start][HL_Activity_i])  # the first data point is enough
             start += window_size // 2  # 50% overlap!!!!!!!!!
