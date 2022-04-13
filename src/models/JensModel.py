@@ -33,7 +33,7 @@ import itertools
 
 
 class JensModel(RainbowModel):
-    def __init__(self, epochs=10, **kwargs):
+    def __init__(self, **kwargs):
         """
 
         epochs=10
@@ -47,10 +47,8 @@ class JensModel(RainbowModel):
         super().__init__(**kwargs)
         self.window_size = kwargs["window_size"]
         self.verbose = kwargs.get("verbose") or True
-        self.n_epochs = kwargs.get("n_epochs") or epochs
+        self.n_epochs = kwargs.get("n_epochs") or 10
         self.model_name = "jens_model"
-
-        self.epochs = epochs
 
         # create model
         self.model = self._create_model(kwargs["n_features"], kwargs["n_outputs"])
