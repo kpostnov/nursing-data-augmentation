@@ -3,9 +3,24 @@ import json
 import os
 
 
-def init():
+def init(dataset: str):
+    global saved_experiments_path
+    saved_experiments_path = "src/saved_experiments"
 
-    # SONAR
+    # Model / Dataset specific configuration
+    if dataset == "opportunity":
+        init_opportunity()
+    elif dataset == "sonar":
+        init_sonar()
+    elif dataset == "pamap2":
+        init_pamap2()
+    elif dataset == "nursing":
+        init_nursing()
+    else:
+        raise Exception("Unknown dataset")
+
+
+def init_sonar():
     global LABELS
     with open("labels.json") as file:
         categories = json.load(file)["items"]
@@ -14,7 +29,6 @@ def init():
                 category["entries"] for category in categories
             )
         )
-        print(LABELS)
 
     global IS_WINDOWS
     IS_WINDOWS = os.name == "nt"
@@ -47,15 +61,10 @@ def init():
     global CSV_HEADER_SIZE
     CSV_HEADER_SIZE = 8
 
-    # OPPORTUNITY
+
+def init_opportunity():
     global opportunity_dataset_path
     opportunity_dataset_path = "../../datasets/OpportunityUCIDataset"
-
-    global pamap2_dataset_path
-    pamap2_dataset_path = "../../datasets/PAMAP2_Dataset"
-
-    global nursing_dataset_path
-    nursing_dataset_path = "../../datasets/NURSING_2020"
 
     global activity_initial_num_to_activity_str
     activity_initial_num_to_activity_str = {
@@ -77,7 +86,11 @@ def init():
         105: 5,
     }
 
-    # PAMAP2
+
+def init_pamap2():
+    global pamap2_dataset_path
+    pamap2_dataset_path = "../../datasets/PAMAP2_Dataset"
+
     global pamap2_activity_map
     pamap2_activity_map = {
         1: "lying",
@@ -88,5 +101,7 @@ def init():
         17: "ironing"
     }
 
-    global saved_experiments_path
-    saved_experiments_path = 'src/saved_experiments'
+
+def init_nursing():
+    global nursing_dataset_path
+    nursing_dataset_path = "../../datasets/NURSING_2020"

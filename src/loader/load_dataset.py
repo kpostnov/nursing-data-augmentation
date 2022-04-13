@@ -10,8 +10,6 @@ from utils import settings
 from utils.Recording import Recording
 from loader.XSensRecordingReader import XSensRecordingReader
 
-settings.init("sonar")
-
 
 def load_dataset(dataset_path: str, limit: int = None) -> "list[Recording]":
     """
@@ -42,7 +40,7 @@ def load_dataset(dataset_path: str, limit: int = None) -> "list[Recording]":
     if not os.path.exists(dataset_path):
         raise Exception("The dataset_path does not exist")
 
-    recordings: list[Recording] = []
+    recordings: "list[Recording]" = []
 
     # recording
     recording_folder_names = get_subfolder_names(dataset_path)
