@@ -25,21 +25,13 @@ def k_fold_cross_validation_test(
     recordings: np.ndarray = np.array(recordings_in)  # for comfortable index splitting
     k_fold = KFold(n_splits=k, random_state=None)
     for idx, (train_index, test_index) in enumerate(k_fold.split(recordings)):
-        recordings_tuple: "tuple[np.ndarray, np.ndarray]" = (
+        print(f"Starting fold {idx}")
+        recordings_train, recordings_test = (
             recordings[train_index],
             recordings[test_index],
         )
-        print(f"Starting fold {idx}")
 
         model = model_builder()
-
-        if data_augmentation_func:
-            recordings_tuple = (
-                data_augmentation_func(recordings[train_index]),
-                recordings[test_index],
-            )
-        recordings_train, recordings_test = recordings_tuple
-
         model.windowize_convert_fit(recordings_train)
 
         # Evaluate model

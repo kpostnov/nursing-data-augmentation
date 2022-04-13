@@ -52,7 +52,7 @@ class MultiOrhanEvaluator(Evaluation):
         average_failure_rate = self._average_failure_rate(prediction_vectors, y_test)
 
         # Calculate F1 Score
-        # f1_score = Evaluation.py.__f1_score(model, X_test, y_test)
+        # f1_score = Evaluation.__f1_score(model, X_test, y_test)
 
         return MarkdownTestResult(
             model,
