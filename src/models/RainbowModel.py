@@ -1,4 +1,4 @@
-# pylint: disable=locally-disabled, multiple-statements, fixme, line-too-long, no-name-in-module, wrong-import-order, bad-option-value
+# pylint: disable=locally-disabled, multiple-statements, fixme, line-too-long, no-name-in-module, import-error, wrong-import-order, bad-option-value
 
 import os
 from abc import ABC, abstractmethod
@@ -20,10 +20,10 @@ from utils.typing import assert_type
 
 class RainbowModel(ABC):
 
-    # general
+    # General
     model_name = None
 
-    # variables that need to be implemented in the child class
+    # Variables that need to be implemented in the child class
     window_size: Union[int, None] = None
     stride_size: Union[int, None] = None
     class_weight = None

@@ -64,7 +64,7 @@ def load_nursing_train_dataset(nursing_dataset_path: str) -> "list[Recording]":
     """
     Returns a list of Recordings from the NURSING_2020 dataset (all training data). 
     """
-    print("Reading the NURSING dataset")
+    print("Reading the NURSING dataset...")
 
     recordings = []
     recordings += load_nursing_field_dataset(nursing_dataset_path)

@@ -4,17 +4,11 @@ import pandas as pd
 from dataclasses import dataclass
 
 
-
 @dataclass
 class Recording:
     """
-    our base data object
+    Our base data object
     Multilabel, so expects activity pd.Series
-
-    Future: 
-        - a dataclass creates the intializer automatically
-            - consider only giving the attributes as class vars -> dataclass handles this
-        - add self.recorder
     """
 
     def __init__(
@@ -39,4 +33,3 @@ class Recording:
         self.time_frame = time_frame
         self.activities = activities
         self.subject = subject
-

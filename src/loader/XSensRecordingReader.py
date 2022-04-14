@@ -7,12 +7,9 @@ import utils.settings as settings
 verbose = False
 
 if verbose:
-
     def d_print(*args):
         print(*args)
-
 else:
-
     def d_print(*args):
         pass
 

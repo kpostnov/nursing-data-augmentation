@@ -7,12 +7,9 @@ import os
 
 def create_conf_matrix(path: str, y_test_pred: np.ndarray, y_test_true: np.ndarray) -> None:
     """
-    creates and saves conf matrix as .png to path 
-
-    TODO: this function shows a window on your desktop, not needed its saved in the folder, deactivate that
-    (PS: its not imshow, haha)
+    Creates and saves confusion matrix as .png to path 
     """
-    # Convertion
+
     classes = list(range(len(y_test_true[0]))) # [0, 1, 0, 0, 0] to [0, 1, 2, 3, 4]
     y_test_true = np.argmax(y_test_true, axis=1)
     y_test_pred = np.argmax(y_test_pred, axis=1)
@@ -51,5 +48,4 @@ def create_conf_matrix(path: str, y_test_pred: np.ndarray, y_test_true: np.ndarr
         plt.xlabel("predicted label")
         f3.show()
 
-    # Save
     plt.savefig(os.path.join(path, "conf_matrix.png"))
