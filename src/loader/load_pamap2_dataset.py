@@ -14,7 +14,7 @@ def load_pamap2_dataset(
     Each Recording corresponds to one subject.
     NOTE: Returns only those subjects and recordings that were mentioned in the paper. (Hoelzmann et al., 2021)
     """
-    print("Reading the PAMAP2 dataset")
+    print("Reading the PAMAP2 dataset...")
     pamap2_dataset_path += "/Protocol"
     subject_ids = range(1, 9)
 
@@ -55,7 +55,9 @@ def load_pamap2_dataset(
         recordings.append(Recording(
             sensor_frame=df.iloc[:, 2:],
             time_frame=df.loc[:, "timestamp"],
-            activities=df.loc[:, "activity_id"],
+            activities=df.loc[:, "activity_id"].map(
+                lambda label: settings.pamap2_initial_num_to_activity_idx[label]
+            ),
             subject=str(subject_id)
         ))
 

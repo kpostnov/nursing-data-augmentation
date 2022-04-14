@@ -13,8 +13,8 @@ import utils.settings as settings
 
 
 # Load data
-# recordings = load_pamap2_dataset(settings.pamap2_dataset_path)
-recordings = load_opportunity_dataset(settings.opportunity_dataset_path)
+recordings = load_pamap2_dataset(settings.pamap2_dataset_path)
+# recordings = load_opportunity_dataset(settings.opportunity_dataset_path)
 
 random.seed(1678978086101)
 random.shuffle(recordings)

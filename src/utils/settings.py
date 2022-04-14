@@ -5,7 +5,7 @@ import os
 
 def init(dataset: str):
     global saved_experiments_path
-    saved_experiments_path = "src/saved_experiments"
+    saved_experiments_path = "../saved_experiments"
 
     # Model / Dataset specific configuration
     if dataset == "opportunity":
@@ -45,19 +45,6 @@ def init_sonar():
     global activity_initial_num_to_activity_str
     activity_initial_num_to_activity_str = ACTIVITIES_ID_TO_NAME
 
-    global BP_PATH
-    BP_PATH = "/dhc/groups/bp2021ba1"
-
-    global ML_RAINBOW_PATH
-    ML_RAINBOW_PATH = BP_PATH + "/apps/ml-rainbow"
-
-    global DATA_PATH
-    DATA_PATH = (
-        BP_PATH + "/data"
-        if not IS_WINDOWS
-        else os.path.dirname(os.path.abspath(__file__)) + "/../dataWindows"
-    )
-
     global SENSOR_SUFFIX_ORDER
     SENSOR_SUFFIX_ORDER = ["LF", "LW", "ST", "RW", "RF"]
 
@@ -96,6 +83,16 @@ def init_opportunity():
 def init_pamap2():
     global pamap2_dataset_path
     pamap2_dataset_path = "../../datasets/PAMAP2_Dataset"
+
+    global pamap2_initial_num_to_activity_idx
+    pamap2_initial_num_to_activity_idx = {
+        1: 0,
+        2: 1,
+        3: 2,
+        4: 3,
+        16: 4,
+        17: 5,
+    }
 
     global pamap2_activity_map
     pamap2_activity_map = {
