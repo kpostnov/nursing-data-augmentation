@@ -1,4 +1,4 @@
-# pylint: disable=locally-disabled, multiple-statements, fixme, line-too-long, no-name-in-module, unused_import, wrong-import-order, bad-option-value
+# pylint: disable=locally-disabled, multiple-statements, fixme, line-too-long, no-name-in-module, wrong-import-order, bad-option-value
 
 import os
 from abc import ABC, abstractmethod
@@ -6,9 +6,9 @@ from random import shuffle
 from typing import Any, Union
 
 import numpy as np
+from tensorflow import keras
+from tensorflow.keras.utils import to_categorical
 import tensorflow as tf  # type: ignore
-from tensorflow.keras.utils import to_categorical  # type: ignore
-from tensorflow.python.saved_model.utils_impl import get_saved_model_pb_path  # type: ignore
 
 import utils.settings as settings
 from utils.Recording import Recording
@@ -43,11 +43,8 @@ class RainbowModel(ABC):
         they need to be stored as instance variable, that they can be accessed, when needed.
         """
 
-        # self.model = None
-        # assert (self.model is not None)
         self.kwargs = kwargs
 
-    # @error_after_seconds(600) # after 10 minutes, something is wrong
     def windowize_convert_fit(self, recordings_train: "list[Recording]") -> None:
         """
         For a data efficient comparison between models, the preprocessed data for
@@ -135,7 +132,7 @@ class RainbowModel(ABC):
         assert (
             X_train.shape[0] == y_train.shape[0]
         ), "X_train and y_train have to have the same length"
-        # print(f"Fitting with class weight: {self.class_weight}")
+
         history = self.model.fit(
             X_train,
             y_train,
@@ -177,7 +174,7 @@ class RainbowModel(ABC):
 
         converter.optimizations = [
             tf.lite.Optimize.DEFAULT
-        ]  # Refactoring Idea: Optimizations for new tensorflow version
+        ] 
         converter.experimental_new_converter = True
         converter.target_spec.supported_ops = [
             tf.lite.OpsSet.TFLITE_BUILTINS,

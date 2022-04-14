@@ -21,6 +21,9 @@ def init(dataset: str):
 
 
 def init_sonar():
+    global sonar_dataset_path
+    sonar_dataset_path = "../../datasets/SONAR"
+
     global LABELS
     with open("labels.json") as file:
         categories = json.load(file)["items"]
@@ -76,6 +79,9 @@ def init_opportunity():
         105: "sandwich time",
     }
 
+    global ACTIVITIES
+    ACTIVITIES = list(activity_initial_num_to_activity_str.values())
+
     global activity_initial_num_to_activity_idx
     activity_initial_num_to_activity_idx = {
         0: 0,
@@ -100,6 +106,9 @@ def init_pamap2():
         16: "vacuum cleaning",
         17: "ironing"
     }
+
+    global ACTIVITIES
+    ACTIVITIES = list(pamap2_activity_map.values())
 
 
 def init_nursing():

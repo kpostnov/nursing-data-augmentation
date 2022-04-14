@@ -1,42 +1,33 @@
 # pylint: disable=locally-disabled, multiple-statements, fixme, line-too-long, no-name-in-module, wrong-import-order, bad-option-value
-# some imports are not accepted by pylint
 
+import itertools
 from models.RainbowModel import RainbowModel
 import numpy as np
 import matplotlib.pyplot as plt
-import tensorflow
+
 from tensorflow import keras
-import h5py
-from keras import regularizers
-from keras.layers import (
-    Input,
-    Conv2D,
-    Dense,
-    Flatten,
-    Dropout,
-    LSTM,
-    GlobalMaxPooling1D,
-    MaxPooling2D,
-    BatchNormalization,
-)
-from keras.models import Model
-from keras.optimizers import Adam
+from keras.models import Sequential
+from keras import layers
+from keras.layers import Dense, Activation
+from keras.layers import LSTM
+from keras.layers.embeddings import Embedding
+
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
-import itertools
-
-from datetime import datetime
-import os
 from utils.typing import assert_type
 from utils.Window import Window
 from utils.Recording import Recording
-import itertools
 
 
-class JensModel(RainbowModel):
+class DeepConvLSTM(RainbowModel):
+
+    batch_size = 100
+    n_filters = 64
+    kernel_size = 5
+    n_lstm_units = 128
+
     def __init__(self, **kwargs):
         """
-
         epochs=10
         :param kwargs:
             window_size: int
@@ -44,68 +35,58 @@ class JensModel(RainbowModel):
             n_outputs: int
         """
 
-        # hyper params to instance vars
         super().__init__(**kwargs)
         self.window_size = kwargs["window_size"]
+        self.n_features = kwargs["n_features"]
+        self.n_outputs = kwargs["n_outputs"]
         self.verbose = kwargs.get("verbose") or True
         self.n_epochs = kwargs.get("n_epochs") or 10
         self.learning_rate = kwargs.get("learning_rate") or 0.001
-        self.model_name = "jens_model"
+        self.model_name = "DeepConvLSTM"
 
-        # create model
-        self.model = self._create_model(kwargs["n_features"], kwargs["n_outputs"])
+        # Create model
+        self.model = self._create_model(self.n_features, self.n_outputs)
         print(
-            f"Building model for {self.window_size} timesteps (window_size) and {kwargs['n_features']} features"
+            f"Building model for {self.window_size} timesteps (window_size) and {kwargs['n_features']} features."
         )
 
     def _create_model(self, n_features, n_outputs):
+        model = keras.Sequential()
+        model.add(keras.Input(shape=(self.window_size, n_features, 1)))
 
-        i = Input(
-            shape=(self.window_size, n_features, 1)
-        )  # before: self.x_train[0].shape - (25, 51, 1)... before self_x_train = np.expand_dims(self.x_train[0], -1) - around the value another []
-        x = Conv2D(
-            32,
-            (3, 3),
-            strides=2,
-            activation="relu",
-            padding="same",
-            kernel_regularizer=regularizers.l2(0.0005),
-        )(i)
-        x = BatchNormalization()(x)
-        x = MaxPooling2D((2, 2))(x)
-        x = Dropout(0.2)(x)
-        x = Conv2D(
-            64,
-            (3, 3),
-            strides=2,
-            activation="relu",
-            padding="same",
-            kernel_regularizer=regularizers.l2(0.0005),
-        )(x)
-        x = BatchNormalization()(x)
-        x = Dropout(0.4)(x)
-        x = Conv2D(
-            128,
-            (3, 3),
-            strides=2,
-            activation="relu",
-            padding="same",
-            kernel_regularizer=regularizers.l2(0.0005),
-        )(x)
-        x = BatchNormalization()(x)
-        x = MaxPooling2D((2, 2))(x)
-        x = Dropout(0.2)(x)
-        x = Flatten()(x)
-        x = Dropout(0.2)(x)
-        x = Dense(1024, activation="relu")(x)
-        x = Dropout(0.2)(x)
-        x = Dense(n_outputs, activation="softmax")(x)
-        model = Model(i, x)
+        # Random orthogonal weights
+        initializer = keras.initializers.Orthogonal()
+
+        # 4 CNN layers
+        model.add(layers.Conv2D(self.n_filters, kernel_size=(
+            self.kernel_size, 1), activation="relu", kernel_initializer=initializer))
+        model.add(layers.Conv2D(self.n_filters, kernel_size=(
+            self.kernel_size, 1), activation="relu", kernel_initializer=initializer))
+        model.add(layers.Conv2D(self.n_filters, kernel_size=(
+            self.kernel_size, 1), activation="relu", kernel_initializer=initializer))
+        model.add(layers.Conv2D(self.n_filters, kernel_size=(
+            self.kernel_size, 1), activation="relu", kernel_initializer=initializer))
+
+        # (None, window_size, n_features, n_filters) -> (None, n_features, window_size * n_filters)
+        model.add(layers.Permute((2, 1, 3)))
+        model.add(layers.Reshape((int(model.layers[4].output_shape[1]), 
+            int(model.layers[4].output_shape[2]) * int(model.layers[4].output_shape[3]))))
+
+        # 2 LSTM layers
+        model.add(layers.LSTM(self.n_lstm_units, activation="tanh", dropout=0.5,
+                  return_sequences=True, kernel_initializer=initializer))
+        model.add(layers.LSTM(self.n_lstm_units, activation="tanh", dropout=0.5,
+                  return_sequences=True, kernel_initializer=initializer))
+        model.add(layers.Flatten())
+
+        model.add(layers.Dense(n_outputs, activation="softmax"))
+
+        print(model.summary())
+
         model.compile(
-            optimizer=Adam(learning_rate=self.learning_rate),
-            loss="categorical_crossentropy",  # CategoricalCrossentropy (than we have to to the one hot encoding - to_categorical), before: "sparse_categorical_crossentropy"
-            metrics=["accuracy"],
-        )
+            loss='categorical_crossentropy', 
+            optimizer='RMSprop', 
+            metrics=[keras.metrics.CategoricalAccuracy(), 'accuracy'])
 
         return model
 

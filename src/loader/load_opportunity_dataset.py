@@ -71,11 +71,14 @@ def load_opportunity_dataset(opportunity_dataset_path: str) -> "list[Recording]"
         "IMU-R-SHOE-AngVelNavFrameY",
         "IMU-R-SHOE-AngVelNavFrameZ",
     ]
-    print(f"Selected features (n_features: {len(selected_feature_names)}):\n", "\n".join(["\t" + str(feature_name) for feature_name in selected_feature_names]))
+    print(f"Selected features (n_features: {len(selected_feature_names)}):\n", "\n".join(
+        ["\t" + str(feature_name) for feature_name in selected_feature_names]))
 
     # Get column names
     col_names = []
-    with open("src/loader/opportunity_col_names", "r") as file:
+    current_directory_path = os.path.dirname(os.path.realpath(__file__))
+    opportunity_col_names_path = os.path.join(current_directory_path, "opportunity_col_names")
+    with open(opportunity_col_names_path, "r") as file:
         lines = file.read().splitlines()
         for line in lines:
             col_names.append(line)
@@ -83,18 +86,19 @@ def load_opportunity_dataset(opportunity_dataset_path: str) -> "list[Recording]"
     recordings = []
     for sub, rec in itertools.product(subject_ids, recording_ids):
         file_name = f"S{sub}-ADL{rec}.dat"
-        file_path = os.path.join(os.path.dirname(__file__), opportunity_dataset_path, file_name)
+        file_path = os.path.join(os.path.dirname(
+            __file__), opportunity_dataset_path, file_name)
         print(f"Reading {file_path} ...")
         file_df = pd.read_csv(file_path, delimiter=" ", header=None)
-        file_df.columns = col_names # give them the real column names
+        file_df.columns = col_names  # give them the real column names
 
         recordings.append(Recording(
-            sensor_frame = file_df.loc[:, selected_feature_names], 
-            time_frame = file_df.loc[:, 'MILLISEC'],
-            activities = file_df.loc[:, 'HL_Activity'].map(
+            sensor_frame=file_df.loc[:, selected_feature_names],
+            time_frame=file_df.loc[:, 'MILLISEC'],
+            activities=file_df.loc[:, 'HL_Activity'].map(
                 lambda label: settings.activity_initial_num_to_activity_idx[label]
             ),  # Use `[0]` to get only one activity | maps 0, 101, 102, 103, 104, 105 to 0, 1, 2, 3, 4, 5
-            subject = f"{sub}",
+            subject=f"{sub}",
         ))
 
     print(f"\n => Total {len(recordings)} recordings read")

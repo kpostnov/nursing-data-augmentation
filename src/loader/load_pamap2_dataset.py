@@ -55,9 +55,7 @@ def load_pamap2_dataset(
         recordings.append(Recording(
             sensor_frame=df.iloc[:, 2:],
             time_frame=df.loc[:, "timestamp"],
-            activities=df.loc[:, "activity_id"].map(
-                lambda label: settings.pamap2_activity_map[label]
-            ),
+            activities=df.loc[:, "activity_id"],
             subject=str(subject_id)
         ))
 
