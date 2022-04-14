@@ -21,6 +21,7 @@ from utils.Recording import Recording
 
 class DeepConvLSTM(RainbowModel):
 
+    # General
     batch_size = 100
     n_filters = 64
     kernel_size = 5
@@ -28,7 +29,6 @@ class DeepConvLSTM(RainbowModel):
 
     def __init__(self, **kwargs):
         """
-        epochs=10
         :param kwargs:
             window_size: int
             n_features: int
@@ -42,6 +42,7 @@ class DeepConvLSTM(RainbowModel):
         self.verbose = kwargs.get("verbose") or True
         self.n_epochs = kwargs.get("n_epochs") or 10
         self.learning_rate = kwargs.get("learning_rate") or 0.001
+        self.frequency = kwargs.get("frequency") or 30
         self.model_name = "DeepConvLSTM"
 
         # Create model
@@ -49,6 +50,7 @@ class DeepConvLSTM(RainbowModel):
         print(
             f"Building model for {self.window_size} timesteps (window_size) and {kwargs['n_features']} features."
         )
+
 
     def _create_model(self, n_features, n_outputs):
         model = keras.Sequential()
@@ -90,11 +92,10 @@ class DeepConvLSTM(RainbowModel):
 
         return model
 
+
     def _windowize_recording(self, recording: "Recording") -> "list[Window]":
         windows = []
-        recording_sensor_array = (
-            recording.sensor_frame.to_numpy()
-        )  # recording_sensor_array[timeaxis/row, sensoraxis/column]
+        recording_sensor_array = (recording.sensor_frame.to_numpy())  
         activities = recording.activities.to_numpy()
 
         start = 0
@@ -106,39 +107,32 @@ class DeepConvLSTM(RainbowModel):
         while last_start_stamp_not_reached(start):
             end = start + self.window_size - 1
 
-            # has planned window the same activity in the beginning and the end?
-            if (
-                len(set(activities[start : (end + 1)])) == 1
-            ):  # its important that the window is small (otherwise can change back and forth) # activities[start] == activities[end] a lot faster probably
-                window_sensor_array = recording_sensor_array[
-                    start : (end + 1), :
-                ]  # data[timeaxis/row, featureaxis/column] data[1, 2] gives specific value, a:b gives you an interval
-                activity = activities[start]  # the first data point is enough
-                start += (
-                    self.window_size // 2
-                )  # 50% overlap!!!!!!!!! - important for the waste calculation
-                windows.append(
-                    Window(window_sensor_array, int(activity), recording.subject)
-                )
-
-            # if the frame contains different activities or from different objects, find the next start point
-            # if there is a rest smaller than the window size -> skip (window small enough?)
+            # Has planned window the same activity in the beginning and the end?
+            if (len(set(activities[start : (end + 1)])) == 1):  
+                window_sensor_array = recording_sensor_array[start : (end + 1), :]
+                activity = activities[start]
+                start += (self.window_size // 2) # 50% overlap
+                
+                windows.append(Window(window_sensor_array, int(activity), recording.subject))
             else:
-                # find the switch point -> start + 1 will than be the new start point
-                # Refactoring idea (speed): Have switching point array to find point immediately
-                # https://stackoverflow.com/questions/19125661/find-index-where-elements-change-value-numpy/19125898#19125898
                 while last_start_stamp_not_reached(start):
                     if activities[start] != activities[start + 1]:
                         start += 1
                         break
                     start += 1
+
         return windows
 
-    def _print_jens_windowize_monitoring(self, recordings: "list[Recording]"):
-        def n_wasted_timesteps_jens_windowize(recording: "Recording"):
+
+    def _print_non_continuous_windowize_monitoring(self, recordings: "list[Recording]"):
+        """
+        Prints the number of timesteps that cannot be used in the model (discarded). 
+        This can happen if a window contains more than one activity.
+        """
+        def n_wasted_timesteps_windowize(recording: "Recording"):
             activities = recording.activities.to_numpy()
             change_idxs = np.where(activities[:-1] != activities[1:])[0] + 1
-            # (overlapping amount self.window_size // 2 from the algorithm!)
+
             def get_n_wasted_timesteps(label_len):
                 return (
                     (label_len - self.window_size) % (self.window_size // 2)
@@ -146,7 +140,6 @@ class DeepConvLSTM(RainbowModel):
                     else label_len
                 )
 
-            # Refactoring to map? Would need an array lookup per change_idx (not faster?!)
             start_idx = 0
             n_wasted_timesteps = 0
             for change_idx in change_idxs:
@@ -162,46 +155,40 @@ class DeepConvLSTM(RainbowModel):
             return n_wasted_timesteps
 
         def to_hours_str(n_timesteps) -> int:
-            hz = 30
+            hz = self.frequency
             minutes = (n_timesteps / hz) / 60
             hours = int(minutes / 60)
             minutes_remaining = int(minutes % 60)
             return f"{hours}h {minutes_remaining}m"
 
-        n_total_timesteps = sum(
-            map(lambda recording: len(recording.activities), recordings)
-        )
-        n_wasted_timesteps = sum(map(n_wasted_timesteps_jens_windowize, recordings))
+        n_total_timesteps = sum(map(lambda recording: len(recording.activities), recordings))
+        n_wasted_timesteps = sum(map(n_wasted_timesteps_windowize, recordings))
+        
         print(
-            f"=> jens_windowize_monitoring (total recording time)\n\tbefore: {to_hours_str(n_total_timesteps)}\n\tafter: {to_hours_str(n_total_timesteps - n_wasted_timesteps)}"
+            f"=> Total recording time: \n\t before: {to_hours_str(n_total_timesteps)}\n\t after: {to_hours_str(n_total_timesteps - n_wasted_timesteps)}"
         )
         print(f"n_total_timesteps: {n_total_timesteps}")
         print(f"n_wasted_timesteps: {n_wasted_timesteps}")
 
+
     def windowize(self, recordings: "list[Recording]") -> "list[Window]":
         """
-        Jens version of windowize
-        - no stride size default overlapping 50 percent
-        - there is is a test for that method
-        - window needs be small, otherwise there will be much data loss
+        - No stride size (overlapping 50%)
+        - Skip time steps if window contains multiple activities
         """
         assert_type([(recordings[0], Recording)])
         assert (
             self.window_size is not None
-        ), "window_size has to be set in the constructor of your concrete model class please, you stupid ass"
-        if self.window_size > 25:
-            print(
-                "\n===> WARNING: the window_size is big with the used windowize algorithm (Jens) you have much data loss!!! (each activity can only be a multiple of the half the window_size, with overlapping a half of a window is cutted)\n"
-            )
+        ), "window_size has to be set in the constructor of your concrete model class."
 
-        self._print_jens_windowize_monitoring(recordings)
-        # Refactoring idea (speed): Mulitprocessing https://stackoverflow.com/questions/20190668/multiprocessing-a-for-loop/20192251#20192251
-        print("windowizing in progress ....")
+        self._print_non_continuous_windowize_monitoring(recordings)
+        print("Windowizing in progress...")
         recording_windows = list(map(self._windowize_recording, recordings))
-        print("windowizing done")
-        return list(
-            itertools.chain.from_iterable(recording_windows)
-        )  # flatten (reduce dimension)
+        print("Windowizing done.")
+
+        # Flatten list of lists
+        return list(itertools.chain.from_iterable(recording_windows))
+
 
     def convert(self, windows: "list[Window]") -> "tuple[np.ndarray, np.ndarray]":
         X_train, y_train = super().convert(windows)

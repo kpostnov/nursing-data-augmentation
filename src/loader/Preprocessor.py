@@ -9,10 +9,6 @@ from utils.typing import assert_type
 class Preprocessor:
     """
     Preprocessing templates (e.g. jens_preprocess) combine the private functions
-
-    Refactoring Idea:
-    - intitalize with functions that will be executed in the order
-    - provide templates
     """
 
     def jens_preprocess(self, recordings: "list[Recording]") -> "list[Recording]":
@@ -21,7 +17,6 @@ class Preprocessor:
         """
         assert_type([(recordings[0], Recording)])
 
-        # not needed? dataCollection = dataCollection.apply(pd.to_numeric, errors="coerce")  # data like 'k' (strings) will be converted to NaN
         recordings = self._normal_interpolate(recordings)
         return recordings
 

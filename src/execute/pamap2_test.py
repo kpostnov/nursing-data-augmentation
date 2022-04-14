@@ -35,14 +35,13 @@ model = DeepConvLSTM(window_size=25, n_features=recordings[0].sensor_frame.shape
 model.windowize_convert_fit(recordings_train)
 
 # Test, Evaluate
-# labels are always in vector format
 X_test, y_test_true = model.windowize_convert(recordings_test)
 y_test_pred = model.predict(X_test)
 
 # Create Folder, save model export and evaluations there
-experiment_folder_path = new_saved_experiment_folder('pamap_deepconv') # create folder to store results
+experiment_folder_path = new_saved_experiment_folder('pamap_deepconv')
 
-model.export(experiment_folder_path) # opt: export model to folder
+# Export model
+model.export(experiment_folder_path)
 create_conf_matrix(experiment_folder_path, y_test_pred, y_test_true)
 create_text_metrics(experiment_folder_path, y_test_pred, y_test_true, [accuracy])
-

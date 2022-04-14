@@ -34,6 +34,7 @@ class RainbowModel(ABC):
     n_epochs: Union[int, None] = None
     kwargs = None
 
+
     @abstractmethod
     def __init__(self, **kwargs):
         """
@@ -44,6 +45,7 @@ class RainbowModel(ABC):
         """
 
         self.kwargs = kwargs
+
 
     def windowize_convert_fit(self, recordings_train: "list[Recording]") -> None:
         """
@@ -56,13 +58,14 @@ class RainbowModel(ABC):
         X_train, y_train = self.windowize_convert(recordings_train)
         self.fit(X_train, y_train)
 
+
     # Preprocess ----------------------------------------------------------------------
 
     def windowize_convert(
         self, recordings_train: "list[Recording]"
     ) -> "tuple[np.ndarray,np.ndarray]":
         """
-        shuffles the windows
+        Shuffles the windows
         """
         windows_train = self.windowize(recordings_train)
         shuffle(
@@ -71,40 +74,20 @@ class RainbowModel(ABC):
         X_train, y_train = self.convert(windows_train)
         return X_train, y_train
 
+
+    @abstractmethod
     def windowize(self, recordings: "list[Recording]") -> "list[Window]":
         """
-        based on the hyper param for window size, windowizes the recording_frames
+        Based on the hyper param for window size, windowizes the recording_frames
         convertion to numpy arrays
         """
         assert_type([(recordings[0], Recording)])
+        raise NotImplementedError
 
-        assert (
-            self.window_size is not None
-        ), "window_size has to be set in the constructor of your concrete model class please, you stupid ass"
-        assert (
-            self.stride_size is not None
-        ), "stride_size has to be set in the constructor of your concrete model class, please"
-
-        windows: "list[Window]" = []
-        for recording in recordings:
-            sensor_array = recording.sensor_frame.to_numpy()
-            sensor_subarrays = transform_to_subarrays(
-                sensor_array, self.window_size, self.stride_size
-            )
-            recording_windows = list(
-                map(
-                    lambda sensor_subarray: Window(
-                        sensor_subarray, recording.activity, recording.subject
-                    ),
-                    sensor_subarrays,
-                )
-            )
-            windows.extend(recording_windows)
-        return windows
 
     def convert(self, windows: "list[Window]") -> "tuple[np.ndarray, np.ndarray]":
         """
-        converts the windows to two numpy arrays as needed for the concrete model
+        Converts the windows to two numpy arrays as needed for the concrete model
         sensor_array (data) and activity_array (labels)
         """
         assert_type([(windows[0], Window)])
@@ -119,6 +102,7 @@ class RainbowModel(ABC):
         )
 
         return np.array(sensor_arrays), np.array(activity_vectors)
+
 
     # Fit ----------------------------------------------------------------------
 
@@ -144,17 +128,19 @@ class RainbowModel(ABC):
         )
         self.history = history
 
+
     # Predict ------------------------------------------------------------------------
 
     def predict(self, X_test: np.ndarray) -> np.ndarray:
         """
-        gets a list of windows and returns a list of prediction_vectors
+        Gets a list of windows and returns a list of prediction_vectors
         """
         return self.model.predict(X_test)
 
+
     def export(self, path: str) -> None:
         """
-        will create an 'export' folder in the path, and save the model there in 3 different formats
+        Will create an 'export' folder in the path, and save the model there in 3 different formats
         """
         print("Exporting model ...")
 
