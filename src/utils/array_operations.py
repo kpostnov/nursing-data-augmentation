@@ -5,18 +5,21 @@ from utils import settings
 
 
 def transform_to_subarrays(
-    array: np.ndarray, subarray_size: int, stride_size: int
+    array: np.ndarray, subarray_size: int, stride_size: int = None
 ) -> 'list[np.ndarray]':
     """
-    Transform an array into a list of subarrays.
+    Transform an array into a list of subarrays without overlap.
+    Truncate the array if it is not divisible by the subarray size.
     """
-    start = 0
+
+    if stride_size is None:
+        stride_size = subarray_size
+    
     array_size = array.shape[0]
 
     sub_windows = (
-        start
-        + np.expand_dims(np.arange(subarray_size), 0)
-        +
+        # [[0, 1, 2, ..., subarray_size-1]]
+        np.expand_dims(np.arange(subarray_size), 0) + 
         # Create a rightmost vector as [0, V, 2V, ...].
         np.expand_dims(np.arange(array_size - subarray_size, step=stride_size), 0).T
     )

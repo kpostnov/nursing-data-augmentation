@@ -6,7 +6,7 @@ from evaluation.text_metrics import create_text_metrics
 from loader.Preprocessor import Preprocessor
 from loader.load_opportunity_dataset import load_opportunity_dataset
 from loader.load_pamap2_dataset import load_pamap2_dataset
-from models.DeepConvLSTM import DeepConvLSTM
+from models.DeepConvLSTM import SlidingWindowDeepConvLSTM, JumpingWindowDeepConvLSTM
 from utils.array_operations import split_list_by_percentage
 from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
@@ -31,7 +31,7 @@ test_percentage = 0.3
 recordings_train, recordings_test = split_list_by_percentage(recordings, test_percentage)
 
 # Init, Train
-model = DeepConvLSTM(window_size=25, n_features=recordings[0].sensor_frame.shape[1], n_outputs=6, verbose=1, n_epochs=10)
+model = SlidingWindowDeepConvLSTM(window_size=25, n_features=recordings[0].sensor_frame.shape[1], n_outputs=6, verbose=1, n_epochs=10)
 model.windowize_convert_fit(recordings_train)
 
 # Test, Evaluate

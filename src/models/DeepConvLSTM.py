@@ -1,5 +1,6 @@
 # pylint: disable=locally-disabled, multiple-statements, fixme, line-too-long, no-name-in-module, wrong-import-order, bad-option-value
 
+from abc import abstractmethod
 import itertools
 from models.RainbowModel import RainbowModel
 import numpy as np
@@ -8,15 +9,13 @@ import matplotlib.pyplot as plt
 from tensorflow import keras
 from keras.models import Sequential
 from keras import layers
-from keras.layers import Dense, Activation
-from keras.layers import LSTM
-from keras.layers.embeddings import Embedding
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 from utils.typing import assert_type
 from utils.Window import Window
 from utils.Recording import Recording
+from utils.array_operations import transform_to_subarrays
 
 
 class DeepConvLSTM(RainbowModel):
@@ -71,8 +70,8 @@ class DeepConvLSTM(RainbowModel):
 
         # (None, window_size, n_features, n_filters) -> (None, n_features, window_size * n_filters)
         model.add(layers.Permute((2, 1, 3)))
-        model.add(layers.Reshape((int(model.layers[4].output_shape[1]), 
-            int(model.layers[4].output_shape[2]) * int(model.layers[4].output_shape[3]))))
+        model.add(layers.Reshape((int(model.layers[4].output_shape[1]),
+                                  int(model.layers[4].output_shape[2]) * int(model.layers[4].output_shape[3]))))
 
         # 2 LSTM layers
         model.add(layers.LSTM(self.n_lstm_units, activation="tanh", dropout=0.5,
@@ -86,16 +85,67 @@ class DeepConvLSTM(RainbowModel):
         print(model.summary())
 
         model.compile(
-            loss='categorical_crossentropy', 
-            optimizer='RMSprop', 
+            loss='categorical_crossentropy',
+            optimizer='RMSprop',
             metrics=[keras.metrics.CategoricalAccuracy(), 'accuracy'])
 
         return model
 
 
+    @abstractmethod
+    def windowize(self, recordings: "list[Recording]") -> "list[Window]":
+        raise NotImplementedError
+
+
+    def convert(self, windows: "list[Window]") -> "tuple[np.ndarray, np.ndarray]":
+        X_train, y_train = super().convert(windows)
+        return np.expand_dims(X_train, -1), y_train
+
+
+class SlidingWindowDeepConvLSTM(DeepConvLSTM):
+    """
+    Windowizes the recording from beginning to end without overlap and skipping time steps.
+    The label is determined by the last time step in the window.
+    """
+
+    def _windowize_recording(self, recording: "Recording") -> "list[Window]":
+        recording_sensor_array = (recording.sensor_frame.to_numpy())
+        activities = recording.activities.to_numpy()
+
+        sensor_subarrays = transform_to_subarrays(recording_sensor_array, self.window_size)
+        activity_subarray = activities[self.window_size-1::self.window_size]
+
+        assert len(sensor_subarrays) == len(activity_subarray)
+
+        recording_windows = [Window(sensor_subarray, int(activity_subarray[i]), recording.subject)
+                             for i, sensor_subarray in enumerate(sensor_subarrays)]
+
+        return recording_windows
+
+
+    def windowize(self, recordings: "list[Recording]") -> "list[Window]":
+        assert_type([(recordings[0], Recording)])
+        assert (
+            self.window_size is not None
+        ), "window_size has to be set in the constructor of your concrete model class."
+
+        print("Windowizing in progress...")
+        recording_windows = list(map(self._windowize_recording, recordings))
+        print("Windowizing done.")
+
+        # Flatten list of lists
+        return list(itertools.chain.from_iterable(recording_windows))
+
+
+class JumpingWindowDeepConvLSTM(DeepConvLSTM):
+    """
+    Windowizes the recording from beginning to end with overlap (50%).
+    Windows that contain multiple activities skip time steps that do not fit or are too short.
+    """
+
     def _windowize_recording(self, recording: "Recording") -> "list[Window]":
         windows = []
-        recording_sensor_array = (recording.sensor_frame.to_numpy())  
+        recording_sensor_array = (recording.sensor_frame.to_numpy())
         activities = recording.activities.to_numpy()
 
         start = 0
@@ -108,12 +158,13 @@ class DeepConvLSTM(RainbowModel):
             end = start + self.window_size - 1
 
             # Has planned window the same activity in the beginning and the end?
-            if (len(set(activities[start : (end + 1)])) == 1):  
-                window_sensor_array = recording_sensor_array[start : (end + 1), :]
+            if (len(set(activities[start: (end + 1)])) == 1):
+                window_sensor_array = recording_sensor_array[start: (end + 1), :]
                 activity = activities[start]
-                start += (self.window_size // 2) # 50% overlap
-                
-                windows.append(Window(window_sensor_array, int(activity), recording.subject))
+                start += (self.window_size // 2)  # 50% overlap
+
+                windows.append(Window(window_sensor_array,
+                               int(activity), recording.subject))
             else:
                 while last_start_stamp_not_reached(start):
                     if activities[start] != activities[start + 1]:
@@ -161,9 +212,10 @@ class DeepConvLSTM(RainbowModel):
             minutes_remaining = int(minutes % 60)
             return f"{hours}h {minutes_remaining}m"
 
-        n_total_timesteps = sum(map(lambda recording: len(recording.activities), recordings))
+        n_total_timesteps = sum(
+            map(lambda recording: len(recording.activities), recordings))
         n_wasted_timesteps = sum(map(n_wasted_timesteps_windowize, recordings))
-        
+
         print(
             f"=> Total recording time: \n\t before: {to_hours_str(n_total_timesteps)}\n\t after: {to_hours_str(n_total_timesteps - n_wasted_timesteps)}"
         )
@@ -172,10 +224,6 @@ class DeepConvLSTM(RainbowModel):
 
 
     def windowize(self, recordings: "list[Recording]") -> "list[Window]":
-        """
-        - No stride size (overlapping 50%)
-        - Skip time steps if window contains multiple activities
-        """
         assert_type([(recordings[0], Recording)])
         assert (
             self.window_size is not None
@@ -188,8 +236,3 @@ class DeepConvLSTM(RainbowModel):
 
         # Flatten list of lists
         return list(itertools.chain.from_iterable(recording_windows))
-
-
-    def convert(self, windows: "list[Window]") -> "tuple[np.ndarray, np.ndarray]":
-        X_train, y_train = super().convert(windows)
-        return np.expand_dims(X_train, -1), y_train
