@@ -3,8 +3,17 @@
   "editor.formatOnSave": true,
   "python.linting.pylintEnabled": true,
   "python.linting.enabled": true,
-  "terminal.integrated.env.osx": { "PYTHONPATH": "${workspaceFolder}/src" },
-  "terminal.integrated.env.windows": { "PYTHONPATH": "${workspaceFolder}/src" },
-  "terminal.integrated.env.linux": { "PYTHONPATH": "${workspaceFolder}/src" },
-  "python.envFile": "${workspaceFolder}/.env"
+  "terminal.integrated.env.osx": {
+    "PYTHONPATH": "${workspaceFolder}/src"
+  },
+  "terminal.integrated.env.windows": {
+    "PYTHONPATH": "${workspaceFolder}/src"
+  },
+  "terminal.integrated.env.linux": {
+    "PYTHONPATH": "${workspaceFolder}/src"
+  },
+  "python.envFile": "${workspaceFolder}/.env",
+  "python.formatting.autopep8Args": [
+    "--max-line-length=200"
+  ]
 }

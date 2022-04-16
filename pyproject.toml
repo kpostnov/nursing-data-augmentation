@@ -2,4 +2,4 @@
 disable = "C0330, C0326, W0105"
 
 [tool.pylint.format]
-max-line-length = "88"
+max-line-length = "200"
