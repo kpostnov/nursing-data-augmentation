@@ -11,6 +11,18 @@ class Preprocessor:
     Preprocessing templates (e.g. jens_preprocess) combine the private functions
     """
 
+    def ordonez_preproceess(self, recordings: "list[Recording]") -> "list[Recording]":
+        """
+        1. _interpolate_linear
+        2. _normalize_per_channel_standardscaler
+        """
+        assert_type([(recordings[0], Recording)])
+
+        recordings = self._interpolate_linear(recordings)
+        recordings = self._normalize_minmaxscaler(recordings)
+        return recordings
+
+
     def jens_preprocess(self, recordings: "list[Recording]") -> "list[Recording]":
         """
         1. _normal_interpolate
@@ -101,12 +113,24 @@ class Preprocessor:
 
         return recordings
 
+    
+    def _interpolate_linear(self, recordings: "list[Recording]") -> "list[Recording]":
+        """
+        the recordings have None values, this function linearly interpolates them
+        """
+        assert_type([(recordings[0], Recording)])
+
+        for recording in recordings:
+            recording.sensor_frame = recording.sensor_frame.interpolate(method="linear")
+
+        return recordings
+
 
     def _normalize_standardscaler(
         self, recordings: "list[Recording]"
     ) -> "list[Recording]":
         """
-        Normalizes the sensor values to be in range 0 to 1
+        Normalizes the sensor values to be in range -1 to 1
         """
         assert_type([(recordings[0], Recording)])
 
@@ -119,6 +143,25 @@ class Preprocessor:
         for recording in recordings:
             transformed_array = scaler.transform(recording.sensor_frame)
             recording.sensor_frame = pd.DataFrame(
-                transformed_array, columns=recording.sensor_frame.columns
-            )
+                transformed_array, columns=recording.sensor_frame.columns)
+        return recordings
+
+
+    def _normalize_minmaxscaler(
+        self, recordings: "list[Recording]"
+    ) -> "list[Recording]":
+        """
+        Normalizes the sensor values per recording channel to be in range 0 to 1
+        """
+        assert_type([(recordings[0], Recording)])
+
+        scaler = MinMaxScaler()
+        complete_sensor_frame = pd.concat([recording.sensor_frame for recording in recordings])
+        scaler.fit(complete_sensor_frame)
+            
+        for recording in recordings:
+            transformed_array = scaler.transform(recording.sensor_frame)
+            recording.sensor_frame = pd.DataFrame(
+                transformed_array, columns=recording.sensor_frame.columns)
+
         return recordings

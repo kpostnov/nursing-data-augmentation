@@ -4,7 +4,8 @@ from evaluation.conf_matrix import create_conf_matrix
 from evaluation.metrics import accuracy
 from evaluation.text_metrics import create_text_metrics
 from loader.Preprocessor import Preprocessor
-from loader.load_pamap2_dataset import load_pamap2_dataset
+from loader.load_opportunity_dataset import load_opportunity_dataset
+from loader.load_opportunity_dataset_ordonez import load_opportunity_dataset_ordonez
 from models.DeepConvLSTM import SlidingWindowDeepConvLSTM, JumpingWindowDeepConvLSTM
 from utils.array_operations import split_list_by_percentage
 from utils.folder_operations import new_saved_experiment_folder
@@ -12,24 +13,20 @@ import utils.settings as settings
 
 
 # Load data
-recordings = load_pamap2_dataset(settings.pamap2_dataset_path)
+(recordings_train, recordings_test) = load_opportunity_dataset_ordonez(settings.opportunity_dataset_path)
 
 random.seed(1678978086101)
-random.shuffle(recordings)
 
 # TODO: apply recording label filter functions
-
-# Preprocessing
-recordings = Preprocessor().jens_preprocess(recordings)
-
 # TODO: save/ load preprocessed data
 
-# Test Train Split
-test_percentage = 0.3
-recordings_train, recordings_test = split_list_by_percentage(recordings, test_percentage)
+# Preprocessing and Test Train Split
+recordings = Preprocessor().ordonez_preproceess(recordings_train + recordings_test)
+recordings_train = recordings[:len(recordings_train)]
+recordings_test = recordings[len(recordings_train):]
 
 # Init, Train
-model = SlidingWindowDeepConvLSTM(window_size=25, n_features=recordings[0].sensor_frame.shape[1], n_outputs=6, verbose=1, n_epochs=10)
+model = SlidingWindowDeepConvLSTM(window_size=20, stride_size=10, n_features=recordings[0].sensor_frame.shape[1], n_outputs=18, verbose=1, n_epochs=15)
 model.windowize_convert_fit(recordings_train)
 
 # Test, Evaluate

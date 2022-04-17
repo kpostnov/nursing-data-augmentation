@@ -42,6 +42,7 @@ class DeepConvLSTM(RainbowModel):
         self.n_epochs = kwargs.get("n_epochs") or 10
         self.learning_rate = kwargs.get("learning_rate") or 0.001
         self.frequency = kwargs.get("frequency") or 30
+        self.stride_size = kwargs.get("stride_size") or self.window_size
         self.model_name = "DeepConvLSTM"
 
         # Create model
@@ -112,8 +113,8 @@ class SlidingWindowDeepConvLSTM(DeepConvLSTM):
         recording_sensor_array = (recording.sensor_frame.to_numpy())
         activities = recording.activities.to_numpy()
 
-        sensor_subarrays = transform_to_subarrays(recording_sensor_array, self.window_size)
-        activity_subarray = activities[self.window_size-1::self.window_size]
+        sensor_subarrays = transform_to_subarrays(recording_sensor_array, self.window_size, self.stride_size)
+        activity_subarray = activities[self.window_size-1::self.stride_size]
 
         assert len(sensor_subarrays) == len(activity_subarray)
 
@@ -139,7 +140,7 @@ class SlidingWindowDeepConvLSTM(DeepConvLSTM):
 
 class JumpingWindowDeepConvLSTM(DeepConvLSTM):
     """
-    Windowizes the recording from beginning to end with overlap (50%).
+    Windowizes the recording from beginning to end with overlap.
     Windows that contain multiple activities skip time steps that do not fit or are too short.
     """
 
@@ -161,7 +162,7 @@ class JumpingWindowDeepConvLSTM(DeepConvLSTM):
             if (len(set(activities[start: (end + 1)])) == 1):
                 window_sensor_array = recording_sensor_array[start: (end + 1), :]
                 activity = activities[start]
-                start += (self.window_size // 2)  # 50% overlap
+                start += self.stride_size
 
                 windows.append(Window(window_sensor_array,
                                int(activity), recording.subject))

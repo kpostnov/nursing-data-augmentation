@@ -56,28 +56,74 @@ def init_opportunity():
     global opportunity_dataset_path
     opportunity_dataset_path = "../../datasets/OpportunityUCIDataset"
 
+    # global activity_initial_num_to_activity_str
+    # activity_initial_num_to_activity_str = {
+    #     0: "null",
+    #     101: "relaxing",
+    #     102: "coffee time",
+    #     103: "early morning",
+    #     104: "cleanup",
+    #     105: "sandwich time",
+    # }
+
+    # global activity_initial_num_to_activity_idx
+    # activity_initial_num_to_activity_idx = {
+    #     0: 0,
+    #     101: 1,
+    #     102: 2,
+    #     103: 3,
+    #     104: 4,
+    #     105: 5,
+    # }
+
+
+    # Ordonez et al. (2015)
     global activity_initial_num_to_activity_str
     activity_initial_num_to_activity_str = {
-        0: "null",
-        101: "relaxing",
-        102: "coffee time",
-        103: "early morning",
-        104: "cleanup",
-        105: "sandwich time",
+        0: 'null',
+        406516: "Open Door 1",
+        406517: "Open Door 2",
+        404516: "Close Door 1",
+        404517: "Close Door 2",
+        406520: "Open Fridge",
+        404520: "Close Fridge",
+        406505: "Open Dishwasher",
+        404505: "Close Dishwasher",
+        406519: "Open Drawer 1", 
+        404519: "Close Drawer 1",
+        406511: "Open Drawer 2", 
+        404511: "Close Drawer 2", 
+        406508: "Open Drawer 3", 
+        404508: "Close Drawer 3", 
+        408512: "Clean Table",
+        407521: "Drink from Cup", 
+        405506: "Toggle Switch",
+    }
+
+    global activity_initial_num_to_activity_idx
+    activity_initial_num_to_activity_idx =  {
+        0: 0,
+        406516: 1,
+        406517: 2,
+        404516: 3,
+        404517: 4,
+        406520: 5,
+        404520: 6,
+        406505: 7,
+        404505: 8,
+        406519: 9, 
+        404519: 10,
+        406511: 11, 
+        404511: 12, 
+        406508: 13, 
+        404508: 14, 
+        408512: 15,
+        407521: 16, 
+        405506: 17,
     }
 
     global ACTIVITIES
     ACTIVITIES = list(activity_initial_num_to_activity_str.values())
-
-    global activity_initial_num_to_activity_idx
-    activity_initial_num_to_activity_idx = {
-        0: 0,
-        101: 1,
-        102: 2,
-        103: 3,
-        104: 4,
-        105: 5,
-    }
 
 
 def init_pamap2():
