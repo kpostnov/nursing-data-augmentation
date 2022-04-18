@@ -4,6 +4,7 @@ from evaluation.conf_matrix import create_conf_matrix
 from evaluation.metrics import accuracy
 from evaluation.text_metrics import create_text_metrics
 from loader.Preprocessor import Preprocessor
+from loader.load_model import load_model
 from loader.load_opportunity_dataset import load_opportunity_dataset
 from loader.load_opportunity_dataset_ordonez import load_opportunity_dataset_ordonez
 from models.DeepConvLSTM import SlidingWindowDeepConvLSTM, JumpingWindowDeepConvLSTM
@@ -11,7 +12,7 @@ from utils.array_operations import split_list_by_percentage
 from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
 
-# Test accuracy: 
+# Test accuracy: 89%
 
 # Load data
 (recordings_train, recordings_test) = load_opportunity_dataset_ordonez(settings.opportunity_dataset_path)
@@ -35,7 +36,7 @@ X_test, y_test_true = model.windowize_convert(recordings_test)
 y_test_pred = model.predict(X_test)
 
 # Create Folder, save model export and evaluations there
-experiment_folder_path = new_saved_experiment_folder('pamap_deepconv')
+experiment_folder_path = new_saved_experiment_folder('opportunity_deepConv')
 
 # Export model
 model.export(experiment_folder_path)

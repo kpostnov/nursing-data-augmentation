@@ -10,6 +10,8 @@ def create_conf_matrix(path: str, y_test_pred: np.ndarray, y_test_true: np.ndarr
     Creates and saves confusion matrix as .png to path 
     """
 
+    print("Creating confusion matrix")
+
     classes = list(range(len(y_test_true[0]))) # [0, 1, 0, 0, 0] to [0, 1, 2, 3, 4]
     y_test_true = np.argmax(y_test_true, axis=1)
     y_test_pred = np.argmax(y_test_pred, axis=1)

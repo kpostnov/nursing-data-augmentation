@@ -5,7 +5,7 @@ import os
 
 def init(dataset: str):
     global saved_experiments_path
-    saved_experiments_path = "../saved_experiments"
+    saved_experiments_path = os.path.dirname(os.path.abspath(__file__)) + "/../../saved_experiments"
 
     # Model / Dataset specific configuration
     if dataset == "opportunity":

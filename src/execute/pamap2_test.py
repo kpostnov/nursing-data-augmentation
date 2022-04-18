@@ -37,7 +37,7 @@ X_test, y_test_true = model.windowize_convert(recordings_test)
 y_test_pred = model.predict(X_test)
 
 # Create Folder, save model export and evaluations there
-experiment_folder_path = new_saved_experiment_folder('pamap_deepconv')
+experiment_folder_path = new_saved_experiment_folder('pamap_deepConv')
 
 # Export model
 model.export(experiment_folder_path)
