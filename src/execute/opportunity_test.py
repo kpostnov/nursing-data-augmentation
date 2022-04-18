@@ -11,6 +11,7 @@ from utils.array_operations import split_list_by_percentage
 from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
 
+# Test accuracy: 
 
 # Load data
 (recordings_train, recordings_test) = load_opportunity_dataset_ordonez(settings.opportunity_dataset_path)

@@ -104,6 +104,7 @@ class Preprocessor:
     def _interpolate_ffill(self, recordings: "list[Recording]") -> "list[Recording]":
         """
         the recordings have None values, this function interpolates them
+        TODO: Handle NaN values in beginning of recording
         """
         assert_type([(recordings[0], Recording)])
         fill_method = "ffill"
@@ -122,6 +123,8 @@ class Preprocessor:
 
         for recording in recordings:
             recording.sensor_frame = recording.sensor_frame.interpolate(method="linear")
+            # Handle NaN values in beginning of recording
+            recording.sensor_frame = recording.sensor_frame.fillna(method="bfill")
 
         return recordings
 
