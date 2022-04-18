@@ -3,6 +3,7 @@ import random
 from evaluation.conf_matrix import create_conf_matrix
 from evaluation.metrics import accuracy
 from evaluation.text_metrics import create_text_metrics
+from evaluation.save_configuration import save_model_configuration
 from loader.Preprocessor import Preprocessor
 from loader.load_pamap2_dataset import load_pamap2_dataset
 from models.DeepConvLSTM import SlidingWindowDeepConvLSTM, JumpingWindowDeepConvLSTM
@@ -43,3 +44,4 @@ experiment_folder_path = new_saved_experiment_folder('pamap_deepConv')
 model.export(experiment_folder_path)
 create_conf_matrix(experiment_folder_path, y_test_pred, y_test_true)
 create_text_metrics(experiment_folder_path, y_test_pred, y_test_true, [accuracy])
+save_model_configuration(experiment_folder_path, model)

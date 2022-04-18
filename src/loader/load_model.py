@@ -1,5 +1,4 @@
 from tensorflow import keras
-from models import RainbowModel
 
 
 def load_model(model_path: str) -> keras.models.Sequential:
