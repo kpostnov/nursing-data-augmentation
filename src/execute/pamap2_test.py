@@ -20,7 +20,7 @@ random.shuffle(recordings)
 # TODO: apply recording label filter functions
 
 # Preprocessing
-recordings = Preprocessor().jens_preprocess(recordings)
+recordings = Preprocessor().pamap2_preprocess(recordings)
 
 # TODO: save/ load preprocessed data
 

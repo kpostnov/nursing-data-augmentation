@@ -22,6 +22,16 @@ class Preprocessor:
         recordings = self._normalize_minmaxscaler(recordings)
         return recordings
 
+    
+    def pamap2_preprocess(self, recordings: "list[Recording]") -> "list[Recording]":
+        """
+        1. _interpolate_ffill
+        """
+        assert_type([(recordings[0], Recording)])
+
+        recordings = self._interpolate_ffill(recordings)
+        return recordings
+
 
     def jens_preprocess(self, recordings: "list[Recording]") -> "list[Recording]":
         """
@@ -103,21 +113,22 @@ class Preprocessor:
 
     def _interpolate_ffill(self, recordings: "list[Recording]") -> "list[Recording]":
         """
-        the recordings have None values, this function interpolates them
-        TODO: Handle NaN values in beginning of recording
+        The recordings have None values, this function interpolates them
         """
         assert_type([(recordings[0], Recording)])
         fill_method = "ffill"
 
         for recording in recordings:
             recording.sensor_frame = recording.sensor_frame.fillna(method=fill_method)
+            # Handle NaN values in beginning of recording
+            recording.sensor_frame = recording.sensor_frame.fillna(method="bfill")
 
         return recordings
 
     
     def _interpolate_linear(self, recordings: "list[Recording]") -> "list[Recording]":
         """
-        the recordings have None values, this function linearly interpolates them
+        The recordings have None values, this function linearly interpolates them
         """
         assert_type([(recordings[0], Recording)])
 
