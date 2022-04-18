@@ -87,7 +87,7 @@ class DeepConvLSTM(RainbowModel):
 
         model.compile(
             loss='categorical_crossentropy',
-            optimizer='RMSprop',
+            optimizer='RMSprop', # learning_rate = 0.001
             metrics=[keras.metrics.CategoricalAccuracy(), 'accuracy'])
 
         return model

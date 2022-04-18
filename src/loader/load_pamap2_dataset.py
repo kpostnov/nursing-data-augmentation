@@ -7,8 +7,7 @@ import utils.settings as settings
 
 def load_pamap2_dataset(
         pamap2_dataset_path: str,
-        include_heart_rate: bool = True,
-        lin_interpolate: bool = False) -> "list[Recording]":
+        include_heart_rate: bool = True) -> "list[Recording]":
     """
     Returns a list of Recordings from the PAMAP2 dataset. 
     Each Recording corresponds to one subject.
