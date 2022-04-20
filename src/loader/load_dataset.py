@@ -74,6 +74,7 @@ def read_recording_from_folder(recording_folder_path: str):
     except Exception as e:
         print("Error while reading recording from folder: " + recording_folder_path)
         print(e)
+        print("Continuing...")
         return None
 
 
@@ -148,9 +149,7 @@ def create_recording(recording_folder_path: str, subject: str) -> Recording:
 
     print(recording_folder_path)
     time1 = time.time()
-    raw_recording_frame = XSensRecordingReader.get_recording_frame(
-        recording_folder_path
-    )
+    raw_recording_frame = XSensRecordingReader.get_recording_frame(recording_folder_path)
 
     # If less than a second is recorded
     if raw_recording_frame.shape[0] < 60:

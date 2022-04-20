@@ -56,16 +56,10 @@ class XSensRecordingReader(object):
             if recording_frame is None:
                 # Init the recording_frame with the dataframe, but add the respective suffix
                 # but keep SampleTimeFine
-                recording_frame = XSensRecordingReader.__prepare_dataframe(
-                    sensor_frame, sensor_id
-                )
+                recording_frame = XSensRecordingReader.__prepare_dataframe(sensor_frame, sensor_id)
             else:
-                sensor_frame = XSensRecordingReader.__prepare_dataframe(
-                    sensor_frame, sensor_id
-                )
-                recording_frame = XSensRecordingReader.__merge_frames(
-                    recording_frame, sensor_frame
-                )
+                sensor_frame = XSensRecordingReader.__prepare_dataframe(sensor_frame, sensor_id)
+                recording_frame = XSensRecordingReader.__merge_frames(recording_frame, sensor_frame)
         recording_frame = XSensRecordingReader.__remove_edge_nans(recording_frame)
         return recording_frame
 
