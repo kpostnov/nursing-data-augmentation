@@ -17,9 +17,9 @@ def save_all_recordings(recordings: 'list[Recording]', path: str):
         os.makedirs(path)
 
     for (index, recording) in enumerate(recordings):
-        print(f'Saving recording {index}')
+        print(f'Saving recording {index} / {len(recordings)}')
         recording.activities.index = recording.sensor_frame.index
-        
+
         recording_dataframe = recording.sensor_frame.copy()
         recording_dataframe['SampleTimeFine'] = recording.time_frame
         recording_dataframe['activity'] = recording.activities
@@ -28,6 +28,7 @@ def save_all_recordings(recordings: 'list[Recording]', path: str):
 
         complete_dataframe = complete_dataframe.append(recording_dataframe)
 
+    print("Writing to .csv...")
     complete_dataframe.to_csv(os.path.join(path, filename), index=False)
     print('Saved recordings to ' + path)
 

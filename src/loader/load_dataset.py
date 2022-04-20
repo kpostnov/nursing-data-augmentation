@@ -152,7 +152,7 @@ def create_recording(recording_folder_path: str, subject: str) -> Recording:
         recording_folder_path
     )
 
-    # If less than a second is recorded or
+    # If less than a second is recorded
     if raw_recording_frame.shape[0] < 60:
         print(f"Dropping because less than 60 steps: {recording_folder_path}")
         return
