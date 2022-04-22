@@ -14,7 +14,7 @@ class Preprocessor:
     def ordonez_preproceess(self, recordings: "list[Recording]") -> "list[Recording]":
         """
         1. _interpolate_linear
-        2. _normalize_per_channel_standardscaler
+        2. _normalize_standardscaler
         """
         assert_type([(recordings[0], Recording)])
 
@@ -33,61 +33,14 @@ class Preprocessor:
 
     def jens_preprocess(self, recordings: "list[Recording]") -> "list[Recording]":
         """
-        1. _normal_interpolate
+        1. _interpolate_linear
         """
         assert_type([(recordings[0], Recording)])
 
-        recordings = self._normal_interpolate(recordings)
-        return recordings
-
-    def our_preprocess(self, recordings: "list[Recording]") -> "list[Recording]":
-        """
-        1. _interpolate_ffill
-        2. _normalize
-        """
-        recordings = self._map_activities_to_id(recordings)
-        recordings = self._interpolate_ffill(recordings)
-        recordings = self._normalize_standardscaler(recordings)
+        recordings = self._interpolate_linear(recordings)
         return recordings
 
     # Preprocess-Library ------------------------------------------------------------
-
-    def _normal_interpolate(self, recordings: "list[Recording]") -> "list[Recording]":
-        """
-        df.interpolate() -> standard linear interpolation
-
-        before:
-                a	b	 c	  d
-            0	1	4.0	 8.0  NaN
-            1	2	NaN	 NaN  9.0
-            2	3	6.0	 NaN  NaN
-            3	4	6.0	 7.0  8.0
-
-        after:
-                a	b	c	        d
-            0	1	4.0	8.000000	NaN
-            1	2	5.0	7.666667	9.0
-            2	3	6.0	7.333333	8.5
-            3	4	6.0	7.000000	8.0
-
-        -> other option fillna (taking the last availble value, duplicate it)
-        -> what interpolation for what sensor makes semantic sense? quaternion? acceleration?
-
-        """
-        assert_type([(recordings[0], Recording)])
-
-        n_nan_values_before = 0
-        n_nan_values_after = 0
-
-        for recording in recordings:
-            n_nan_values_before += recording.sensor_frame.isna().sum().sum()
-            recording.sensor_frame = recording.sensor_frame.interpolate()
-            n_nan_values_after += recording.sensor_frame.isna().sum().sum()
-
-        print("number of NaN before interpolation", n_nan_values_before)
-        print("number of NaN after interpolation", n_nan_values_after)
-
-        return recordings
 
     def _map_activities_to_id(self, recordings: "list[Recording]") -> "list[Recording]":
         def map_recording_activities_to_id(recording):
@@ -107,7 +60,8 @@ class Preprocessor:
 
     def _interpolate_ffill(self, recordings: "list[Recording]") -> "list[Recording]":
         """
-        The recordings have None values, this function interpolates them
+        The recordings have None values, this function interpolates them.
+        NaN values in the beginning (that cannot be interpolated) are filled with the first non-NaN value.
         """
         assert_type([(recordings[0], Recording)])
         fill_method = "ffill"
