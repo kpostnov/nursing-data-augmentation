@@ -18,7 +18,7 @@ def save_recordings(recordings: 'list[Recording]', path: str) -> None:
         recording_dataframe['SampleTimeFine'] = recording.time_frame
         recording_dataframe['activity'] = recording.activities
 
-        filename = str(index) + '_' + recording.subject + '_' + str(recording_dataframe.iloc[0, 0]) + '.csv'
+        filename = str(index) + '_' + recording.subject + '.csv'
         recording_dataframe.to_csv(os.path.join(path, filename), index=False)
 
     print('Saved recordings to ' + path)
@@ -35,7 +35,8 @@ def load_recordings(path: str, limit: int = None) -> 'list[Recording]':
     
     if limit is not None:
         recording_files = recording_files[:limit]
-        recording_files.sort()
+
+    recording_files = sorted(recording_files, key=lambda file: int(file.split('_')[0]))
 
     for (index, file) in enumerate(recording_files):
         print(f'Loading recording {file}, {index+1} / {len(recording_files)}')
@@ -43,9 +44,8 @@ def load_recordings(path: str, limit: int = None) -> 'list[Recording]':
         recording_dataframe = pd.read_csv(os.path.join(path, file))
         time_frame = recording_dataframe.loc[:, 'SampleTimeFine']
         activities = recording_dataframe.loc[:, 'activity']
-        sensor_frame = recording_dataframe.loc[:, 
-            recording_dataframe.columns.difference(['SampleTimeFine', 'activity'])]
-        subject = file.split('_')[0]
+        sensor_frame = recording_dataframe.loc[:, recording_dataframe.columns.difference(['SampleTimeFine', 'activity'])]
+        subject = file.split('_')[1]
 
         recordings.append(Recording(sensor_frame, time_frame, activities, subject))
 

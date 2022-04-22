@@ -22,7 +22,6 @@ class Preprocessor:
         recordings = self._normalize_minmaxscaler(recordings)
         return recordings
 
-    
     def pamap2_preprocess(self, recordings: "list[Recording]") -> "list[Recording]":
         """
         1. _interpolate_ffill
@@ -31,7 +30,6 @@ class Preprocessor:
 
         recordings = self._interpolate_ffill(recordings)
         return recordings
-
 
     def jens_preprocess(self, recordings: "list[Recording]") -> "list[Recording]":
         """
@@ -42,7 +40,6 @@ class Preprocessor:
         recordings = self._normal_interpolate(recordings)
         return recordings
 
-
     def our_preprocess(self, recordings: "list[Recording]") -> "list[Recording]":
         """
         1. _interpolate_ffill
@@ -52,7 +49,6 @@ class Preprocessor:
         recordings = self._interpolate_ffill(recordings)
         recordings = self._normalize_standardscaler(recordings)
         return recordings
-
 
     # Preprocess-Library ------------------------------------------------------------
 
@@ -93,7 +89,6 @@ class Preprocessor:
 
         return recordings
 
-
     def _map_activities_to_id(self, recordings: "list[Recording]") -> "list[Recording]":
         def map_recording_activities_to_id(recording):
             """
@@ -110,7 +105,6 @@ class Preprocessor:
         # Convert the string labels of all recordings to integers
         return [map_recording_activities_to_id(recording) for recording in recordings]
 
-
     def _interpolate_ffill(self, recordings: "list[Recording]") -> "list[Recording]":
         """
         The recordings have None values, this function interpolates them
@@ -125,7 +119,6 @@ class Preprocessor:
 
         return recordings
 
-    
     def _interpolate_linear(self, recordings: "list[Recording]") -> "list[Recording]":
         """
         The recordings have None values, this function linearly interpolates them
@@ -139,7 +132,6 @@ class Preprocessor:
 
         return recordings
 
-
     def _normalize_standardscaler(
         self, recordings: "list[Recording]"
     ) -> "list[Recording]":
@@ -151,7 +143,7 @@ class Preprocessor:
         # First fit the scaler on all data
         scaler = StandardScaler()
         for recording in recordings:
-            scaler.fit(recording.sensor_frame)
+            scaler.partial_fit(recording.sensor_frame)
 
         # Then apply normalization on each recording_frame
         for recording in recordings:
@@ -159,7 +151,6 @@ class Preprocessor:
             recording.sensor_frame = pd.DataFrame(
                 transformed_array, columns=recording.sensor_frame.columns)
         return recordings
-
 
     def _normalize_minmaxscaler(
         self, recordings: "list[Recording]"
@@ -170,9 +161,11 @@ class Preprocessor:
         assert_type([(recordings[0], Recording)])
 
         scaler = MinMaxScaler()
-        complete_sensor_frame = pd.concat([recording.sensor_frame for recording in recordings])
-        scaler.fit(complete_sensor_frame)
-            
+        # complete_sensor_frame = pd.concat([recording.sensor_frame for recording in recordings])
+        # scaler.fit(complete_sensor_frame)
+        for recording in recordings:
+            scaler.partial_fit(recording.sensor_frame)
+
         for recording in recordings:
             transformed_array = scaler.transform(recording.sensor_frame)
             recording.sensor_frame = pd.DataFrame(

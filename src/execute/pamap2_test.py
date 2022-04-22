@@ -30,7 +30,13 @@ test_percentage = 0.3
 recordings_train, recordings_test = split_list_by_percentage(recordings, test_percentage)
 
 # Init, Train
-model = SlidingWindowDeepConvLSTM(window_size=100, stride_size=100, n_features=recordings[0].sensor_frame.shape[1], n_outputs=6, verbose=1, n_epochs=200)
+model = SlidingWindowDeepConvLSTM(
+    window_size=100, 
+    stride_size=100, 
+    n_features=recordings[0].sensor_frame.shape[1], 
+    n_outputs=6, 
+    verbose=1, 
+    n_epochs=200)
 model.windowize_convert_fit(recordings_train)
 
 # Test, Evaluate
