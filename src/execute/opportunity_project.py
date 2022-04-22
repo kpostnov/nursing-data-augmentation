@@ -3,7 +3,7 @@ from evaluation.conf_matrix import create_conf_matrix
 from evaluation.metrics import accuracy
 from evaluation.save_configuration import save_model_configuration
 from evaluation.text_metrics import create_text_metrics
-from loader.Preprocessor import Preprocessor
+from loader.preprocessing import pamap2_preprocess
 from loader.load_opportunity_dataset import load_opportunity_dataset
 from models.DeepConvLSTM import SlidingWindowDeepConvLSTM, JumpingWindowDeepConvLSTM
 from utils.array_operations import split_list_by_percentage
@@ -17,7 +17,7 @@ random.seed(1678978086101)
 random.shuffle(recordings)
 
 # Preprocessing
-recordings = Preprocessor().pamap2_preprocess(recordings)
+recordings = pamap2_preprocess(recordings)
 
 # Test Train Split
 test_percentage = 0.3

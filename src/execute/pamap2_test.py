@@ -4,7 +4,7 @@ from evaluation.conf_matrix import create_conf_matrix
 from evaluation.metrics import accuracy
 from evaluation.text_metrics import create_text_metrics
 from evaluation.save_configuration import save_model_configuration
-from loader.Preprocessor import Preprocessor
+from loader.preprocessing import pamap2_preprocess
 from loader.load_pamap2_dataset import load_pamap2_dataset
 from models.DeepConvLSTM import SlidingWindowDeepConvLSTM, JumpingWindowDeepConvLSTM
 from utils.array_operations import split_list_by_percentage
@@ -21,7 +21,7 @@ random.shuffle(recordings)
 # TODO: apply recording label filter functions
 
 # Preprocessing
-recordings = Preprocessor().pamap2_preprocess(recordings)
+recordings = pamap2_preprocess(recordings)
 
 # TODO: save/ load preprocessed data
 

@@ -1,6 +1,6 @@
 import os
 from evaluation.MarkdownTestResult import MarkdownTestResult
-from loader.Preprocessor import Preprocessor
+from loader.preprocessing import Preprocessor
 from loader.filter_dataset import filter_acceleration
 from archive.loader_archive.load_dataset import load_dataset
 from models.RainbowModel import RainbowModel

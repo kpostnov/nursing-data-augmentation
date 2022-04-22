@@ -17,7 +17,7 @@ import random
 from importlib_metadata import itertools  # type: ignore
 import numpy as np
 from augmentation.rotate import append_recordings_randomly_rotated_n_times
-from loader.Preprocessor import Preprocessor
+from loader.preprocessing import Preprocessor
 from archive.loader_archive.convert_dataset import convert_quaternion_to_euler
 from loader.filter_dataset import filter_acceleration
 from archive.loader_archive.load_dataset import load_dataset

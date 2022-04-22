@@ -4,7 +4,7 @@ from evaluation.conf_matrix import create_conf_matrix
 from evaluation.metrics import accuracy
 from evaluation.text_metrics import create_text_metrics
 from evaluation.save_configuration import save_model_configuration
-from loader.Preprocessor import Preprocessor
+from loader.preprocessing import pamap2_preprocess
 from loader.load_pamap2_dataset import load_pamap2_dataset
 from models.DeepConvLSTM import SlidingWindowDeepConvLSTM, JumpingWindowDeepConvLSTM
 from utils.array_operations import split_list_by_percentage
@@ -20,7 +20,7 @@ random.seed(1678978086101)
 random.shuffle(recordings)
 
 # Preprocessing (Interpolation)
-recordings = Preprocessor().pamap2_preprocess(recordings)
+recordings = pamap2_preprocess(recordings)
 
 # Train M1 on whole dataset (no normalization)
 model_m1 = SlidingWindowDeepConvLSTM(window_size=100, stride_size=100, n_features=recordings[0].sensor_frame.shape[1], n_outputs=6, verbose=1, n_epochs=200)

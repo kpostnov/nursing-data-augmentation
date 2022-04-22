@@ -2,7 +2,7 @@ import random
 from evaluation.conf_matrix import create_conf_matrix
 from evaluation.metrics import accuracy
 from evaluation.text_metrics import create_text_metrics
-from loader.Preprocessor import Preprocessor
+from loader.preprocessing import ordonez_preprocess
 from loader.load_opportunity_dataset_ordonez import load_opportunity_dataset_ordonez
 from models.DeepConvLSTM import SlidingWindowDeepConvLSTM, JumpingWindowDeepConvLSTM
 from utils.folder_operations import new_saved_experiment_folder
@@ -19,7 +19,7 @@ random.seed(1678978086101)
 # TODO: save/ load preprocessed data
 
 # Preprocessing and Test Train Split
-recordings = Preprocessor().ordonez_preproceess(recordings_train + recordings_test)
+recordings = ordonez_preprocess(recordings_train + recordings_test)
 recordings_train = recordings[:len(recordings_train)]
 recordings_test = recordings[len(recordings_train):]
 
