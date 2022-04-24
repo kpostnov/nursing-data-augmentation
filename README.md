@@ -1,1 +1,1 @@
-# Nursing Data Augmentation Using Generative Adversarial Networks (GANs)
+# Multimodal Nursing Data Augmentation Using Generative Adversarial Networks (GANs)
