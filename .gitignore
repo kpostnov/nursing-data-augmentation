@@ -6,6 +6,9 @@ opportunity-dataset
 saved_experiments/
 datasets/
 
+# Plots
+src/visualization/plots/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

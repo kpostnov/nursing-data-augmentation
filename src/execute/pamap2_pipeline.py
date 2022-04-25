@@ -23,7 +23,13 @@ random.shuffle(recordings)
 recordings = pamap2_preprocess(recordings)
 
 # Train M1 on whole dataset (no normalization)
-model_m1 = SlidingWindowDeepConvLSTM(window_size=100, stride_size=100, n_features=recordings[0].sensor_frame.shape[1], n_outputs=6, verbose=1, n_epochs=200)
+model_m1 = SlidingWindowDeepConvLSTM(
+    window_size=100,
+    stride_size=100,
+    n_features=recordings[0].sensor_frame.shape[1],
+    n_outputs=6,
+    verbose=1,
+    n_epochs=200)
 model_m1.windowize_convert_fit(recordings)
 
 # LOSO-folds (alpha-dataset)
@@ -37,7 +43,13 @@ for subject_id in subject_ids:
 
     # Train alpha model on alpha_subset
     print("Training alpha model on alpha_subset")
-    model_alpha = SlidingWindowDeepConvLSTM(window_size=100, stride_size=100, n_features=recordings[0].sensor_frame.shape[1], n_outputs=6, verbose=1, n_epochs=200)
+    model_alpha = SlidingWindowDeepConvLSTM(
+        window_size=100,
+        stride_size=100,
+        n_features=recordings[0].sensor_frame.shape[1],
+        n_outputs=6,
+        verbose=1,
+        n_epochs=200)
     X_train, y_train = model_alpha.windowize_convert(alpha_subset)   
     model_alpha.fit(X_train, y_train)
 
@@ -46,7 +58,7 @@ for subject_id in subject_ids:
     y_test_pred_model_alpha = model_alpha.predict(X_test)
 
     # Split recordings data activity wise for data augmentation
-    print("Beginn data augmentation")
+    print("Begin data augmentation")
     activities_one_hot_encoded = np.eye(6, 6)
     for row in activities_one_hot_encoded:
         # Get all indices in y_train where the one-hot-encoded row is equal to row
@@ -59,4 +71,10 @@ for subject_id in subject_ids:
     # TODO: Merge augmented data with alpha_subset --> beta_subset
 
     # TODO: Train beta model on beta_subset
-    model_beta = JumpingWindowDeepConvLSTM(window_size=100, stride_size=100, n_features=recordings[0].sensor_frame.shape[1], n_outputs=6, verbose=1, n_epochs=200)
+    model_beta = JumpingWindowDeepConvLSTM(
+        window_size=100,
+        stride_size=100,
+        n_features=recordings[0].sensor_frame.shape[1],
+        n_outputs=6,
+        verbose=1,
+        n_epochs=200)
