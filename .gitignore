@@ -7,7 +7,7 @@ saved_experiments/
 datasets/
 
 # Plots
-src/visualization/plots/*
+src/visualization/plots/*.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
