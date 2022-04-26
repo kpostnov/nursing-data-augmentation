@@ -2,17 +2,10 @@
 
 import os
 from abc import ABC, abstractmethod
-from random import shuffle
 from typing import Any, Union
-
 import numpy as np
-from tensorflow import keras
-from tensorflow.keras.utils import to_categorical
 import tensorflow as tf  # type: ignore
 
-import utils.settings as settings
-from utils.Recording import Recording
-from utils.Window import Window
 from utils.array_operations import transform_to_subarrays
 from utils.folder_operations import create_folders_in_path
 from utils.typing import assert_type
@@ -45,64 +38,6 @@ class RainbowModel(ABC):
         """
 
         self.kwargs = kwargs
-
-
-    def windowize_convert_fit(self, recordings_train: "list[Recording]") -> None:
-        """
-        For a data efficient comparison between models, the preprocessed data for
-        training and evaluation of the model only exists, while this method is running
-
-        shuffles the windows
-        """
-        assert_type([(recordings_train[0], Recording)])
-        X_train, y_train = self.windowize_convert(recordings_train)
-        self.fit(X_train, y_train)
-
-
-    # Preprocess ----------------------------------------------------------------------
-
-    def windowize_convert(
-        self, recordings_train: "list[Recording]"
-    ) -> "tuple[np.ndarray,np.ndarray]":
-        """
-        Shuffles the windows
-        """
-        windows_train = self.windowize(recordings_train)
-        shuffle(
-            windows_train
-        )  # many running windows in a row?, one batch too homogenous?, lets shuffle
-        X_train, y_train = self.convert(windows_train)
-        return X_train, y_train
-
-
-    @abstractmethod
-    def windowize(self, recordings: "list[Recording]") -> "list[Window]":
-        """
-        Based on the hyper param for window size, windowizes the recording_frames
-        convertion to numpy arrays
-        """
-        assert_type([(recordings[0], Recording)])
-        raise NotImplementedError
-
-
-    def convert(self, windows: "list[Window]") -> "tuple[np.ndarray, np.ndarray]":
-        """
-        Converts the windows to two numpy arrays as needed for the concrete model
-        sensor_array (data) and activity_array (labels)
-        """
-        assert_type([(windows[0], Window)])
-
-        sensor_arrays = list(map(lambda window: window.sensor_array, windows))
-        activities = list(map(lambda window: window.activity, windows))
-
-        # to_categorical converts the activity_array to the dimensions needed
-        activity_vectors = to_categorical(
-            np.array(activities),
-            num_classes=len(settings.ACTIVITIES),
-        )
-
-        return np.array(sensor_arrays), np.array(activity_vectors)
-
 
     # Fit ----------------------------------------------------------------------
 

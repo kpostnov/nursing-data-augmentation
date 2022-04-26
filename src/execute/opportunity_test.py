@@ -1,34 +1,49 @@
 import random
+from tkinter.tix import WINDOW
 from evaluation.conf_matrix import create_conf_matrix
 from evaluation.metrics import accuracy
 from evaluation.text_metrics import create_text_metrics
 from loader.preprocessing import ordonez_preprocess
 from loader.load_opportunity_dataset_ordonez import load_opportunity_dataset_ordonez
-from models.DeepConvLSTM import SlidingWindowDeepConvLSTM, JumpingWindowDeepConvLSTM
+from models.DeepConvLSTM import DeepConvLSTM
+import utils.windowize as windowize
 from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
 
 # Test accuracy: 89%
+
+WINDOW_SIZE = 20
+STRIDE_SIZE = 10
 
 # Load data
 (recordings_train, recordings_test) = load_opportunity_dataset_ordonez(settings.opportunity_dataset_path)
 
 random.seed(1678978086101)
 
-# TODO: apply recording label filter functions
-# TODO: save/ load preprocessed data
-
 # Preprocessing and Test Train Split
 recordings = ordonez_preprocess(recordings_train + recordings_test)
 recordings_train = recordings[:len(recordings_train)]
 recordings_test = recordings[len(recordings_train):]
 
+# Windowize
+X_train, y_train = windowize.windowize_convert(
+                        recordings_train, 
+                        WINDOW_SIZE, 
+                        STRIDE_SIZE, 
+                        windowize.windowize_sliding)
+
 # Init, Train
-model = SlidingWindowDeepConvLSTM(window_size=20, stride_size=10, n_features=recordings[0].sensor_frame.shape[1], n_outputs=18, verbose=1, n_epochs=15)
-model.windowize_convert_fit(recordings_train)
+model = DeepConvLSTM(
+    window_size=WINDOW_SIZE,
+    stride_size=STRIDE_SIZE,
+    n_features=recordings[0].sensor_frame.shape[1],
+    n_outputs=18,
+    verbose=1,
+    n_epochs=15)
+model.fit(X_train=X_train, y_train=y_train)
 
 # Test, Evaluate
-X_test, y_test_true = model.windowize_convert(recordings_test)
+X_test, y_test_true = windowize.windowize_convert(recordings_test)
 y_test_pred = model.predict(X_test)
 
 # Create Folder, save model export and evaluations there
