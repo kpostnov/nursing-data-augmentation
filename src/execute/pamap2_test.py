@@ -7,7 +7,7 @@ from evaluation.save_configuration import save_model_configuration
 from loader.preprocessing import pamap2_preprocess
 from loader.load_pamap2_dataset import load_pamap2_dataset
 from models.DeepConvLSTM import DeepConvLSTM
-import utils.windowize as windowize
+from utils.Windowizer import Windowizer
 from utils.array_operations import split_list_by_percentage
 from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
@@ -30,11 +30,8 @@ test_percentage = 0.3
 recordings_train, recordings_test = split_list_by_percentage(recordings, test_percentage)
 
 # Windowize
-X_train, y_train = windowize.windowize_convert(
-                        recordings_train,
-                        WINDOW_SIZE,
-                        STRIDE_SIZE,
-                        windowize.windowize_sliding)
+windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_sliding)
+X_train, y_train = windowizer.windowize_convert(recordings_train)
 
 # Init, Train
 model = DeepConvLSTM(
@@ -47,7 +44,7 @@ model = DeepConvLSTM(
 model.fit(X_train=X_train, y_train=y_train)
 
 # Test, Evaluate
-X_test, y_test_true = windowize.windowize_convert(recordings_test)
+X_test, y_test_true = windowizer.windowize_convert(recordings_test)
 y_test_pred = model.predict(X_test)
 
 # Create Folder, save model export and evaluations there

@@ -4,11 +4,10 @@ from evaluation.conf_matrix import create_conf_matrix
 from evaluation.metrics import accuracy
 from evaluation.text_metrics import create_text_metrics
 from evaluation.save_configuration import save_model_configuration
-from execute.opportunity_project import WINDOW_SIZE
 from loader.preprocessing import pamap2_preprocess
 from loader.load_pamap2_dataset import load_pamap2_dataset
 from models.DeepConvLSTM import DeepConvLSTM
-import utils.windowize as windowize
+from utils.Windowizer import Windowizer
 from utils.array_operations import split_list_by_percentage
 from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
@@ -28,21 +27,18 @@ random.shuffle(recordings)
 recordings = pamap2_preprocess(recordings)
 
 # Windowize all recordings
-X_train, y_train = windowize.windowize_convert(
-                        recordings,
-                        WINDOW_SIZE,
-                        STRIDE_SIZE,
-                        windowize.windowize_sliding)
+windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_sliding)
+X_train, y_train = windowizer.windowize_convert(recordings)
 
 # Train M1 on whole dataset (no normalization)
-model_m1 = DeepConvLSTM(
-    window_size=WINDOW_SIZE,
-    stride_size=STRIDE_SIZE,
-    n_features=recordings[0].sensor_frame.shape[1],
-    n_outputs=6,
-    verbose=1,
-    n_epochs=200)
-model_m1.fit(X_train=X_train, y_train=y_train)
+# model_m1 = DeepConvLSTM(
+#     window_size=WINDOW_SIZE,
+#     stride_size=STRIDE_SIZE,
+#     n_features=recordings[0].sensor_frame.shape[1],
+#     n_outputs=6,
+#     verbose=1,
+#     n_epochs=200)
+# model_m1.fit(X_train=X_train, y_train=y_train)
 
 # LOSO-folds (alpha-dataset)
 subject_ids = range(1, 9)
@@ -62,14 +58,14 @@ for subject_id in subject_ids:
         n_outputs=6,
         verbose=1,
         n_epochs=200)
-    X_train, y_train = windowize.windowize_convert(alpha_subset)   
-    model_alpha.fit(X_train, y_train)
+    X_train, y_train = windowizer.windowize_convert(alpha_subset) 
+    # model_alpha.fit(X_train, y_train)
 
     # Test alpha model on validation_subset
-    X_test, y_test = windowize.windowize_convert(validation_subset)
-    y_test_pred_model_alpha = model_alpha.predict(X_test)
+    X_test, y_test = windowizer.windowize_convert(validation_subset)
+    # y_test_pred_model_alpha = model_alpha.predict(X_test)
 
-    # Split recordings data activity wise for data augmentation
+    # Split recordings data activity-wise for data augmentation
     print("Begin data augmentation")
     activities_one_hot_encoded = np.eye(6, 6)
     for row in activities_one_hot_encoded:

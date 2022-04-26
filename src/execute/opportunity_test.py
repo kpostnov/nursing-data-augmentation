@@ -6,7 +6,7 @@ from evaluation.text_metrics import create_text_metrics
 from loader.preprocessing import ordonez_preprocess
 from loader.load_opportunity_dataset_ordonez import load_opportunity_dataset_ordonez
 from models.DeepConvLSTM import DeepConvLSTM
-import utils.windowize as windowize
+from utils.Windowizer import Windowizer
 from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
 
@@ -26,11 +26,8 @@ recordings_train = recordings[:len(recordings_train)]
 recordings_test = recordings[len(recordings_train):]
 
 # Windowize
-X_train, y_train = windowize.windowize_convert(
-                        recordings_train, 
-                        WINDOW_SIZE, 
-                        STRIDE_SIZE, 
-                        windowize.windowize_sliding)
+windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_sliding)
+X_train, y_train = windowizer.windowize_convert(recordings_train)
 
 # Init, Train
 model = DeepConvLSTM(
@@ -43,7 +40,7 @@ model = DeepConvLSTM(
 model.fit(X_train=X_train, y_train=y_train)
 
 # Test, Evaluate
-X_test, y_test_true = windowize.windowize_convert(recordings_test)
+X_test, y_test_true = windowizer.windowize_convert(recordings_test)
 y_test_pred = model.predict(X_test)
 
 # Create Folder, save model export and evaluations there
