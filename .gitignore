@@ -9,6 +9,9 @@ datasets/
 # Plots
 src/visualization/plots/*.png
 
+# TimeGAN
+src/report.txt
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

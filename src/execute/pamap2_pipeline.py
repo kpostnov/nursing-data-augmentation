@@ -13,9 +13,19 @@ from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
 import numpy as np
 
+import TimeGAN.timegan as timegan
+
 
 WINDOW_SIZE = 100
 STRIDE_SIZE = 100
+
+# Newtork parameters
+parameters = dict()
+parameters['module'] = 'gru' # LSTM possible
+parameters['hidden_dim'] = 100
+parameters['num_layer'] = 3
+parameters['iterations'] = 10000
+parameters['batch_size'] = 128
 
 # Load data
 recordings = load_pamap2_dataset(settings.pamap2_dataset_path)
@@ -73,10 +83,28 @@ for subject_id in subject_ids:
         activity_group_indices = np.nonzero(np.all(np.isclose(y_train, row), axis=1))[0]
         activity_group_X = X_train[activity_group_indices]
         activity_group_y = y_train[activity_group_indices]
-    
-    # TODO: Data Augmentation
 
-    # TODO: Merge augmented data with alpha_subset --> beta_subset
+        # Data Augmentation
+        ori_data = np.squeeze(activity_group_X, -1)
+        generated_activity_data = timegan.timegan(ori_data, parameters)
+
+        # generated_activity_labels = ...
+
+        print('Finish Synthetic Data Generation')
+        print(len(generated_activity_data))
+        print(generated_activity_data[0])
+        break
+    break
+
+        # Test generated data (>= 95%)
+
+    
+
+        # TODO: Merge augmented data with alpha_subset --> beta_subset
+        # TODO: expand dims in generated data
+        # Add generated_activity_data to X_train
+
+        # Add generated_activity_labels to y_train
 
     # TODO: Train beta model on beta_subset
     model_beta = DeepConvLSTM(
@@ -86,3 +114,5 @@ for subject_id in subject_ids:
         n_outputs=6,
         verbose=1,
         n_epochs=200)
+    model_beta.fit(X_train, y_train)
+    y_test_pred_model_beta = model_beta.predict(X_test)
