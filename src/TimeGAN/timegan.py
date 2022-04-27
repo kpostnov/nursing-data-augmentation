@@ -19,7 +19,7 @@ Note: Use original data as training set to generater synthetic data (time-series
 # Necessary Packages
 import tensorflow as tf
 import numpy as np
-from utils import extract_time, rnn_cell, random_generator, batch_generator
+from .utils import extract_time, rnn_cell, random_generator, batch_generator
 
 
 def timegan (ori_data, parameters):
@@ -297,14 +297,16 @@ def timegan (ori_data, parameters):
   print('Finish Joint Training')
     
   ## Synthetic data generation
-  Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
-  generated_data_curr = sess.run(X_hat, feed_dict={Z: Z_mb, X: ori_data, T: ori_time})    
-    
   generated_data = list()
-    
-  for i in range(no):
-    temp = generated_data_curr[i,:ori_time[i],:]
-    generated_data.append(temp)
+
+  # Generate 5 times as much synthetic data as original data
+  for i in range(5):
+    Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
+    generated_data_curr = sess.run(X_hat, feed_dict={Z: Z_mb, X: ori_data, T: ori_time})    
+      
+    for i in range(no):
+      temp = generated_data_curr[i,:ori_time[i],:]
+      generated_data.append(temp)
         
   # Renormalization
   generated_data = generated_data * max_val

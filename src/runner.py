@@ -4,9 +4,10 @@ Only import from experiments and tests
 """
 
 import utils.settings as settings
+import numpy as np
 
 
-settings.init('sonar')
+settings.init('pamap2')
 
 if __name__ == '__main__':
-    import execute.sonar_test
+    import execute.pamap2_pipeline

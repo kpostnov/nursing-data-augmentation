@@ -7,6 +7,7 @@ from evaluation.save_configuration import save_model_configuration
 from loader.preprocessing import pamap2_preprocess
 from loader.load_pamap2_dataset import load_pamap2_dataset
 from models.DeepConvLSTM import DeepConvLSTM
+from utils.Window import Window
 from utils.Windowizer import Windowizer
 from utils.array_operations import split_list_by_percentage
 from utils.folder_operations import new_saved_experiment_folder
@@ -14,17 +15,18 @@ import utils.settings as settings
 import numpy as np
 
 import TimeGAN.timegan as timegan
+import gc
 
 
 WINDOW_SIZE = 100
 STRIDE_SIZE = 100
 
-# Newtork parameters
+# GAN Newtork parameters
 parameters = dict()
 parameters['module'] = 'gru' # LSTM possible
-parameters['hidden_dim'] = 100
+parameters['hidden_dim'] = 44 # Paper: 4 times the size of input features
 parameters['num_layer'] = 3
-parameters['iterations'] = 10000
+parameters['iterations'] = 1 # Paper: 10.000
 parameters['batch_size'] = 128
 
 # Load data
@@ -78,7 +80,7 @@ for subject_id in subject_ids:
     # Split recordings data activity-wise for data augmentation
     print("Begin data augmentation")
     activities_one_hot_encoded = np.eye(6, 6)
-    for row in activities_one_hot_encoded:
+    for (index, row) in enumerate(activities_one_hot_encoded):
         # Get all indices in y_train where the one-hot-encoded row is equal to row
         activity_group_indices = np.nonzero(np.all(np.isclose(y_train, row), axis=1))[0]
         activity_group_X = X_train[activity_group_indices]
@@ -88,23 +90,32 @@ for subject_id in subject_ids:
         ori_data = np.squeeze(activity_group_X, -1)
         generated_activity_data = timegan.timegan(ori_data, parameters)
 
-        # generated_activity_labels = ...
+        generated_activity_labels = np.expand_dims(row, axis=0)
+        generated_activity_labels = np.repeat(generated_activity_labels, len(generated_activity_data), axis=0)
 
         print('Finish Synthetic Data Generation')
-        print(len(generated_activity_data))
-        print(generated_activity_data[0])
-        break
-    break
 
         # Test generated data (>= 95%)
 
-    
 
-        # TODO: Merge augmented data with alpha_subset --> beta_subset
-        # TODO: expand dims in generated data
-        # Add generated_activity_data to X_train
+        # Convert generated data (list) to numpy array
+        generated_activity_data = np.asarray(generated_activity_data)
+        generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
-        # Add generated_activity_labels to y_train
+        # Save generated data
+        np.save(f'data_{subject_id}_{index}', generated_activity_data)
+        np.save(f'labels_{subject_id}_{index}', generated_activity_labels)
+
+        del generated_activity_data
+        del generated_activity_labels
+        del activity_group_X
+        del activity_group_y
+        del ori_data
+        gc.collect()
+
+        # Merge augmented data with alpha_subset
+        # X_train = np.append(X_train, generated_activity_data, axis=0)
+        # y_train = np.append(y_train, generated_activity_labels, axis=0)
 
     # TODO: Train beta model on beta_subset
     model_beta = DeepConvLSTM(
@@ -114,5 +125,5 @@ for subject_id in subject_ids:
         n_outputs=6,
         verbose=1,
         n_epochs=200)
-    model_beta.fit(X_train, y_train)
-    y_test_pred_model_beta = model_beta.predict(X_test)
+    # model_beta.fit(X_train, y_train)
+    # y_test_pred_model_beta = model_beta.predict(X_test)
