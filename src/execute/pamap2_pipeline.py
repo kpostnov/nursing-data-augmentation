@@ -14,7 +14,7 @@ from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
 import numpy as np
 
-import TimeGAN.timegan as timegan
+import TimeGAN_v2.timegan as timegan
 import gc
 
 
@@ -106,6 +106,7 @@ for subject_id in subject_ids:
         np.save(f'data_{subject_id}_{index}', generated_activity_data)
         np.save(f'labels_{subject_id}_{index}', generated_activity_labels)
 
+        # Garbage collection
         del generated_activity_data
         del generated_activity_labels
         del activity_group_X
