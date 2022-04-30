@@ -12,6 +12,8 @@ src/visualization/plots/*.png
 # TimeGAN
 src/report.txt
 
+src/runner.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

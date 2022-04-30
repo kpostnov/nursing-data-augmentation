@@ -43,7 +43,8 @@ def visualization (ori_data, generated_data, analysis):
   generated_data = generated_data[idx]
   
   no, seq_len, dim = ori_data.shape  
-  
+
+  # Calculate mean over all sensor channels in order to get one time series
   for i in range(anal_sample_no):
     if (i == 0):
       prep_data = np.reshape(np.mean(ori_data[0,:,:], 1), [1,seq_len])
@@ -53,7 +54,7 @@ def visualization (ori_data, generated_data, analysis):
                                   np.reshape(np.mean(ori_data[i,:,:],1), [1,seq_len])))
       prep_data_hat = np.concatenate((prep_data_hat, 
                                       np.reshape(np.mean(generated_data[i,:,:],1), [1,seq_len])))
-    
+
   # Visualization parameter        
   colors = ["red" for i in range(anal_sample_no)] + ["blue" for i in range(anal_sample_no)]    
     
