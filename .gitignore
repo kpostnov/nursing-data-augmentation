@@ -11,6 +11,7 @@ src/visualization/plots/*.png
 
 # TimeGAN
 src/report.txt
+src/time_gan
 
 src/runner.py
 

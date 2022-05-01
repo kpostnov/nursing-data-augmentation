@@ -11,6 +11,7 @@ from models.DeepConvLSTM import DeepConvLSTM
 from visualization.visualize import plot_pca
 from loader.preprocessing import interpolate_linear
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 # Kann in Recording (sowie evtl. mapping int zu labels)
@@ -31,12 +32,14 @@ for rec in recordings:
     rec.activities = rec.activities.map(settings.ACTIVITIES)
 
 windowizer = Windowizer(100, 100, Windowizer.windowize_sliding)
-# windows = windowizer.windowize_sliding(recordings)
+windows = windowizer.windowize_sliding(recordings)
 # columns = get_index_map_by_column(recordings[0], ['dv[1]_LW', 'dv[2]_LW', 'dv[3]_LW'])
-X_train, y_train = windowizer.windowize_convert(recordings)
+# X_train, y_train = windowizer.windowize_convert(recordings)
 
 # X_train = np.squeeze(X_train, -1)
 
 
-
-# plot_pca(windows, columns_to_plot=columns)
+fig, ax = plt.subplots(nrows=2)
+plot_pca(windows[:200], ax=ax[0])
+plot_pca(windows[200:400], ax=ax[1])
+plt.show()

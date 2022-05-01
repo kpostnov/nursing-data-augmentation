@@ -5,7 +5,7 @@ from utils import settings
 from utils.Window import Window
 from sklearn.decomposition import PCA
 from matplotlib import pyplot as plt
-from typing import Callable, Dict
+from typing import Dict
 import math
 import numpy as np
 
@@ -20,7 +20,7 @@ def plot_pca_distribution(original_data: np.ndarray, generated_data: np.ndarray,
     assert(original_data.ndim == 4), 'original_data must be a 4D array'
     assert(generated_data.ndim == 4), 'generated_data must be a 4D array'
 
-    number_samples = min(original_data.shape[0], 1000)
+    number_samples = min(original_data.shape[0], 2000)
     idx = np.random.permutation(number_samples)
 
     original_data = original_data[idx]
@@ -55,12 +55,16 @@ def plot_pca_distribution(original_data: np.ndarray, generated_data: np.ndarray,
     # If plot is drawn individually
     if ax is None:
         ax = plt.gca()
-        plt.suptitle(f'PCA visualization of {activity}')
-        plt.savefig(f'visualization/plots/pca_distribution_{activity}.png')
+        plt.suptitle(f'PCA visualization of activity {activity}')
 
     ax.scatter(Xt_original[:, 0], Xt_original[:, 1], c=df_original['color'], alpha=0.2, label='original')
     plot = ax.scatter(Xt_generated[:, 0], Xt_generated[:, 1], c=df_generated['color'], alpha=0.2, label='generated')  
     ax.legend()
+
+    plt.savefig(f'visualization/plots/pca_distribution_{activity}.png')
+
+
+    print(f'Plotting PCA visualization of activity {activity} finished')
 
     return plot
 
@@ -94,6 +98,8 @@ def plot_pca(windows: 'list[Window]', ax = None) -> None:
     Xt = pca.fit_transform(complete_df.iloc[:, :-1])
     plot = ax.scatter(Xt[:, 0], Xt[:, 1], c=complete_df['activity'], cmap='viridis')
     ax.legend(handles=plot.legend_elements()[0], labels=list(activities))
+
+    print("Plotting PCA on all sensor channels, {len(activities)} activities, {len(windows)} windows")
 
     return plot
 

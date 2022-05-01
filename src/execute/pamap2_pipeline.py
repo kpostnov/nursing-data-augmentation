@@ -13,8 +13,10 @@ from utils.array_operations import split_list_by_percentage
 from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
 import numpy as np
+from visualization.visualize import plot_pca_distribution
 
-import TimeGAN_v2.timegan as timegan
+# import TimeGAN.timegan as timegan
+import TimeGAN_gpu.timegan as timegan
 import gc
 
 
@@ -23,11 +25,18 @@ STRIDE_SIZE = 100
 
 # GAN Newtork parameters
 parameters = dict()
-parameters['module'] = 'gru' # LSTM possible
-parameters['hidden_dim'] = 44 # Paper: 4 times the size of input features
-parameters['num_layer'] = 3
-parameters['iterations'] = 1 # Paper: 10.000
+# parameters['module'] = 'gru' # LSTM possible
+# parameters['hidden_dim'] = 44 # Paper: 4 times the size of input features
+# parameters['num_layer'] = 3
+# parameters['iterations'] = 1 # Paper: 10.000
+# parameters['batch_size'] = 128
+
+parameters['seq_len'] = WINDOW_SIZE
+parameters['n_seq'] = 11
 parameters['batch_size'] = 128
+parameters['hidden_dim'] = 44
+parameters['num_layer'] = 3
+parameters['train_steps'] = 10000
 
 # Load data
 recordings = load_pamap2_dataset(settings.pamap2_dataset_path)
@@ -63,13 +72,13 @@ for subject_id in subject_ids:
 
     # Train alpha model on alpha_subset
     print("Training alpha model on alpha_subset")
-    model_alpha = DeepConvLSTM(
-        window_size=WINDOW_SIZE,
-        stride_size=STRIDE_SIZE,
-        n_features=recordings[0].sensor_frame.shape[1],
-        n_outputs=6,
-        verbose=1,
-        n_epochs=200)
+    # model_alpha = DeepConvLSTM(
+    #     window_size=WINDOW_SIZE,
+    #     stride_size=STRIDE_SIZE,
+    #     n_features=recordings[0].sensor_frame.shape[1],
+    #     n_outputs=6,
+    #     verbose=1,
+    #     n_epochs=200)
     X_train, y_train = windowizer.windowize_convert(alpha_subset) 
     # model_alpha.fit(X_train, y_train)
 
@@ -97,14 +106,14 @@ for subject_id in subject_ids:
 
         # Test generated data (>= 95%)
 
-
         # Convert generated data (list) to numpy array
-        generated_activity_data = np.asarray(generated_activity_data)
+        # generated_activity_data = np.asarray(generated_activity_data)
         generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
         # Save generated data
         np.save(f'data_{subject_id}_{index}', generated_activity_data)
         np.save(f'labels_{subject_id}_{index}', generated_activity_labels)
+
 
         # Garbage collection
         del generated_activity_data
@@ -114,6 +123,15 @@ for subject_id in subject_ids:
         del ori_data
         gc.collect()
 
+
+
+        # data_path = "D:\dataset\Augmented Data\\"
+        # generated_activity_data = np.load(f'{data_path}\data_{subject_id}_{index}.npy')
+
+        # plot_pca_distribution(activity_group_X, generated_activity_data, str(index))
+        
+        # if index == 2:
+        #     exit()
         # Merge augmented data with alpha_subset
         # X_train = np.append(X_train, generated_activity_data, axis=0)
         # y_train = np.append(y_train, generated_activity_labels, axis=0)
