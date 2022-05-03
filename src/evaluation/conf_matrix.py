@@ -26,7 +26,7 @@ def create_conf_matrix(path: str, y_test_pred: np.ndarray, y_test_true: np.ndarr
     if normalize:
         cm = cm.astype("float") / cm.sum(axis=1)[:, np.newaxis]
 
-    f3 = plt.figure(3)
+    f3 = plt.figure()
     plt.imshow(cm, interpolation="nearest", cmap=cmap)
     plt.title(title)
     plt.colorbar()
@@ -48,6 +48,5 @@ def create_conf_matrix(path: str, y_test_pred: np.ndarray, y_test_true: np.ndarr
         plt.tight_layout()
         plt.ylabel("True label")
         plt.xlabel("predicted label")
-        f3.show()
 
     plt.savefig(os.path.join(path, "conf_matrix.png"))
