@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 
-from utils.Recording import Recording
+from datatypes.Recording import Recording
 import utils.settings as settings
 
 

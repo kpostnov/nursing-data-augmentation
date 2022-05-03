@@ -1,7 +1,7 @@
 from multiprocessing import Pool
 import os
 import pandas as pd
-from utils.Recording import Recording
+from datatypes.Recording import Recording
 
 
 def save_recordings(recordings: 'list[Recording]', path: str) -> None:

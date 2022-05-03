@@ -2,7 +2,7 @@ import os
 import random
 
 from loader.load_dataset import load_dataset
-from utils import Recording
+from datatypes.Recording import Recording
 from utils.save_all_recordings import save_all_recordings
 from utils.cache_recordings import save_recordings, load_recordings
 import utils.settings as settings

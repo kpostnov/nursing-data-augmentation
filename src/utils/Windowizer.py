@@ -3,8 +3,8 @@ from typing import Callable
 import numpy as np
 import random
 from utils import settings
-from utils.Recording import Recording
-from utils.Window import Window
+from datatypes.Recording import Recording
+from datatypes.Window import Window
 from utils.array_operations import transform_to_subarrays
 from utils.typing import assert_type
 from tensorflow.keras.utils import to_categorical

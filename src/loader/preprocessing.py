@@ -2,7 +2,7 @@ from sklearn.preprocessing import MinMaxScaler, StandardScaler
 import pandas as pd
 
 from utils import settings
-from utils.Recording import Recording
+from datatypes.Recording import Recording
 from utils.typing import assert_type
 
 

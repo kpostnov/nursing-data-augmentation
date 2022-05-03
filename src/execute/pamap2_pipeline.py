@@ -7,7 +7,7 @@ from evaluation.save_configuration import save_model_configuration
 from loader.preprocessing import pamap2_preprocess
 from loader.load_pamap2_dataset import load_pamap2_dataset
 from models.DeepConvLSTM import DeepConvLSTM
-from utils.Window import Window
+from datatypes.Window import Window
 from utils.Windowizer import Windowizer
 from utils.array_operations import split_list_by_percentage
 from utils.folder_operations import new_saved_experiment_folder

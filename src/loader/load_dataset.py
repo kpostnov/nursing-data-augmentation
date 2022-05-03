@@ -7,7 +7,7 @@ import pandas as pd
 
 from utils.file_functions import get_subfolder_names
 from utils import settings
-from utils.Recording import Recording
+from datatypes.Recording import Recording
 from loader.XSensRecordingReader import XSensRecordingReader
 
 
