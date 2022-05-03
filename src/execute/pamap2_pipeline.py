@@ -13,7 +13,7 @@ from utils.array_operations import split_list_by_percentage
 from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
 import numpy as np
-from visualization.visualize import plot_pca_distribution
+from visualization.visualize import plot_pca_distribution, plot_tsne_distribution
 
 # import TimeGAN.timegan as timegan
 import TimeGAN_gpu.timegan as timegan
@@ -96,39 +96,46 @@ for subject_id in subject_ids:
         activity_group_y = y_train[activity_group_indices]
 
         # Data Augmentation
-        ori_data = np.squeeze(activity_group_X, -1)
-        generated_activity_data = timegan.timegan(ori_data, parameters)
+        # ori_data = np.squeeze(activity_group_X, -1)
+        # generated_activity_data = timegan.timegan(ori_data, parameters)
 
-        generated_activity_labels = np.expand_dims(row, axis=0)
-        generated_activity_labels = np.repeat(generated_activity_labels, len(generated_activity_data), axis=0)
+        # generated_activity_labels = np.expand_dims(row, axis=0)
+        # generated_activity_labels = np.repeat(generated_activity_labels, len(generated_activity_data), axis=0)
 
-        print('Finish Synthetic Data Generation')
+        # print('Finish Synthetic Data Generation')
 
         # Test generated data (>= 95%)
 
         # Convert generated data (list) to numpy array
         # generated_activity_data = np.asarray(generated_activity_data)
-        generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
+        # generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
         # Save generated data
-        np.save(f'data_{subject_id}_{index}', generated_activity_data)
-        np.save(f'labels_{subject_id}_{index}', generated_activity_labels)
+        # np.save(f'data_{subject_id}_{index}', generated_activity_data)
+        # np.save(f'labels_{subject_id}_{index}', generated_activity_labels)
 
 
         # Garbage collection
-        del generated_activity_data
-        del generated_activity_labels
-        del activity_group_X
-        del activity_group_y
-        del ori_data
-        gc.collect()
+        # del generated_activity_data
+        # del generated_activity_labels
+        # del activity_group_X
+        # del activity_group_y
+        # del ori_data
+        # gc.collect()
 
 
 
-        # data_path = "D:\dataset\Augmented Data\\"
-        # generated_activity_data = np.load(f'{data_path}\data_{subject_id}_{index}.npy')
+        data_path = "D:\dataset\Augmented Data\without_gpu\\"
+        generated_activity_data = np.load(f'{data_path}\data_{subject_id}_{index}.npy')
 
-        # plot_pca_distribution(activity_group_X, generated_activity_data, str(index))
+        plot_pca_distribution(activity_group_X, generated_activity_data, str(index) + "_without_gpu")
+        plot_tsne_distribution(activity_group_X, generated_activity_data, str(index) + "_without_gpu")
+
+        data_path = "D:\dataset\Augmented Data\with_gpu\\"
+        generated_activity_data = np.load(f'{data_path}\data_{subject_id}_{index}.npy')
+        plot_pca_distribution(activity_group_X, generated_activity_data, str(index) + "_with_gpu")
+        plot_tsne_distribution(activity_group_X, generated_activity_data, str(index) + "_with_gpu")
+
         
         # if index == 2:
         #     exit()

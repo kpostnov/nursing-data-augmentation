@@ -11,7 +11,7 @@ import numpy as np
 from sklearn.manifold import TSNE
 
 
-def plot_pca_distribution(original_data: np.ndarray, generated_data: np.ndarray, activity: str, ax = None) -> None:
+def plot_pca_distribution(original_data: np.ndarray, generated_data: np.ndarray, activity: str) -> None:
     '''
     Plot distributions of the original and generated data.
     Calculate the mean of each time step over all sensor channels. 
@@ -42,7 +42,6 @@ def plot_pca_distribution(original_data: np.ndarray, generated_data: np.ndarray,
             generated_array = np.concatenate((generated_array, 
                                         np.reshape(np.mean(generated_data[i,:,:], 1), [1, seq_len])))
 
-
     df_original = pd.DataFrame(original_array)
     df_generated = pd.DataFrame(generated_array)
     df_original['color'] = 'red'
@@ -53,21 +52,14 @@ def plot_pca_distribution(original_data: np.ndarray, generated_data: np.ndarray,
     Xt_original = pca.transform(df_original.iloc[:, :-1])
     Xt_generated = pca.transform(df_generated.iloc[:, :-1])
 
-    # If plot is drawn individually
-    if ax is None:
-        ax = plt.gca()
-        plt.suptitle(f'PCA visualization of activity {activity}')
-
-    ax.scatter(Xt_original[:, 0], Xt_original[:, 1], c=df_original['color'], alpha=0.2, label='original')
-    plot = ax.scatter(Xt_generated[:, 0], Xt_generated[:, 1], c=df_generated['color'], alpha=0.2, label='generated')  
-    ax.legend()
+    plt.scatter(Xt_original[:, 0], Xt_original[:, 1], c=df_original['color'], alpha=0.2, label='original')
+    plt.scatter(Xt_generated[:, 0], Xt_generated[:, 1], c=df_generated['color'], alpha=0.2, label='generated')  
+    plt.legend()
+    plt.title('PCA visualization of activity: ' + activity)
 
     plt.savefig(f'visualization/plots/pca_distribution_{activity}.png')
 
-
     print(f'Plotting PCA visualization of activity {activity} finished')
-
-    return plot
 
 
 def plot_pca(windows: 'list[Window]', ax = None) -> None:
@@ -190,15 +182,13 @@ def plot_tsne_distribution(original_data: np.ndarray, generated_data: np.ndarray
     tsne = TSNE(n_components = 2, verbose = 1, perplexity = 40, n_iter = 300)
     tsne_results = tsne.fit_transform(prep_data_final.iloc[:, :-1])
       
-    # Plotting
-    f, ax = plt.subplots(1)
-      
+    # Plotting  
     plt.scatter(tsne_results[:number_samples,0], tsne_results[:number_samples,1], 
                 c = prep_data_final.loc[:number_samples-1, 'color'], alpha = 0.2, label = "Original")
     plt.scatter(tsne_results[number_samples:,0], tsne_results[number_samples:,1], 
                 c = prep_data_final.loc[number_samples:, 'color'], alpha = 0.2, label = "Synthetic")
   
-    ax.legend()
+    plt.legend()
       
     plt.title('t-SNE visualization of activity: ' + activity)
     plt.savefig(f'visualization/plots/tsne_distribution_{activity}.png')
