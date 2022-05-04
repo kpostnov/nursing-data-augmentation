@@ -47,6 +47,11 @@ def load_recordings(path: str, limit: int = None) -> 'list[Recording]':
     pool.join()
     recordings = list(recordings)
 
+    # In case multi-processing should fail
+    # recordings = list()
+    # for index, rec in enumerate(recording_files):
+    #     recordings.append(read_recording_from_csv(data=(index, rec)))
+
     print(f'Loaded {len(recordings)} recordings from {path}')
 
     return recordings

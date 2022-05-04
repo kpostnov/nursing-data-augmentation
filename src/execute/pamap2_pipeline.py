@@ -16,7 +16,9 @@ import numpy as np
 from visualization.visualize import plot_pca_distribution, plot_tsne_distribution
 
 # import TimeGAN.timegan as timegan
-import TimeGAN_gpu.timegan as timegan
+# import TimeGAN_gpu.timegan as timegan
+from TimeGAN_ydata.src.ydata_synthetic.synthesizers.timeseries.timegan.model import TimeGAN
+from TimeGAN_ydata.src.ydata_synthetic.synthesizers import ModelParameters
 import gc
 
 
@@ -37,6 +39,17 @@ parameters['batch_size'] = 128
 parameters['hidden_dim'] = 44
 parameters['num_layer'] = 3
 parameters['train_steps'] = 10000
+
+parameters['gamma'] = 1
+parameters['noise_dim'] = 11
+parameters['dim'] = 128
+parameters['log_step'] = 100
+parameters['learning_rate'] = 5e-4
+
+gan_args = ModelParameters(batch_size=parameters['batch_size'],
+                           lr=parameters['learning_rate'],
+                           noise_dim=parameters['noise_dim'],
+                           layers_dim=parameters['dim'])
 
 # Load data
 recordings = load_pamap2_dataset(settings.pamap2_dataset_path)
@@ -79,7 +92,7 @@ for subject_id in subject_ids:
     #     n_outputs=6,
     #     verbose=1,
     #     n_epochs=200)
-    X_train, y_train = windowizer.windowize_convert(alpha_subset) 
+    X_train, y_train = windowizer.windowize_convert(alpha_subset)
     # model_alpha.fit(X_train, y_train)
 
     # Test alpha model on validation_subset
@@ -96,47 +109,60 @@ for subject_id in subject_ids:
         activity_group_y = y_train[activity_group_indices]
 
         # Data Augmentation
-        # ori_data = np.squeeze(activity_group_X, -1)
+        ori_data = np.squeeze(activity_group_X, -1)
+        ori_data_list = list()
+        for matrix in ori_data:
+            ori_data_list.append(matrix)
+
+        synth = TimeGAN(model_parameters=gan_args, 
+                                hidden_dim=parameters['hidden_dim'], 
+                                seq_len=parameters['seq_len'], 
+                                n_seq=parameters['n_seq'], 
+                                gamma=parameters['gamma'])
+        synth.train(ori_data_list, train_steps=parameters['train_steps'])
+        synth.save(f'synthesizer_{subject_id}_{index}.pkl')
+
+        generated_activity_data = synth.sample(5000)
+ 
         # generated_activity_data = timegan.timegan(ori_data, parameters)
 
-        # generated_activity_labels = np.expand_dims(row, axis=0)
-        # generated_activity_labels = np.repeat(generated_activity_labels, len(generated_activity_data), axis=0)
+        generated_activity_labels = np.expand_dims(row, axis=0)
+        generated_activity_labels = np.repeat(generated_activity_labels, len(generated_activity_data), axis=0)
 
-        # print('Finish Synthetic Data Generation')
-
-        # Test generated data (>= 95%)
+        print(f'Finish Synthetic Data Generation: {generated_activity_data.shape}')
 
         # Convert generated data (list) to numpy array
         # generated_activity_data = np.asarray(generated_activity_data)
-        # generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
+        generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
         # Save generated data
-        # np.save(f'data_{subject_id}_{index}', generated_activity_data)
-        # np.save(f'labels_{subject_id}_{index}', generated_activity_labels)
-
+        np.save(f'data_{subject_id}_{index}_gpunew', generated_activity_data)
+        np.save(f'labels_{subject_id}_{index}_gpunew', generated_activity_labels)
 
         # Garbage collection
-        # del generated_activity_data
-        # del generated_activity_labels
-        # del activity_group_X
-        # del activity_group_y
-        # del ori_data
-        # gc.collect()
+        del generated_activity_data
+        del generated_activity_labels
+        del activity_group_X
+        del activity_group_y
+        del ori_data
+        gc.collect()
 
-
+        continue
 
         data_path = "D:\dataset\Augmented Data\without_gpu\\"
-        generated_activity_data = np.load(f'{data_path}\data_{subject_id}_{index}.npy')
+        try:
+            generated_activity_data = np.load(f'{data_path}\data_{subject_id}_{index}.npy')
+        except OSError:
+            continue
 
-        plot_pca_distribution(activity_group_X, generated_activity_data, str(index) + "_without_gpu")
-        plot_tsne_distribution(activity_group_X, generated_activity_data, str(index) + "_without_gpu")
+        plot_pca_distribution(activity_group_X, generated_activity_data, str(subject_id) + "_" + str(index) + "_without_gpu")
+        plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject_id) + "_" + str(index) + "_without_gpu")
 
-        data_path = "D:\dataset\Augmented Data\with_gpu\\"
-        generated_activity_data = np.load(f'{data_path}\data_{subject_id}_{index}.npy')
-        plot_pca_distribution(activity_group_X, generated_activity_data, str(index) + "_with_gpu")
-        plot_tsne_distribution(activity_group_X, generated_activity_data, str(index) + "_with_gpu")
+        # data_path = "D:\dataset\Augmented Data\with_gpu\\"
+        # generated_activity_data = np.load(f'{data_path}\data_{subject_id}_{index}.npy')
+        # plot_pca_distribution(activity_group_X, generated_activity_data, str(index) + "_with_gpu")
+        # plot_tsne_distribution(activity_group_X, generated_activity_data, str(index) + "_with_gpu")
 
-        
         # if index == 2:
         #     exit()
         # Merge augmented data with alpha_subset

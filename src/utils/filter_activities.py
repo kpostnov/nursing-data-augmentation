@@ -3,7 +3,7 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 
-from utils.Recording import Recording
+from datatypes.Recording import Recording
 
 
 def filter_activities(
@@ -23,7 +23,7 @@ def filter_activities_negative(
 
 
 def filter_activities_custom(
-    recordings: "list[Recording]", filter_fn: Callable[[pd.Series], list[bool]]
+    recordings: "list[Recording]", filter_fn: Callable[[pd.Series], "list[bool]"]
 ) -> "list[Recording]":
     """
     Removes all activities where filter_fn is false
