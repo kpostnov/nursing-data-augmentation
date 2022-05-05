@@ -51,6 +51,10 @@ def init_sonar():
     global CSV_HEADER_SIZE
     CSV_HEADER_SIZE = 8
 
+    # TODO: Convert to numbers
+    global SUBJECTS
+    SUBJECTS = ["aileen", "alex", "anja", "b2", "brueggemann", "christine", "connie", "florian", "kathi", "mathias", "oli",	"rauche", "trapp", "yvan"]
+
 
 def init_opportunity():
     global opportunity_dataset_path
@@ -76,7 +80,6 @@ def init_opportunity():
     #     105: 5,
     # }
 
-
     # Ordonez et al. (2015)
     global activity_initial_num_to_activity_str
     activity_initial_num_to_activity_str = {
@@ -89,19 +92,19 @@ def init_opportunity():
         404520: "Close Fridge",
         406505: "Open Dishwasher",
         404505: "Close Dishwasher",
-        406519: "Open Drawer 1", 
+        406519: "Open Drawer 1",
         404519: "Close Drawer 1",
-        406511: "Open Drawer 2", 
-        404511: "Close Drawer 2", 
-        406508: "Open Drawer 3", 
-        404508: "Close Drawer 3", 
+        406511: "Open Drawer 2",
+        404511: "Close Drawer 2",
+        406508: "Open Drawer 3",
+        404508: "Close Drawer 3",
         408512: "Clean Table",
-        407521: "Drink from Cup", 
+        407521: "Drink from Cup",
         405506: "Toggle Switch",
     }
 
     global activity_initial_num_to_activity_idx
-    activity_initial_num_to_activity_idx =  {
+    activity_initial_num_to_activity_idx = {
         0: 0,
         406516: 1,
         406517: 2,
@@ -111,14 +114,14 @@ def init_opportunity():
         404520: 6,
         406505: 7,
         404505: 8,
-        406519: 9, 
+        406519: 9,
         404519: 10,
-        406511: 11, 
-        404511: 12, 
-        406508: 13, 
-        404508: 14, 
+        406511: 11,
+        404511: 12,
+        406508: 13,
+        404508: 14,
         408512: 15,
-        407521: 16, 
+        407521: 16,
         405506: 17,
     }
 
