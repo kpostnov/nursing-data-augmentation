@@ -23,8 +23,9 @@ def get_index_map_by_column(recording: Recording, columns: 'list[str]'):
 recordings = load_recordings("D:\dataset\ML Prototype Recordings\without_null_activities", limit=3)
 
 values = count_activities_per_person(recordings)
-
 values.to_csv('actvities_per_person.csv')
+values.plot.bar()
+plt.savefig('activities_per_person.png')
 
 # random.seed(1678978086101)
 # random.shuffle(recordings)
