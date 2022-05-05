@@ -66,14 +66,12 @@ class XSensRecordingReader(object):
     @staticmethod
     def __prepare_dataframe(frame, identifier):
         suffix = "_" + identifier
-        del frame["PacketCounter"]
-        # Fill all values of columns that begin with Quat_ with 0
-        # frame['Quat_W'] = 0
-        # frame['Quat_X'] = 0
-        # frame['Quat_Y'] = 0
-        # frame['Quat_Z'] = 0
-        # del frame['Status']
-        frame = frame.astype({"SampleTimeFine": "int64"})
+        if "PacketCounter" in frame.columns:
+            del frame["PacketCounter"]
+        if "Status" in frame.columns:
+            del frame["Status"]
+        # Convert all frame values to numbers (otherwise nans might not be read correctly!)
+        frame = frame.apply(pd.to_numeric, errors='coerce').astype({"SampleTimeFine": "int64"})
         frame = XSensRecordingReader.__remove_SampleTimeFine_overflow(frame)
         return XSensRecordingReader.__add_suffix_except_SampleTimeFine(frame, suffix)
 

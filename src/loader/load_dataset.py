@@ -11,30 +11,24 @@ from datatypes.Recording import Recording
 from loader.XSensRecordingReader import XSensRecordingReader
 
 
-def load_dataset(dataset_path: str, limit: int = None) -> "list[Recording]":
+def load_dataset(dataset_path: str, limit_n_recs: int = None, multiprocessing: bool = True) -> "list[Recording]":
     """
     Returns a list of the raw recordings (activities, subjects included, None values) (different representaion of dataset)
     directory structure bias! not shuffled!
-
-
     This function knows the structure of the XSens dataset.
     It will call the create_recording_frame function on every recording folder.
-
     bp/data
         dataset_01
             recording_01
                 metadata.json
                 sensor_01.csv
                 sensor_02.csv
-
             recording_01
                 metadata.json
                 sensor_01.csv
                 sensor_02.csv
-
         data_set_02
             ...
-
     """
 
     if not os.path.exists(dataset_path):
@@ -44,48 +38,58 @@ def load_dataset(dataset_path: str, limit: int = None) -> "list[Recording]":
 
     # recording
     recording_folder_names = get_subfolder_names(dataset_path)
+
     recording_folder_names = [
         os.path.join(dataset_path, recording_folder_name)
         for recording_folder_name in recording_folder_names
     ]
-
-    if limit is not None:
-        recording_folder_names = recording_folder_names[:limit]
+    
+    if limit_n_recs is not None:
+        enumerated_recording_folder_names = list(enumerate(recording_folder_names[:limit_n_recs]))
+    else:
+        enumerated_recording_folder_names = list(enumerate(recording_folder_names))
 
     # USE ONE (Multiprocessing or Single Thread)
     # Multiprocessing:
-    pool = Pool()
-    recordings = pool.imap_unordered(
-        read_recording_from_folder, recording_folder_names, 10
-    )
-    pool.close()
-    pool.join()
+    if multiprocessing:
+        pool = Pool()
+        recordings = pool.imap_unordered(
+            read_recording_from_folder, enumerated_recording_folder_names, 10
+        )
+        pool.close()
+        pool.join()
 
     # Single thread:
-    # recordings = [read_recording_from_folder(recording_folder_name) for recording_folder_name in recording_folder_names]
+    else:
+        recordings = [read_recording_from_folder(recording_folder_name, continue_on_error = True) for recording_folder_name in enumerated_recording_folder_names]
 
-    return list(filter(lambda x: x is not None, recordings))
+    recordings = list(filter(lambda x: x is not None, recordings))
+    assert len(recordings) > 0, "load_sonar_dataset: recordings empty!"
+    return recordings
 
 
-def read_recording_from_folder(recording_folder_path: str):
+def read_recording_from_folder(enumerated_recording_folder_names: 'tuple(int, str)', continue_on_error: bool = True):
+    recording_folder_path = enumerated_recording_folder_names[1]
+    recording_idx = enumerated_recording_folder_names[0]
     try:
         subject_folder_name = get_subject_folder_name(recording_folder_path)
-        return create_recording(recording_folder_path, subject_folder_name)
+        return create_recording(recording_folder_path, subject_folder_name, recording_idx)
     except Exception as e:
-        print("Error while reading recording from folder: " + recording_folder_path)
-        print(e)
-        print("Continuing...")
-        return None
+        if continue_on_error:
+            print("===> Will skip Recording, because error while reading! path:" + recording_folder_path + "\nError:\n\t" + str(e))
+            return None
+        raise e
+
 
 
 def get_subject_folder_name(recording_folder_path: str) -> str:
-    with open(recording_folder_path + os.path.sep + "metadata.json", "r") as f:
+    with open(recording_folder_path + os.path.sep + "metadata.json", "r", encoding="utf8") as f:
         data = json.load(f)
     return data["person"]
 
 
 def get_activity_dataframe(time_frame, recording_folder_path: str) -> pd.DataFrame:
-    with open(recording_folder_path + os.path.sep + "metadata.json", "r") as f:
+    with open(recording_folder_path + os.path.sep + "metadata.json", "r", encoding="utf8") as f:
         data = json.load(f)
     # The activities as a list of objects with label & timeStarted
     activities_meta = data["activities"]
@@ -100,8 +104,13 @@ def get_activity_dataframe(time_frame, recording_folder_path: str) -> pd.DataFra
     def label_timestamp_to_microseconds(label_obj: dict):
         label_obj["timeStarted"] = timestamp_to_microseconds(label_obj["timeStarted"])
         return label_obj
+    
+    def str_label_to_activity_idx(label_obj: dict):
+        label_obj["label"] = settings.ACTIVITIES(label_obj["label"])
+        return label_obj
 
     activities_meta = list(map(label_timestamp_to_microseconds, activities_meta))
+    activities_meta = list(map(str_label_to_activity_idx, activities_meta))
 
     # Now we have all timesteps in the same format (microseconds), but the label timestamps are still offset by some value
     # To fix / work around that, we always take the duration of one label and add it to the labels current SampleTimeFine
@@ -141,7 +150,7 @@ def get_activity_dataframe(time_frame, recording_folder_path: str) -> pd.DataFra
     return activities_per_timestep
 
 
-def create_recording(recording_folder_path: str, subject: str) -> Recording:
+def create_recording(recording_folder_path: str, subject: str, recording_idx: int) -> Recording:
     """
     Returns a recording
     Gets a XSens recorind folder path, loops over sensor files, concatenates them, adds activity and subject, returns a recording
@@ -149,9 +158,11 @@ def create_recording(recording_folder_path: str, subject: str) -> Recording:
 
     print(recording_folder_path)
     time1 = time.time()
-    raw_recording_frame = XSensRecordingReader.get_recording_frame(recording_folder_path)
+    raw_recording_frame = XSensRecordingReader.get_recording_frame(
+        recording_folder_path
+    )
 
-    # If less than a second is recorded
+    # If less than a second is recorded or
     if raw_recording_frame.shape[0] < 60:
         print(f"Dropping because less than 60 steps: {recording_folder_path}")
         return
@@ -192,7 +203,6 @@ def reorder_sensor_columns(
         else:
             column_suffix_dict[ending] = [column_name]
 
-    # assert list(column_suffix_dict.keys()) == settings.SENSOR_SUFFIX_ORDER ... only same elements
 
     # Catch errors and output the file where it goes wrong
     try:
