@@ -3,6 +3,7 @@ import random
 
 from loader.load_dataset import load_dataset
 from datatypes.Recording import Recording
+from utils.filter_activities import filter_activities, filter_activities_negative
 from utils.save_all_recordings import save_all_recordings
 from utils.cache_recordings import save_recordings, load_recordings
 import utils.settings as settings
@@ -13,22 +14,33 @@ from loader.preprocessing import interpolate_linear
 from scripts.plot_people import count_activities_per_person
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
-
-# Kann in Recording (sowie evtl. mapping int zu labels)
-def get_index_map_by_column(recording: Recording, columns: 'list[str]'):
-    return {recording.sensor_frame.columns.get_loc(column): column for column in columns}
 
 # Load data
 recordings = load_recordings("D:\dataset\ML Prototype Recordings\without_null_activities", limit=3)
 
-values = count_activities_per_person(recordings)
-values.to_csv('actvities_per_person.csv')
-values.plot.bar()
-plt.savefig('activities_per_person.png')
 
-# random.seed(1678978086101)
-# random.shuffle(recordings)
+activities_to_remove = ['föhnen', 'essen reichen', 'haare waschen', 'accessoires anlegen', 'aufwischen (staub)', 'medikamente stellen', 'küchenvorbereitung']
+subjects_to_remove = ['mathias', 'christine']
+# Possibly merge flo and florian
+
+reduced = filter_activities_negative(recordings, activities_to_remove)
+for rec in reduced:
+    if rec.subject in subjects_to_remove:
+        reduced.remove(rec)
+
+save_recordings(reduced, "D:\dataset\ML Prototype Recordings\\test")
+
+
+rare_activities = ['föhnen', 'haare waschen', 'accessoires anlegen', 'aufwischen (staub)', 'haare kämmen', 'dokumentation', 'mundpflege']
+subjects_to_remove = ['christine']
+
+rare = filter_activities(reduced, rare_activities)
+for rec in rare:
+    if rec.subject in subjects_to_remove:
+        rare.remove(rec)
+
 
 # save_recordings(recordings, "D:\dataset\ML Prototype Recordings\without_null_activities")
 

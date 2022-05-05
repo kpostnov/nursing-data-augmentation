@@ -24,7 +24,7 @@ def plot_distribution_pie_chart(distribution: "dict[str, int]", display_n: int =
     plt.suptitle("People Distribution", y=0.95)
     plt.title(f"{len(activity_dict)} people – {round(sum(data))} minutes", y=1.04)
     plt.axis('equal')
-    plt.show()
+    plt.savefig("distribution_pie_chart.png")
 
 
 def plot_distribution_bar_chart(distribution: "dict[str, int]"):
@@ -39,4 +39,4 @@ def plot_distribution_bar_chart(distribution: "dict[str, int]"):
     plt.ylabel("Minutes")
     plt.xticks(rotation=45, ha="right")
     plt.subplots_adjust(bottom=0.2)
-    plt.show()
+    plt.savefig("distribution_bar_chart.png")
