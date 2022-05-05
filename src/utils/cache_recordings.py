@@ -62,7 +62,7 @@ def read_recording_from_csv(data: 'tuple[int, str]') -> Recording:
 
     print(f'Loading recording {file}, {index + 1}')
 
-    recording_dataframe = pd.read_csv(file)
+    recording_dataframe = pd.read_csv(file, encoding='utf8')
     time_frame = recording_dataframe.loc[:, 'SampleTimeFine']
     activities = recording_dataframe.loc[:, 'activity']
     sensor_frame = recording_dataframe.loc[:, recording_dataframe.columns.difference(['SampleTimeFine', 'activity'])]
