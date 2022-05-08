@@ -1,21 +1,25 @@
-from keras.datasets import mnist
+import time
 from keras.layers import Input, Dense, Reshape, Flatten, LSTM
-from keras.layers import BatchNormalization
-from keras.layers.advanced_activations import LeakyReLU
 from keras.models import Sequential, Model
-import matplotlib.pyplot as plt
 import numpy as np
 import keras.backend as K
-from keras.optimizers import RMSprop
+from tensorflow.keras.optimizers import RMSprop
+import tensorflow as tf
+from visualization.visualize import plot_pca_distribution, plot_tsne_distribution
+
+
+def plot_progress(real_data, generated_data, epoch):
+    plot_pca_distribution(real_data, generated_data, "epoch_" + str(epoch))
+    plot_tsne_distribution(real_data, generated_data, "epoch_" + str(epoch))
 
 
 def wasserstein_loss(y_true, y_pred):
     return K.mean(y_true * y_pred)
 
 
-def build_generator(num_layers=3, window_shape=(120, 70, 1), num_features=70):
+def build_generator(num_layers=3, window_shape=(120, 70), num_features=70):
 
-    noise_shape = (100,)   
+    noise_shape = window_shape
 
     model = Sequential()
 
@@ -24,58 +28,60 @@ def build_generator(num_layers=3, window_shape=(120, 70, 1), num_features=70):
                       return_sequences=True,
                       name=f'LSTM_{i + 1}'))
 
-    model.add(Dense(units=np.prod(window_shape),
+    model.add(Dense(units=num_features,
                     activation='sigmoid',
                     name='OUT'))
     model.add(Reshape(target_shape=window_shape))
 
-    model.summary()
-
     noise = Input(shape=noise_shape)
     img = model(noise)
+
+    print(model.summary())
 
     return Model(noise, img)
 
 
-def build_discriminator(num_layers=3, window_shape=(120, 70, 1), num_features=70):
+def build_discriminator(num_layers=3, window_shape=(120, 70), num_features=70):
 
     model = Sequential()
 
     for i in range(num_layers):
         model.add(LSTM(units=num_features*4,
+                      input_shape=window_shape,
                       return_sequences=True,
                       name=f'LSTM_{i + 1}'))
 
     model.add(Dense(1, activation='linear', name='OUT'))
 
-    model.summary()
-
     img = Input(shape=window_shape)
     validity = model(img)
+
+    print(model.summary())
 
     return Model(img, validity)
 
 
-def train(dataset=None, epochs=10000, batch_size=128, n_critic=5, num_layers=3):
-    # TODO: Normalize
+def train(dataset=None, epochs=10000, batch_size=128, n_critic=5, num_layers=3, n_outputs=1000):
 
     # Load the dataset
+    real_data = np.expand_dims(dataset, axis=-1)
+
     X_train = dataset
     window_shape = X_train.shape[1:]
     num_features = window_shape[1]
 
-    optimizer = RMSprop(lr=0.00005, clipvalue=0.01) 
+    optimizer = RMSprop(learning_rate=0.00005, clipvalue=0.01) 
 
-    discriminator = build_discriminator()
+    discriminator = build_discriminator(window_shape=window_shape, num_features=num_features)
     discriminator.compile(loss=wasserstein_loss,
         optimizer=optimizer,
         metrics=['accuracy'])
 
-    generator = build_generator()
+    generator = build_generator(window_shape=window_shape, num_features=num_features)
     generator.compile(loss='binary_crossentropy', optimizer=optimizer)
 
     # Random input to the generator
-    z = Input(shape=(100,))
+    z = Input(shape=window_shape)
     img = generator(z)
 
     discriminator.trainable = False  
@@ -85,12 +91,11 @@ def train(dataset=None, epochs=10000, batch_size=128, n_critic=5, num_layers=3):
     combined = Model(z, valid)
     combined.compile(loss=wasserstein_loss, optimizer=optimizer)
 
-
     # Begin training
     half_batch = int(batch_size / 2)
     batch_per_epoch = int(X_train.shape[0] / batch_size)
     n_steps = batch_per_epoch * epochs
-    
+
     for step in range(n_steps):
 
         # ---------------------
@@ -98,13 +103,14 @@ def train(dataset=None, epochs=10000, batch_size=128, n_critic=5, num_layers=3):
         # ---------------------
 
         d_loss = 0
+        # Discriminator is trained several times per generator update in Wasserstein GAN
         for _ in range(n_critic):
             # Select a random half batch of real images
             idx = np.random.randint(0, X_train.shape[0], half_batch)
             windows = X_train[idx]
-    
+
             # Generate a half batch of fake images
-            noise = np.random.normal(0, 1, (half_batch, 100))
+            noise = np.random.normal(0, 1, (half_batch, window_shape[0], window_shape[1]))
             gen_windows = generator.predict(noise)
 
             # Train the discriminator on real and fake images
@@ -117,15 +123,27 @@ def train(dataset=None, epochs=10000, batch_size=128, n_critic=5, num_layers=3):
         #  Train Generator
         # ---------------------
 
-        # Create noise vectors as input for generator. 
-        noise = np.random.normal(0, 1, (batch_size, 100)) 
+        # Create noise vectors as input for generator.
+        noise = np.random.normal(0, 1, (batch_size, window_shape[0], window_shape[1]))
 
         valid_y = np.array([-1] * batch_size)
 
-        g_loss = combined.train_on_batch(noise, valid_y)
-        
+        g_loss = combined.train_on_batch(noise, tf.cast(valid_y, tf.float32))
+
         if step % batch_per_epoch == 0:
             print ("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (int(step / batch_per_epoch), d_loss[0], 100*d_loss[1], g_loss))
 
-    generator.save('generator_model.h5') 
- 
+        # Every 500 epochs
+        if step % (batch_per_epoch * 500) == 0:
+            generated_data = generator.predict(np.random.normal(0, 1, (2000, window_shape[0], window_shape[1])))
+            generated_data = np.expand_dims(generated_data, axis=-1)
+            plot_progress(real_data, generated_data, int(step / batch_per_epoch))
+
+    file_name = f'generator_model_{int(time.time())}.h5'
+    tf.saved_model.save(generator, file_name)
+
+    noise = np.random.normal(0, 1, (n_outputs, window_shape[0], window_shape[1]))
+    gen_windows = generator.predict(noise)
+
+    return gen_windows
+    

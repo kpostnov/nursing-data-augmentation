@@ -6,6 +6,17 @@ from datatypes.Recording import Recording
 from utils.typing import assert_type
 
 
+def preprocess(recordings: "list[Recording]", methods: list) -> "list[Recording]":
+    """
+    Preprocesses the recordings with the given methods
+    """
+    assert_type([(recordings[0], Recording)])
+
+    for method in methods:
+        recordings = method(recordings)
+    return recordings
+    
+
 def ordonez_preprocess(recordings: "list[Recording]") -> "list[Recording]":
     """
     1. _interpolate_linear
