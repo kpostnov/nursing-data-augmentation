@@ -7,7 +7,7 @@ saved_experiments/
 datasets/
 
 # Plots
-src/visualization/plots/*.png
+src/visualization/plots/*
 
 # TimeGAN
 src/report.txt

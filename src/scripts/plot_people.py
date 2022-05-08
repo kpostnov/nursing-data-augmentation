@@ -7,6 +7,14 @@ from utils.cache_recordings import load_recordings
 from visualization.plot_distribution import plot_distribution_pie_chart, plot_distribution_bar_chart
 
 
+def count_recordings_per_person(recordings: "list[Recording]"):
+    values = pd.Series({recordings[0].subject: 1})
+    for rec in recordings[1:]:
+        values = values.add(pd.Series({rec.subject: 1}), fill_value=0)
+
+    return values
+
+
 def count_activities_per_person(recordings: "list[Recording]"):
     values = pd.DataFrame({recordings[0].subject: recordings[0].activities.value_counts()})
     for rec in recordings[1:]:
