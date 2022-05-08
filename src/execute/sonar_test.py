@@ -11,7 +11,7 @@ from utils.Windowizer import Windowizer
 from models.DeepConvLSTM import DeepConvLSTM
 from visualization.visualize import plot_pca
 from loader.preprocessing import interpolate_linear
-from scripts.plot_people import count_activities_per_person
+from scripts.plot_people import count_activities_per_person, count_recordings_per_person
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -23,25 +23,34 @@ recordings = load_recordings("D:\dataset\ML Prototype Recordings\without_null_ac
 
 activities_to_remove = ['föhnen', 'essen reichen', 'haare waschen', 'accessoires anlegen', 'aufwischen (staub)', 'medikamente stellen', 'küchenvorbereitung']
 subjects_to_remove = ['mathias', 'christine']
-# Possibly merge flo and florian
 
 reduced = filter_activities_negative(recordings, activities_to_remove)
-for rec in reduced:
-    if rec.subject in subjects_to_remove:
-        reduced.remove(rec)
+idx = [i for i in range(len(reduced)) if reduced[i].subject in subjects_to_remove]
+reduced = [reduced[i] for i in range(len(reduced)) if i not in idx]
 
-save_recordings(reduced, "D:\dataset\ML Prototype Recordings\\test")
+save_recordings(reduced, "/dhc/groups/bp2021ba1/data/reduced_data")
 
 
 rare_activities = ['föhnen', 'haare waschen', 'accessoires anlegen', 'aufwischen (staub)', 'haare kämmen', 'dokumentation', 'mundpflege']
 subjects_to_remove = ['christine']
 
-rare = filter_activities(reduced, rare_activities)
-for rec in rare:
-    if rec.subject in subjects_to_remove:
-        rare.remove(rec)
+rare = filter_activities(recordings, rare_activities)
+idx = [i for i in range(len(rare)) if rare[i].subject in subjects_to_remove]
+rare = [rare[i] for i in range(len(rare)) if i not in idx]
+
+save_recordings(rare, "/dhc/groups/bp2021ba1/data/rare_data")
 
 
-# save_recordings(recordings, "D:\dataset\ML Prototype Recordings\without_null_activities")
+
+# recordings = load_recordings("/dhc/groups/bp2021ba1/data/filtered_dataset_without_null")
+
+# values = count_recordings_per_person(recordings)
+
+# values.to_csv("recordings_per_person.csv")
+# values.plot.bar(figsize=(22,16))
+# plt.title("Recordings per person")
+# plt.xlabel("Person")
+# plt.ylabel("Number of recordings")
+# plt.savefig('recordings_per_person.png')
 
 

@@ -11,6 +11,8 @@ import numpy as np
 import TimeGAN.timegan as timegan
 import gc
 
+from visualization.visualize import plot_pca_distribution, plot_tsne_distribution
+
 
 WINDOW_SIZE = 120
 STRIDE_SIZE = 120
@@ -25,6 +27,10 @@ parameters['batch_size'] = 128
 
 # Load data
 recordings = load_recordings(settings.sonar_dataset_path)
+
+# Activities to number
+for rec in recordings:
+    rec.activities = rec.activities.map(lambda label: settings.ACTIVITIES[label])
 
 random.seed(1678978086101)
 random.shuffle(recordings)
@@ -70,9 +76,6 @@ for subject in settings.SUBJECTS:
 
         # Data Augmentation
         ori_data = np.squeeze(activity_group_X, -1)
-        # ori_data_list = list()
-        # for matrix in ori_data:
-        #     ori_data_list.append(matrix)
 
         generated_activity_data = timegan.timegan(ori_data, parameters)
 
@@ -99,6 +102,17 @@ for subject in settings.SUBJECTS:
 
         continue
 
+        # data_path = "D:\dataset\Augmented Data\SONAR\\"
+        # try:
+        #     generated_activity_data = np.load(f'{data_path}\data_{subject}_{index}.npy')
+        # except OSError:
+        #     continue
+        
+        # print(generated_activity_data.shape)
+        # plot_pca_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
+        # plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
+
+        # exit()
         # Merge augmented data with alpha_subset
         # X_train = np.append(X_train, generated_activity_data, axis=0)
         # y_train = np.append(y_train, generated_activity_labels, axis=0)

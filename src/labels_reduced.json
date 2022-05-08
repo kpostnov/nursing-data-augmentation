@@ -1,0 +1,49 @@
+{
+  "items": [
+    {
+      "category": "Others",
+      "entries": [
+        "aufräumen"
+      ]
+    },
+    {
+      "category": "Morgenpflege",
+      "entries": [
+        "bad vorbereiten",
+        "bett machen",
+        "haare kämmen",
+        "mundpflege",
+        "umkleiden"
+      ]
+    },
+    {
+      "category": "Waschen",
+      "entries": [
+        "gesamtwaschen im bett",
+        "waschen am waschbecken"
+      ]
+    },
+    {
+      "category": "Mahlzeiten",
+      "entries": [
+        "essen auf teller geben",
+        "essen austragen",
+        "geschirr einsammeln",
+        "getränke ausschenken"
+      ]
+    },
+    {
+      "category": "Assistieren",
+      "entries": [
+        "rollstuhl schieben",
+        "rollstuhl transfer"
+      ]
+    },
+    {
+      "category": "Organisation",
+      "entries": [
+        "dokumentation"
+      ]
+    }
+  ]
+}
