@@ -4,19 +4,18 @@ from evaluation.conf_matrix import create_conf_matrix
 from evaluation.metrics import accuracy
 from evaluation.text_metrics import create_text_metrics
 from evaluation.save_configuration import save_model_configuration
-from loader.preprocessing import pamap2_preprocess
+from loader.preprocessing import interpolate_ffill, normalize_standardscaler, preprocess
 from loader.load_pamap2_dataset import load_pamap2_dataset
 from models.DeepConvLSTM import DeepConvLSTM
 from datatypes.Window import Window
 from utils.Windowizer import Windowizer
-from utils.array_operations import split_list_by_percentage
 from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
 import numpy as np
 from visualization.visualize import plot_pca_distribution, plot_tsne_distribution
 
-import TimeGAN.timegan as timegan
-# import TimeGAN_gpu.timegan as timegan
+# import TimeGAN.timegan as timegan
+import wgan.wgan as wgan
 import gc
 
 
@@ -25,24 +24,11 @@ STRIDE_SIZE = 100
 
 # GAN Newtork parameters
 parameters = dict()
-# parameters['module'] = 'gru' # LSTM possible
-# parameters['hidden_dim'] = 44 # Paper: 4 times the size of input features
-# parameters['num_layer'] = 3
-# parameters['iterations'] = 1 # Paper: 10.000
-# parameters['batch_size'] = 128
-
-parameters['seq_len'] = WINDOW_SIZE
-parameters['n_seq'] = 11
-parameters['batch_size'] = 128
-parameters['hidden_dim'] = 44
+parameters['module'] = 'gru' # LSTM possible
+parameters['hidden_dim'] = 44 # Paper: 4 times the size of input features
 parameters['num_layer'] = 3
-parameters['train_steps'] = 10000
-
-parameters['gamma'] = 1
-parameters['noise_dim'] = 11
-parameters['dim'] = 128
-parameters['log_step'] = 100
-parameters['learning_rate'] = 5e-4
+parameters['iterations'] = 1 # Paper: 10.000
+parameters['batch_size'] = 128
 
 # Load data
 recordings = load_pamap2_dataset(settings.pamap2_dataset_path)
@@ -50,8 +36,11 @@ recordings = load_pamap2_dataset(settings.pamap2_dataset_path)
 random.seed(1678978086101)
 random.shuffle(recordings)
 
-# Preprocessing (Interpolation)
-recordings = pamap2_preprocess(recordings)
+# Preprocessing
+recordings = preprocess(recordings, methods=[
+    interpolate_ffill,
+    normalize_standardscaler
+])
 
 # Windowize all recordings
 windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_sliding)
@@ -102,54 +91,49 @@ for subject_id in subject_ids:
         activity_group_y = y_train[activity_group_indices]
 
         # Data Augmentation
-        # ori_data = np.squeeze(activity_group_X, -1)
+        ori_data = np.squeeze(activity_group_X, -1)
         # ori_data_list = list()
         # for matrix in ori_data:
         #     ori_data_list.append(matrix)
 
-        # synth = TimeGAN(model_parameters=gan_args, 
-        #                         hidden_dim=parameters['hidden_dim'], 
-        #                         seq_len=parameters['seq_len'], 
-        #                         n_seq=parameters['n_seq'], 
-        #                         gamma=parameters['gamma'])
-        # synth.train(ori_data_list, train_steps=parameters['train_steps'])
-        # synth.save(f'synthesizer_{subject_id}_{index}.pkl')
-
-        # generated_activity_data = synth.sample(5000)
  
         # generated_activity_data = timegan.timegan(ori_data, parameters)
+        generated_activity_data = wgan.train(ori_data,
+                                            epochs=1,
+                                            batch_size=128,
+                                            n_outputs=5000)
 
-        # generated_activity_labels = np.expand_dims(row, axis=0)
-        # generated_activity_labels = np.repeat(generated_activity_labels, len(generated_activity_data), axis=0)
+        generated_activity_labels = np.expand_dims(row, axis=0)
+        generated_activity_labels = np.repeat(generated_activity_labels, len(generated_activity_data), axis=0)
 
-        # print(f'Finish Synthetic Data Generation: {generated_activity_data.shape}')
+        print(f'Finish Synthetic Data Generation: {generated_activity_data.shape}')
 
         # Convert generated data (list) to numpy array
         # generated_activity_data = np.asarray(generated_activity_data)
-        # generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
+        generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
         # Save generated data
-        # np.save(f'data_{subject_id}_{index}_gpunew', generated_activity_data)
-        # np.save(f'labels_{subject_id}_{index}_gpunew', generated_activity_labels)
+        np.save(f'data_{subject_id}_{index}', generated_activity_data)
+        np.save(f'labels_{subject_id}_{index}', generated_activity_labels)
 
         # Garbage collection
-        # del generated_activity_data
-        # del generated_activity_labels
-        # del activity_group_X
-        # del activity_group_y
-        # del ori_data
-        # gc.collect()
+        del generated_activity_data
+        del generated_activity_labels
+        del activity_group_X
+        del activity_group_y
+        del ori_data
+        gc.collect()
 
-        # continue
+        continue
 
-        data_path = "D:\dataset\Augmented Data\gpunew\\"
-        try:
-            generated_activity_data = np.load(f'{data_path}\data_{subject_id}_{index}.npy')
-        except OSError:
-            continue
+        # data_path = "D:\dataset\Augmented Data\gpunew\\"
+        # try:
+        #     generated_activity_data = np.load(f'{data_path}\data_{subject_id}_{index}.npy')
+        # except OSError:
+        #     continue
 
-        plot_pca_distribution(activity_group_X, generated_activity_data, str(subject_id) + "_" + str(index) + "_gpunew")
-        plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject_id) + "_" + str(index) + "_gpunew")
+        # plot_pca_distribution(activity_group_X, generated_activity_data, str(subject_id) + "_" + str(index) + "_gpunew")
+        # plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject_id) + "_" + str(index) + "_gpunew")
 
         # data_path = "D:\dataset\Augmented Data\with_gpu\\"
         # generated_activity_data = np.load(f'{data_path}\data_{subject_id}_{index}.npy')
