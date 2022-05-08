@@ -99,7 +99,7 @@ for subject_id in subject_ids:
  
         # generated_activity_data = timegan.timegan(ori_data, parameters)
         generated_activity_data = wgan.train(ori_data,
-                                            epochs=1,
+                                            epochs=10000,
                                             batch_size=128,
                                             n_outputs=5000)
 

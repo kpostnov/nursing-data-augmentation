@@ -5,6 +5,12 @@ import numpy as np
 import keras.backend as K
 from tensorflow.keras.optimizers import RMSprop
 import tensorflow as tf
+from visualization.visualize import plot_pca_distribution, plot_tsne_distribution
+
+
+def plot_progress(real_data, generated_data, epoch):
+    plot_pca_distribution(real_data, generated_data, "epoch_" + str(epoch))
+    plot_tsne_distribution(real_data, generated_data, "epoch_" + str(epoch))
 
 
 def wasserstein_loss(y_true, y_pred):
@@ -56,9 +62,10 @@ def build_discriminator(num_layers=3, window_shape=(120, 70), num_features=70):
 
 
 def train(dataset=None, epochs=10000, batch_size=128, n_critic=5, num_layers=3, n_outputs=1000):
-    # TODO: Normalize
 
     # Load the dataset
+    real_data = np.expand_dims(dataset, axis=-1)
+
     X_train = dataset
     window_shape = X_train.shape[1:]
     num_features = window_shape[1]
@@ -125,6 +132,12 @@ def train(dataset=None, epochs=10000, batch_size=128, n_critic=5, num_layers=3, 
 
         if step % batch_per_epoch == 0:
             print ("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (int(step / batch_per_epoch), d_loss[0], 100*d_loss[1], g_loss))
+
+        # Every 500 epochs
+        if step % (batch_per_epoch * 500) == 0:
+            generated_data = generator.predict(np.random.normal(0, 1, (2000, window_shape[0], window_shape[1])))
+            generated_data = np.expand_dims(generated_data, axis=-1)
+            plot_progress(real_data, generated_data, int(step / batch_per_epoch))
 
     file_name = f'generator_model_{int(time.time())}.h5'
     tf.saved_model.save(generator, file_name)
