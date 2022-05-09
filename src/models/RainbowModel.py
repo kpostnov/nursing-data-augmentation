@@ -37,6 +37,13 @@ class RainbowModel(ABC):
         they need to be stored as instance variable, that they can be accessed, when needed.
         """
 
+        self.window_size = kwargs["window_size"]
+        self.stride_size = kwargs.get("stride_size") or self.window_size
+        self.n_features = kwargs["n_features"]
+        self.n_outputs = kwargs["n_outputs"]
+        self.verbose = kwargs.get("verbose") or True
+        self.n_epochs = kwargs.get("n_epochs") or 10
+        self.learning_rate = kwargs.get("learning_rate") or 0.001
         self.kwargs = kwargs
 
     # Fit ----------------------------------------------------------------------

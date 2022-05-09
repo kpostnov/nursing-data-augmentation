@@ -7,7 +7,7 @@ import utils.settings as settings
 import numpy as np
 
 
-settings.init('pamap2')
+settings.init('sonar')
 
 if __name__ == '__main__':
-    import execute.pamap2_pipeline
+    import execute.sonar_test
