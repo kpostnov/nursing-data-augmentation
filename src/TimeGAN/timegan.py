@@ -299,8 +299,8 @@ def timegan (ori_data, parameters):
   ## Synthetic data generation
   generated_data = list()
 
-  # Generate 5 times as much synthetic data as original data
-  for i in range(5):
+  # Generate 10 times as much synthetic data as original data
+  for i in range(10):
     Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
     generated_data_curr = sess.run(X_hat, feed_dict={Z: Z_mb, X: ori_data, T: ori_time})    
       

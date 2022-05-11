@@ -1,8 +1,8 @@
 import os
 import random
-from loader.preprocessing import pamap2_preprocess
+from loader.preprocessing import preprocess, normalize_standardscaler, interpolate_linear
 from utils.cache_recordings import load_recordings
-from models.DeepConvLSTM import DeepConvLSTM
+from models.AdaptedDeepConvLSTM import AdaptedDeepConvLSTM
 from datatypes.Window import Window
 from utils.Windowizer import Windowizer
 import utils.settings as settings
@@ -14,8 +14,8 @@ import gc
 from visualization.visualize import plot_pca_distribution, plot_tsne_distribution
 
 
-WINDOW_SIZE = 120
-STRIDE_SIZE = 120
+WINDOW_SIZE = 900
+STRIDE_SIZE = 900
 
 # GAN Newtork parameters
 parameters = dict()
@@ -35,11 +35,13 @@ for rec in recordings:
 random.seed(1678978086101)
 random.shuffle(recordings)
 
-# Preprocessing (Interpolation)
-recordings = pamap2_preprocess(recordings)
+# Preprocessing (MinMaxScaler is applied in timegan.py)
+recordings = preprocess(recordings, methods=[
+    interpolate_linear
+])
 
 # Windowize all recordings
-windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_sliding)
+windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_jumping, 60)
 
 # LOSO-folds (alpha-dataset)
 for subject in settings.SUBJECTS:
@@ -51,13 +53,13 @@ for subject in settings.SUBJECTS:
 
     # Train alpha model on alpha_subset
     print("Training alpha model on alpha_subset")
-    # model_alpha = DeepConvLSTM(
+    # model_alpha = AdaptedDeepConvLSTM(
     #     window_size=WINDOW_SIZE,
     #     stride_size=STRIDE_SIZE,
     #     n_features=recordings[0].sensor_frame.shape[1],
-    #     n_outputs=6,
+    #     n_outputs=15,
     #     verbose=1,
-    #     n_epochs=200)
+    #     n_epochs=20)
     X_train, y_train = windowizer.windowize_convert(alpha_subset)
     # model_alpha.fit(X_train, y_train)
 
@@ -89,8 +91,8 @@ for subject in settings.SUBJECTS:
         generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
         # Save generated data
-        np.save(f'data_{subject}_{index}', generated_activity_data)
-        np.save(f'labels_{subject}_{index}', generated_activity_labels)
+        np.save(f'data_{subject}_{index}_900', generated_activity_data)
+        np.save(f'labels_{subject}_{index}_900', generated_activity_labels)
 
         # Garbage collection
         del generated_activity_data
@@ -118,12 +120,12 @@ for subject in settings.SUBJECTS:
         # y_train = np.append(y_train, generated_activity_labels, axis=0)
 
     # TODO: Train beta model on beta_subset
-    model_beta = DeepConvLSTM(
+    model_beta = AdaptedDeepConvLSTM(
         window_size=WINDOW_SIZE,
         stride_size=STRIDE_SIZE,
         n_features=recordings[0].sensor_frame.shape[1],
-        n_outputs=6,
+        n_outputs=15,
         verbose=1,
-        n_epochs=200)
+        n_epochs=20)
     # model_beta.fit(X_train, y_train)
     # y_test_pred_model_beta = model_beta.predict(X_test)
