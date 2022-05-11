@@ -69,7 +69,7 @@ class AdaptedDeepConvLSTM(RainbowModel):
 
         model.compile(
             optimizer="RMSprop",
-            loss="CategoricalCrossentropy",  # CategoricalCrossentropy (than we have to to the one hot encoding - to_categorical), before: "sparse_categorical_crossentropy"
+            loss="CategoricalCrossentropy",
             metrics=["accuracy"],
         )
 

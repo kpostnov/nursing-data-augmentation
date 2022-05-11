@@ -22,10 +22,10 @@ def init(dataset: str):
 
 def init_sonar():
     global sonar_dataset_path
-    sonar_dataset_path = "../../datasets/SONAR"
+    sonar_dataset_path = "/dhc/groups/bp2021ba1/data/reduced_data"
 
     global LABELS
-    with open("labels.json") as file:
+    with open("labels_reduced.json") as file:
         categories = json.load(file)["items"]
         LABELS = list(
             itertools.chain.from_iterable(

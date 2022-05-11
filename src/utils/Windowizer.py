@@ -11,12 +11,13 @@ from tensorflow.keras.utils import to_categorical
 
 
 class Windowizer:
-    def __init__(self, window_size: int, stride_size: int, windowize: Callable):
+    def __init__(self, window_size: int, stride_size: int, windowize: Callable, frequency: int = 60):
         self.window_size = window_size
         self.stride_size = stride_size
         self.windowize = windowize
+        self.frequency = frequency
     
-    def print_non_continuous_windowize_monitoring(self, recordings: "list[Recording]", frequency: int = 30) -> None:
+    def print_non_continuous_windowize_monitoring(self, recordings: "list[Recording]") -> None:
         """
         Prints the number of timesteps that cannot be used in the model (discarded). 
         This can happen if a window contains more than one activity.
@@ -47,7 +48,7 @@ class Windowizer:
             return n_wasted_timesteps
 
         def to_hours_str(n_timesteps) -> int:
-            hz = frequency
+            hz = self.frequency
             minutes = (n_timesteps / hz) / 60
             hours = int(minutes / 60)
             minutes_remaining = int(minutes % 60)
@@ -141,6 +142,14 @@ class Windowizer:
         return list(itertools.chain.from_iterable(recording_windows))
 
 
+    def windowize_windowize(self, recordings: "list[Recording]") -> "list[Window]":
+        """
+        Returns windows of the recordings.
+        """
+        windows = self.windowize(self, recordings)
+        return windows
+
+    
     def windowize_convert(self, recordings_train: "list[Recording]") -> "tuple[np.ndarray,np.ndarray]":
         """
         Shuffles the windows

@@ -2,7 +2,7 @@
 
 import os
 from abc import ABC, abstractmethod
-from typing import Any, Union
+from typing import Any, Tuple, Union
 import numpy as np
 import tensorflow as tf  # type: ignore
 
@@ -27,7 +27,6 @@ class RainbowModel(ABC):
     n_epochs: Union[int, None] = None
     kwargs = None
 
-
     @abstractmethod
     def __init__(self, **kwargs):
         """
@@ -48,7 +47,12 @@ class RainbowModel(ABC):
 
     # Fit ----------------------------------------------------------------------
 
-    def fit(self, X_train: np.ndarray, y_train: np.ndarray) -> None:
+    def fit(
+            self,
+            X_train: np.ndarray,
+            y_train: np.ndarray,
+            include_val_set: bool = None,
+            val_set: Tuple[np.ndarray, np.ndarray] = None) -> None:
         """
         Fit the self.model to the data
         """
@@ -59,17 +63,27 @@ class RainbowModel(ABC):
             X_train.shape[0] == y_train.shape[0]
         ), "X_train and y_train have to have the same length"
 
-        history = self.model.fit(
-            X_train,
-            y_train,
-            validation_split=0.2,
-            epochs=self.n_epochs,
-            batch_size=self.batch_size,
-            verbose=self.verbose,
-            class_weight=self.class_weight,
-        )
-        self.history = history
-
+        if include_val_set:
+            assert_type([(val_set, (np.ndarray, np.generic))]), "val_set has to be a tuple of (X_val, y_val)"
+            self.history = self.model.fit(
+                X_train,
+                y_train,
+                validation_data=(val_set[0], val_set[1]),
+                epochs=self.n_epochs,
+                batch_size=self.batch_size,
+                verbose=self.verbose,
+                class_weight=self.class_weight,
+            )
+        else:
+            self.history = self.model.fit(
+                X_train,
+                y_train,
+                validation_split=0.2,
+                epochs=self.n_epochs,
+                batch_size=self.batch_size,
+                verbose=self.verbose,
+                class_weight=self.class_weight,
+            )
 
     # Predict ------------------------------------------------------------------------
 
@@ -78,7 +92,6 @@ class RainbowModel(ABC):
         Gets a list of windows and returns a list of prediction_vectors
         """
         return self.model.predict(X_test)
-
 
     def export(self, path: str) -> None:
         """
@@ -102,7 +115,7 @@ class RainbowModel(ABC):
 
         converter.optimizations = [
             tf.lite.Optimize.DEFAULT
-        ] 
+        ]
         converter.experimental_new_converter = True
         converter.target_spec.supported_ops = [
             tf.lite.OpsSet.TFLITE_BUILTINS,

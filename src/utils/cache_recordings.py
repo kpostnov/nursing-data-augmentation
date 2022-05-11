@@ -47,6 +47,9 @@ def load_recordings(path: str, limit: int = None) -> 'list[Recording]':
     pool.join()
     recordings = list(recordings)
 
+    print(f"Loaded {len(recordings)} recordings before filtering empty recordings")
+    recordings = list(filter(lambda x: x is not None, recordings))
+
     # In case multi-processing should fail
     # recordings = list()
     # for index, rec in enumerate(recording_files):
@@ -63,6 +66,9 @@ def read_recording_from_csv(data: 'tuple[int, str]') -> Recording:
     print(f'Loading recording {file}, {index + 1}')
 
     recording_dataframe = pd.read_csv(file, encoding='utf8')
+    if recording_dataframe.shape[0] == 0:
+        return
+
     time_frame = recording_dataframe.loc[:, 'SampleTimeFine']
     activities = recording_dataframe.loc[:, 'activity']
     sensor_frame = recording_dataframe.loc[:, recording_dataframe.columns.difference(['SampleTimeFine', 'activity'])]
