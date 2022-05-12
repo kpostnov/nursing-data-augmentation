@@ -8,12 +8,14 @@ from utils.Windowizer import Windowizer
 import utils.settings as settings
 import numpy as np
 
-import TimeGAN.timegan as timegan
+# import TimeGAN.timegan as timegan
+import TimeGAN_gpu.timegan as timegan
 import gc
 
 from visualization.visualize import plot_pca_distribution, plot_tsne_distribution
 
 
+# Leave-subject-out pipeline
 WINDOW_SIZE = 900
 STRIDE_SIZE = 900
 
@@ -24,6 +26,13 @@ parameters['hidden_dim'] = 280  # Paper: 4 times the size of input features
 parameters['num_layer'] = 3
 parameters['iterations'] = 10000  # Paper: 10.000
 parameters['batch_size'] = 128
+
+parameters['seq_len'] = WINDOW_SIZE
+parameters['n_seq'] = 70
+parameters['batch_size'] = 128
+parameters['hidden_dim'] = 280
+parameters['num_layer'] = 3
+parameters['train_steps'] = 10000
 
 # Load data
 recordings = load_recordings(settings.sonar_dataset_path)
@@ -75,7 +84,7 @@ for subject in settings.SUBJECTS:
         activity_group_indices = np.nonzero(np.all(np.isclose(y_train, row), axis=1))[0]
         activity_group_X = X_train[activity_group_indices]
         activity_group_y = y_train[activity_group_indices]
-
+        '''
         # Data Augmentation
         ori_data = np.squeeze(activity_group_X, -1)
 
@@ -103,16 +112,16 @@ for subject in settings.SUBJECTS:
         gc.collect()
 
         continue
-
-        # data_path = "D:\dataset\Augmented Data\SONAR\\"
-        # try:
-        #     generated_activity_data = np.load(f'{data_path}\data_{subject}_{index}.npy')
-        # except OSError:
-        #     continue
+        '''
+        data_path = "D:\dataset\Augmented Data\SONAR"
+        try:
+            generated_activity_data = np.load(f'{data_path}\data_{subject}_{index}.npy')
+        except OSError:
+            continue
         
-        # print(generated_activity_data.shape)
-        # plot_pca_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
-        # plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
+        print(generated_activity_data.shape)
+        plot_pca_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
+        plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
 
         # exit()
         # Merge augmented data with alpha_subset

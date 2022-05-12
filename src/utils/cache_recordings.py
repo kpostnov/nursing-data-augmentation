@@ -12,7 +12,7 @@ def save_recordings(recordings: 'list[Recording]', path: str) -> None:
         os.makedirs(path)
 
     for (index, recording) in enumerate(recordings):
-        print(f'Saving recording {index} / {len(recordings)}')
+        print(f'Saving recording {index} / {len(recordings)}', end="\r")
 
         recording.activities.index = recording.sensor_frame.index
 
@@ -63,7 +63,7 @@ def load_recordings(path: str, limit: int = None) -> 'list[Recording]':
 def read_recording_from_csv(data: 'tuple[int, str]') -> Recording:
     index, file = data
 
-    print(f'Loading recording {file}, {index + 1}')
+    print(f'Loading recording {file}, {index + 1}', end="\r")
 
     recording_dataframe = pd.read_csv(file, encoding='utf8')
     if recording_dataframe.shape[0] == 0:

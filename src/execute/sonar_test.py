@@ -14,6 +14,7 @@ from utils.folder_operations import new_saved_experiment_folder
 from utils.save_all_recordings import save_all_recordings
 from utils.cache_recordings import save_recordings, load_recordings
 import utils.settings as settings
+from utils.convert_dataset import convert_to_relative_sensor_data
 from utils.Windowizer import Windowizer
 from models.AdaptedDeepConvLSTM import AdaptedDeepConvLSTM
 from visualization.visualize import plot_pca
@@ -46,6 +47,8 @@ import pandas as pd
 # rare = filter_activities(recordings, rare_activities)
 # idx = [i for i in range(len(rare)) if rare[i].subject in subjects_to_remove]
 # rare = [rare[i] for i in range(len(rare)) if i not in idx]
+
+# rare = list(filter(lambda x: x.sensor_frame.shape[0] > 0, rare))
 
 # save_recordings(rare, "/dhc/groups/bp2021ba1/data/rare_data")
 
@@ -86,6 +89,11 @@ STRIDE_SIZE = 900
 
 # Load data
 recordings = load_recordings("D:\dataset\ML Prototype Recordings\without_null_activities", limit=10)
+
+# recordings = filter_activities_negative(recordings, ['accessoires anlegen', 'haare waschen', 'aufwischen (staub)', 'föhnen'])
+# leere Recordings Filter
+
+recordings = convert_to_relative_sensor_data(recordings)
 
 random.seed(1678978086101)
 random.shuffle(recordings)

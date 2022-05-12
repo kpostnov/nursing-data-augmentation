@@ -10,4 +10,4 @@ import numpy as np
 settings.init('sonar')
 
 if __name__ == '__main__':
-    import execute.sonar_test
+    import execute.sonar_lso_pipeline
