@@ -10,6 +10,7 @@ import numpy as np
 
 # import TimeGAN.timegan as timegan
 import TimeGAN_gpu.timegan as timegan
+import mtss_gan.mtss_gan as mtss_gan
 import gc
 
 from visualization.visualize import plot_pca_distribution, plot_tsne_distribution
@@ -84,11 +85,12 @@ for subject in settings.SUBJECTS:
         activity_group_indices = np.nonzero(np.all(np.isclose(y_train, row), axis=1))[0]
         activity_group_X = X_train[activity_group_indices]
         activity_group_y = y_train[activity_group_indices]
-        '''
+        
         # Data Augmentation
         ori_data = np.squeeze(activity_group_X, -1)
 
-        generated_activity_data = timegan.timegan(ori_data, parameters)
+        # generated_activity_data = timegan.timegan(ori_data, parameters)
+        generated_activity_data = mtss_gan.start_training(ori_data, seq_len=WINDOW_SIZE, num_features=70)
 
         generated_activity_labels = np.expand_dims(row, axis=0)
         generated_activity_labels = np.repeat(generated_activity_labels, len(generated_activity_data), axis=0)
@@ -122,7 +124,7 @@ for subject in settings.SUBJECTS:
         print(generated_activity_data.shape)
         plot_pca_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
         plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
-
+        '''
         # exit()
         # Merge augmented data with alpha_subset
         # X_train = np.append(X_train, generated_activity_data, axis=0)
