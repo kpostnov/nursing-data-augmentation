@@ -14,8 +14,8 @@ import utils.settings as settings
 import numpy as np
 from visualization.visualize import plot_pca_distribution, plot_tsne_distribution
 
-# import TimeGAN.timegan as timegan
-import wgan.wgan as wgan
+import TimeGAN.timegan as timegan
+#import wgan.wgan as wgan
 import gc
 
 
@@ -39,7 +39,6 @@ random.shuffle(recordings)
 # Preprocessing
 recordings = preprocess(recordings, methods=[
     interpolate_ffill,
-    normalize_standardscaler
 ])
 
 # Windowize all recordings
@@ -59,6 +58,8 @@ X_train, y_train = windowizer.windowize_convert(recordings)
 # LOSO-folds (alpha-dataset)
 subject_ids = range(1, 9)
 for subject_id in subject_ids:
+    if subject_id < 8:
+        continue
     print("LOSO-fold without subject: {}".format(subject_id))
 
     # Remove recordings where recording.subject_id == subject_id
@@ -96,7 +97,7 @@ for subject_id in subject_ids:
         # for matrix in ori_data:
         #     ori_data_list.append(matrix)
 
- 
+        '''
         # generated_activity_data = timegan.timegan(ori_data, parameters)
         generated_activity_data = wgan.train(ori_data,
                                             epochs=10000,
@@ -125,15 +126,15 @@ for subject_id in subject_ids:
         gc.collect()
 
         continue
-
-        # data_path = "D:\dataset\Augmented Data\gpunew\\"
-        # try:
-        #     generated_activity_data = np.load(f'{data_path}\data_{subject_id}_{index}.npy')
-        # except OSError:
-        #     continue
-
-        # plot_pca_distribution(activity_group_X, generated_activity_data, str(subject_id) + "_" + str(index) + "_gpunew")
-        # plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject_id) + "_" + str(index) + "_gpunew")
+        '''
+        
+        try:
+            generated_activity_data = np.load(f'data_{subject_id}_{index}_pamap.npy')
+        except OSError:
+            continue
+        print(generated_activity_data.shape)
+        plot_pca_distribution(activity_group_X, generated_activity_data, str(subject_id) + "_" + str(index) + "_pamap")
+        plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject_id) + "_" + str(index) + "_pamap")
 
         # data_path = "D:\dataset\Augmented Data\with_gpu\\"
         # generated_activity_data = np.load(f'{data_path}\data_{subject_id}_{index}.npy')
@@ -143,7 +144,7 @@ for subject_id in subject_ids:
         # Merge augmented data with alpha_subset
         # X_train = np.append(X_train, generated_activity_data, axis=0)
         # y_train = np.append(y_train, generated_activity_labels, axis=0)
-
+    exit()
     # TODO: Train beta model on beta_subset
     model_beta = DeepConvLSTM(
         window_size=WINDOW_SIZE,

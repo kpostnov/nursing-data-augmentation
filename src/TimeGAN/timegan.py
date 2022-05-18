@@ -18,6 +18,7 @@ Note: Use original data as training set to generater synthetic data (time-series
 
 # Necessary Packages
 import tensorflow as tf
+from keras import backend as K
 import numpy as np
 from .utils import extract_time, rnn_cell, random_generator, batch_generator
 
@@ -43,6 +44,28 @@ def timegan (ori_data, parameters):
   # Maximum sequence length and each sequence length
   ori_time, max_seq_len = extract_time(ori_data)
   
+
+  '''
+  imported = tf.saved_model.load('./saved_model')
+  z_dim = dim
+
+  Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
+  infer = imported.signatures['serving_default']
+  print(infer.structured_outputs)
+  print(infer.outputs)
+  X_hat = infer.outputs[0]
+ 
+  with tf.compat.v1.Session(graph=tf.Graph()) as sess:
+    tf.compat.v1.saved_model.loader.load(sess, ['serve'], './saved_model')
+    Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
+    generated_data_curr = sess.run(X_hat, feed_dict={Z: Z_mb, X: ori_data, T: ori_time})    
+    generated_data = list()  
+    for i in range(no):
+      temp = generated_data_curr[i,:ori_time[i],:]
+      generated_data.append(temp)
+    return generated_data
+   '''
+
   def MinMaxScaler(data):
     """Min-Max Normalizer.
     
@@ -225,7 +248,7 @@ def timegan (ori_data, parameters):
   D_solver = tf.compat.v1.train.AdamOptimizer().minimize(D_loss, var_list = d_vars)
   G_solver = tf.compat.v1.train.AdamOptimizer().minimize(G_loss, var_list = g_vars + s_vars)      
   GS_solver = tf.compat.v1.train.AdamOptimizer().minimize(G_loss_S, var_list = g_vars + s_vars)   
-        
+  '''
   ## TimeGAN training   
   sess = tf.compat.v1.Session()
   sess.run(tf.compat.v1.global_variables_initializer())
@@ -295,9 +318,42 @@ def timegan (ori_data, parameters):
             ', g_loss_v: ' + str(np.round(step_g_loss_v,4)) + 
             ', e_loss_t0: ' + str(np.round(np.sqrt(step_e_loss_t0),4))  )
   print('Finish Joint Training')
-    
+  '''
+
+  #imported = tf.saved_model.load('./saved_model')
+  #z_dim = dim
+
+  #Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
+  #infer = imported.signatures['serving_default']
+  #print(infer.structured_outputs)
+  #print(infer.outputs)
+  #X_hat = infer.outputs[0]
+  #K.clear_session()
+  tf.compat.v1.reset_default_graph()
+  sess = tf.compat.v1.Session()
+  sess.run(tf.compat.v1.global_variables_initializer())
+
+  tf.compat.v1.saved_model.loader.load(sess, ['serve'], './saved_model')
+  Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
+  generated_data_curr = sess.run(X_hat, feed_dict={Z: Z_mb, X: ori_data, T: ori_time})
+  generated_data = list()
+  for i in range(no):
+    temp = generated_data_curr[i,:ori_time[i],:]
+    generated_data.append(temp)
+  return generated_data
+
+
+
+
   ## Synthetic data generation
   generated_data = list()
+
+  tf.compat.v1.saved_model.simple_save(
+      sess,
+      export_dir='./saved_model',
+      inputs={"Z": Z, "X": X, "T": T},
+      outputs={"X_hat": X_hat})
+
 
   # Generate 10 times as much synthetic data as original data
   for i in range(10):
@@ -313,3 +369,4 @@ def timegan (ori_data, parameters):
   generated_data = generated_data + min_val
     
   return generated_data
+

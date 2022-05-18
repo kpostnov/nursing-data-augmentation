@@ -12,19 +12,18 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.optimizers import RMSprop
 from tensorflow.keras.utils import to_categorical
 import numpy as np
-import math
-import matplotlib.pyplot as plt
-import os
 
-def start_training(train_data, seq_len: int = 900, num_features: int = 70):
+
+def start_training(train_data, seq_len: int = 900, num_features: int = 70, subj: int = 0):
     # Globals
     seq_length = seq_len
     features_n = num_features
     noise_dim = seq_length * features_n
     SHAPE = (seq_length, features_n)
+    MODEL_SHAPE = (int(50), int(10))
     hidden_dim = features_n * 4
 
-    z_dim = 50 ##this is the real noise input
+    z_dim = 128 #this is the real noise input
     z_shape = (z_dim, )
 
 
@@ -84,15 +83,15 @@ def start_training(train_data, seq_len: int = 900, num_features: int = 70):
             # default input is just a noise dimension (z-code)
             x = inputs ## 
 
-        x = Dense(SHAPE[0]*SHAPE[1])(x)
-        x = Reshape((SHAPE[0], SHAPE[1]))(x)
-        x = GRU(72, return_sequences=False, return_state=False,unroll=True)(x)
-        x = Reshape((int(SHAPE[0]/2), 6))(x)
+        x = Dense(MODEL_SHAPE[0]*MODEL_SHAPE[1])(x)
+        x = Reshape((MODEL_SHAPE[0], MODEL_SHAPE[1]))(x)
+        x = GRU(10*450, return_sequences=False, return_state=False,unroll=True)(x)
+        x = Reshape((450, 10))(x)
         x = Conv1D(128, 4, 1, "same")(x)
         x = BatchNormalization(momentum=0.8)(x) # adjusting and scaling the activations
         x = ReLU()(x)
         x = UpSampling1D()(x)
-        x = Conv1D(6, 4, 1, "same")(x)
+        x = Conv1D(70, 7, 1, "same")(x)
         x = BatchNormalization(momentum=0.8)(x)
 
         if activation is not None:
@@ -117,9 +116,9 @@ def start_training(train_data, seq_len: int = 900, num_features: int = 70):
         Returns:
             Model: Discriminator Model
         """
-        ints = int(SHAPE[0]/2)
+        ints = int(23)
         x = inputs
-        x = GRU(SHAPE[1]*SHAPE[0] , return_sequences=False, return_state=False,unroll=True, activation="relu")(x)
+        x = GRU(MODEL_SHAPE[1]*MODEL_SHAPE[0]+29, return_sequences=False, return_state=False,unroll=True, activation="relu")(x)
         x = Reshape((ints, ints))(x)
         x = Conv1D(16, 3,2, "same")(x)
         x = LeakyReLU(alpha=0.2)(x)
@@ -161,7 +160,7 @@ def start_training(train_data, seq_len: int = 900, num_features: int = 70):
 
         x, feature0 = inputs
 
-        y = GRU(SHAPE[0]*SHAPE[1], return_sequences=False, return_state=False,unroll=True)(x)
+        y = GRU(MODEL_SHAPE[0]*MODEL_SHAPE[1], return_sequences=False, return_state=False,unroll=True)(x)
         y = Flatten()(y)
         feature0_output = Dense(feature0_dim, activation='relu')(y)
         # Encoder0 or enc0: data to feature0 
@@ -212,8 +211,8 @@ def start_training(train_data, seq_len: int = 900, num_features: int = 70):
 
         return gen0, gen1
 
-    # TODO
-    def build_discriminator(inputs, z_dim=50):
+
+    def build_discriminator(inputs, z_dim=128):
         """Build Discriminator 1 Model
         Classifies feature0 (features) as real/fake time series array and recovers
         the input noise or latent code (by minimizing entropy loss)
@@ -225,9 +224,9 @@ def start_training(train_data, seq_len: int = 900, num_features: int = 70):
         """
 
         # input is 256-dim feature1
-        x = Dense(SHAPE[0]*SHAPE[1], activation='relu')(inputs)
+        x = Dense(MODEL_SHAPE[0]*MODEL_SHAPE[1], activation='relu')(inputs)
     
-        x = Dense(SHAPE[0]*SHAPE[1], activation='relu')(x)
+        x = Dense(MODEL_SHAPE[0]*MODEL_SHAPE[1], activation='relu')(x)
 
 
         # first output is probability that feature0 is real
@@ -280,6 +279,7 @@ def start_training(train_data, seq_len: int = 900, num_features: int = 70):
             np.argmax(noise_class, axis=1))
 
         for i in range(train_steps):
+            print(f"Step {i}/{train_steps}")
             # train the discriminator1 for 1 batch
             # 1 batch of real (label=1.0) and fake feature1 (label=0.0)
             # randomly pick real time series arrays from dataset
@@ -417,7 +417,7 @@ def start_training(train_data, seq_len: int = 900, num_features: int = 70):
         model.fit(x_train,
                 y_train,
                 validation_data=(x_test, y_test),
-                epochs=10,
+                epochs=3,
                 batch_size=batch_size)
 
         model.save(model_name + "-encoder.h5")
@@ -476,7 +476,7 @@ def start_training(train_data, seq_len: int = 900, num_features: int = 70):
                     optimizer=optimizer,
                     metrics=['accuracy'])
         dis0.summary() # feature0 discriminator, z0 estimator
-
+        
         # build discriminator 1 and Q network 1 models
 
         input_shape = (x_train.shape[1], x_train.shape[2])
@@ -609,7 +609,7 @@ def start_training(train_data, seq_len: int = 900, num_features: int = 70):
     to highlight the process, and get the model architecture to load the weights into..
     ..if you want to retrain the model add more steps than 10 and don't load the weights. 
     """
-    steps = 1 # original model used 2000
+    steps = 8000 # original model used 2000
     gen0, gen1, scaler = build_and_train_models(train_steps = steps)
 
     # label and noise codes for generator testing
@@ -620,14 +620,19 @@ def start_training(train_data, seq_len: int = 900, num_features: int = 70):
     noise_params = [noise_class, z0, z1]
     generators = (gen0, gen1)
 
-    syn_data = generate_data(generators, noise_params, scaler)
+    gen_data = generate_data(generators, noise_params, scaler)
+    for _ in range(2):
+        syn_data = generate_data(generators, noise_params, scaler)
+        gen_data = np.concatenate((gen_data, syn_data), axis=0)
+
 
     # Comment and uncomment to load/save models
-    # gen1.save("gen0")
-    # gen0.save_weights("gen1_weights")
+    gen1.save(f"gen1_{subj}")
+    gen0.save(f"gen0_{subj}")
+    gen0.save_weights(f"gen1_weights_{subj}")
 
     ## Load the fully developed model.
     # gen0 = load_model("gen0")
     # gen1.load_weights('gen1_weights')
 
-    return syn_data
+    return gen_data
