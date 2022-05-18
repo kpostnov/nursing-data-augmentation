@@ -14,6 +14,7 @@ src/report.txt
 src/time_gan
 
 src/runner.py
+src/utils/settings.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

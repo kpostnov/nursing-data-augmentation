@@ -2,6 +2,7 @@ import os
 import json
 import time
 from multiprocessing import Pool
+import traceback
 import numpy as np
 import pandas as pd
 
@@ -77,6 +78,7 @@ def read_recording_from_folder(enumerated_recording_folder_names: 'tuple(int, st
     except Exception as e:
         if continue_on_error:
             print("===> Will skip Recording, because error while reading! path:" + recording_folder_path + "\nError:\n\t" + str(e))
+            print(traceback.format_exc())
             return None
         raise e
 
@@ -106,7 +108,7 @@ def get_activity_dataframe(time_frame, recording_folder_path: str) -> pd.DataFra
         return label_obj
     
     def str_label_to_activity_idx(label_obj: dict):
-        label_obj["label"] = settings.ACTIVITIES(label_obj["label"])
+        label_obj["label"] = settings.ACTIVITIES[label_obj["label"]]
         return label_obj
 
     activities_meta = list(map(label_timestamp_to_microseconds, activities_meta))

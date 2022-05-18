@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 import re
 import json
 import utils.settings as settings
@@ -30,7 +31,7 @@ class XSensRecordingReader(object):
         # Iterate over all files in the data directory
         for file_name in os.listdir(recording_folder_path):
             is_file = os.path.isfile(os.path.join(recording_folder_path, file_name))
-            if not is_file or not file_name.endswith(".csv"):
+            if not is_file or not file_name.endswith(".csv") or file_name.endswith("poseSequence.csv"):
                 continue
             sensor_file_name = file_name
 
@@ -80,7 +81,7 @@ class XSensRecordingReader(object):
         vals = frame["SampleTimeFine"].values
         for idx in range(1, vals.size):
             while vals[idx] < vals[idx - 1]:
-                vals[idx] += pow(2, 32) - 1
+                vals[idx] += pow(2, 32)
         frame["SampleTimeFine"] = vals
         return frame
 
@@ -93,14 +94,29 @@ class XSensRecordingReader(object):
 
     @staticmethod
     def __merge_frames(frame1, frame2):
-        d_print(frame1.describe())
-        d_print(frame2.describe())
+        frame2 = XSensRecordingReader.__normalize_SampleTimeFine(frame1, frame2)
 
-        # frame2 = frame2.astype({'SampleTimeFine': 'int64'})
-        return pd.merge_asof(
-            frame1, frame2, on="SampleTimeFine", tolerance=16000, direction="nearest"
-        )
-        # return pd.merge(frame1, frame2, on='SampleTimeFine', how='outer')
+        # join on frame1
+        df1_2 = pd.merge_asof(frame1, frame2, on='SampleTimeFine', tolerance=16000, direction='nearest')
+
+        # join on frame2
+        df2_1 = pd.merge_asof(frame2, frame1, on='SampleTimeFine', tolerance=16000, direction='nearest')
+
+        # concat frame1-join with frame2-joins where the last column values (those should always be from frame1) are NaN (equivalent to full outer join)
+        df_outer_joined = pd.concat([df1_2,df2_1[df2_1.iloc[:, -1].isnull()]])
+        df_outer_joined.sort_values(["SampleTimeFine"], inplace=True)
+        return df_outer_joined
+
+    @staticmethod
+    def __normalize_SampleTimeFine(frame1, frame2):
+        frame1_first_SampleTimeFine = frame1.iloc[0]['SampleTimeFine']
+        frame2_first_SampleTimeFine = frame2.iloc[0]['SampleTimeFine']
+        diff = frame2_first_SampleTimeFine - frame1_first_SampleTimeFine
+        frame2_SampleTimeFine = frame2['SampleTimeFine'].values
+        diff_calc = lambda t: t - diff
+        frame2_SampleTimeFine = diff_calc(frame2_SampleTimeFine).astype(np.int64)
+        frame2['SampleTimeFine'] = frame2_SampleTimeFine
+        return frame2
 
     @staticmethod
     def __remove_edge_nans(frame):
