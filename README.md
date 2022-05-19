@@ -1,1 +1,1 @@
-# Data Augmentation for High Dimensional Time-Series Data Using Generative Adversarial Networks (GANs)
+# Data Augmentation for High Dimensional Multivariate Time-Series Data Using Generative Adversarial Networks (GANs)
