@@ -19,7 +19,7 @@ from utils.Windowizer import Windowizer
 from models.AdaptedDeepConvLSTM import AdaptedDeepConvLSTM
 from visualization.visualize import plot_pca
 from loader.preprocessing import interpolate_linear, normalize_standardscaler, preprocess
-from scripts.plot_people import count_windows_per_activity
+from scripts.plot_people import count_windows_per_activity, count_person_length, count_activity_length, count_activities_per_person, count_recordings_per_person, count_windows_per_activity_per_person
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -66,21 +66,77 @@ recordings = preprocess(recordings, methods=[
     interpolate_linear,
     normalize_standardscaler
 ])
+'''
 
+WINDOW_SIZE = 600
+STRIDE_SIZE = 600
 
-# Windowize
+recordings = load_recordings(settings.sonar_lab_dataset_path)
+
+values1 = count_person_length(recordings)
+values2 = count_activity_length(recordings)
+values3 = count_activities_per_person(recordings)
+values4 = count_recordings_per_person(recordings)
+
 windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_jumping)
 windows = windowizer.windowize_windowize(recordings)
 
-values = count_windows_per_activity(windows, WINDOW_SIZE)
+values5 = count_windows_per_activity(windows, WINDOW_SIZE)
+values6 = count_windows_per_activity_per_person(windows, WINDOW_SIZE)
 
-values.to_csv("windows_per_activity.csv")
-values.plot.bar(figsize=(22,16))
+plt.figure()
+values1.to_csv("person_length.csv")
+values1.plot.bar(figsize=(22,16))
+plt.title("Person length")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.savefig('person_length')
+plt.close()
+
+plt.figure()
+values2.to_csv("activity_length.csv")
+values2.plot.bar(figsize=(22,16))
+plt.title("Activity length")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.savefig('activity_length.png')
+plt.close()
+
+plt.figure()
+values3.to_csv("activities_per_person.csv")
+values3.plot.bar(figsize=(22,16))
+plt.title("Activities per person")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.savefig('activities_per_person.png')
+plt.close()
+
+plt.figure()
+values4.to_csv("recordings_per_person.csv")
+values4.plot.bar(figsize=(22,16))
+plt.title("Recordings per person")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.savefig('recordings_per_person.png')
+plt.close()
+
+plt.figure()
+values5.to_csv("windows_per_activity.csv")
+values5.plot.bar(figsize=(22,16))
 plt.title("Windows per activity")
-plt.xlabel("Activity")
-plt.ylabel("Number of windows")
+plt.xlabel("x")
+plt.ylabel("y")
 plt.savefig('windows_per_activity.png')
-'''
+plt.close()
+
+plt.figure()
+values6.to_csv("windows_per_activity_per_person.csv")
+values6.plot.bar(figsize=(22,16))
+plt.title("Windows per activity per person")
+plt.xlabel("x")
+plt.ylabel("y")
+plt.savefig('windows_per_activity_per_person.png')
+plt.close()
 
 
 # Pipeline
@@ -88,12 +144,12 @@ WINDOW_SIZE = 900
 STRIDE_SIZE = 900
 
 # Load data
-recordings = load_recordings("D:\dataset\ML Prototype Recordings\without_null_activities", limit=10)
+recordings = load_recordings(settings.sonar_dataset_path, limit=10)
 
 # recordings = filter_activities_negative(recordings, ['accessoires anlegen', 'haare waschen', 'aufwischen (staub)', 'föhnen'])
 # leere Recordings Filter
 
-recordings = convert_to_relative_sensor_data(recordings)
+# recordings = convert_to_relative_sensor_data(recordings)
 
 random.seed(1678978086101)
 random.shuffle(recordings)

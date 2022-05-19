@@ -1,29 +1,23 @@
 """Time-series Generative Adversarial Networks (TimeGAN) Codebase.
-
 Reference: Jinsung Yoon, Daniel Jarrett, Mihaela van der Schaar, 
 "Time-series Generative Adversarial Networks," 
 Neural Information Processing Systems (NeurIPS), 2019.
-
 Paper link: https://papers.nips.cc/paper/8789-time-series-generative-adversarial-networks
-
 Last updated Date: April 24th 2020
 Code author: Jinsung Yoon (jsyoon0823@gmail.com)
-
 -----------------------------
-
 timegan.py
-
 Note: Use original data as training set to generater synthetic data (time-series)
 """
 
 # Necessary Packages
 import tensorflow as tf
-from keras import backend as K
 import numpy as np
 from .utils import extract_time, rnn_cell, random_generator, batch_generator
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 
-def timegan (ori_data, parameters):
+def timegan (ori_data, parameters, index, compute_gan = True, save_model = True):
   """TimeGAN function.
   
   Use original data as training set to generater synthetic data (time-series)
@@ -35,6 +29,7 @@ def timegan (ori_data, parameters):
   Returns:
     - generated_data: generated time-series data
   """
+  
   # Initialization on the Graph
   tf.compat.v1.reset_default_graph()
 
@@ -44,28 +39,6 @@ def timegan (ori_data, parameters):
   # Maximum sequence length and each sequence length
   ori_time, max_seq_len = extract_time(ori_data)
   
-
-  '''
-  imported = tf.saved_model.load('./saved_model')
-  z_dim = dim
-
-  Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
-  infer = imported.signatures['serving_default']
-  print(infer.structured_outputs)
-  print(infer.outputs)
-  X_hat = infer.outputs[0]
- 
-  with tf.compat.v1.Session(graph=tf.Graph()) as sess:
-    tf.compat.v1.saved_model.loader.load(sess, ['serve'], './saved_model')
-    Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
-    generated_data_curr = sess.run(X_hat, feed_dict={Z: Z_mb, X: ori_data, T: ori_time})    
-    generated_data = list()  
-    for i in range(no):
-      temp = generated_data_curr[i,:ori_time[i],:]
-      generated_data.append(temp)
-    return generated_data
-   '''
-
   def MinMaxScaler(data):
     """Min-Max Normalizer.
     
@@ -248,125 +221,162 @@ def timegan (ori_data, parameters):
   D_solver = tf.compat.v1.train.AdamOptimizer().minimize(D_loss, var_list = d_vars)
   G_solver = tf.compat.v1.train.AdamOptimizer().minimize(G_loss, var_list = g_vars + s_vars)      
   GS_solver = tf.compat.v1.train.AdamOptimizer().minimize(G_loss_S, var_list = g_vars + s_vars)   
-  '''
-  ## TimeGAN training   
-  sess = tf.compat.v1.Session()
-  sess.run(tf.compat.v1.global_variables_initializer())
-    
-  # 1. Embedding network training
-  print('Start Embedding Network Training')
-    
-  for itt in range(iterations):
-    # Set mini-batch
-    X_mb, T_mb = batch_generator(ori_data, ori_time, batch_size)           
-    # Train embedder        
-    _, step_e_loss = sess.run([E0_solver, E_loss_T0], feed_dict={X: X_mb, T: T_mb})        
-    # Checkpoint
-    if itt % 100 == 0:
-      print('step: '+ str(itt) + '/' + str(iterations) + ', e_loss: ' + str(np.round(np.sqrt(step_e_loss),4)) ) 
-      
-  print('Finish Embedding Network Training')
-    
-  # 2. Training only with supervised loss
-  print('Start Training with Supervised Loss Only')
-    
-  for itt in range(iterations):
-    # Set mini-batch
-    X_mb, T_mb = batch_generator(ori_data, ori_time, batch_size)    
-    # Random vector generation   
-    Z_mb = random_generator(batch_size, z_dim, T_mb, max_seq_len)
-    # Train generator       
-    _, step_g_loss_s = sess.run([GS_solver, G_loss_S], feed_dict={Z: Z_mb, X: X_mb, T: T_mb})       
-    # Checkpoint
-    if itt % 100 == 0:
-      print('step: '+ str(itt)  + '/' + str(iterations) +', s_loss: ' + str(np.round(np.sqrt(step_g_loss_s),4)) )
-      
-  print('Finish Training with Supervised Loss Only')
-    
-  # 3. Joint Training
-  print('Start Joint Training')
   
-  for itt in range(iterations):
-    # Generator training (twice more than discriminator training)
-    for kk in range(2):
+  # -----------------------------------------------------------------------
+  #
+  # Time-GAN training
+  #
+  # -----------------------------------------------------------------------
+  if compute_gan:
+    ## TimeGAN training   
+    sess = tf.compat.v1.Session()
+    sess.run(tf.compat.v1.global_variables_initializer())
+      
+    # 1. Embedding network training
+    print('Start Embedding Network Training')
+      
+    for itt in range(iterations):
       # Set mini-batch
-      X_mb, T_mb = batch_generator(ori_data, ori_time, batch_size)               
+      X_mb, T_mb = batch_generator(ori_data, ori_time, batch_size)           
+      # Train embedder        
+      _, step_e_loss = sess.run([E0_solver, E_loss_T0], feed_dict={X: X_mb, T: T_mb})        
+      # Checkpoint
+      if itt % 100 == 0:
+        print('step: '+ str(itt) + '/' + str(iterations) + ', e_loss: ' + str(np.round(np.sqrt(step_e_loss),4)) ) 
+        
+    print('Finish Embedding Network Training')
+      
+    # 2. Training only with supervised loss
+    print('Start Training with Supervised Loss Only')
+      
+    for itt in range(iterations):
+      # Set mini-batch
+      X_mb, T_mb = batch_generator(ori_data, ori_time, batch_size)    
+      # Random vector generation   
+      Z_mb = random_generator(batch_size, z_dim, T_mb, max_seq_len)
+      # Train generator       
+      _, step_g_loss_s = sess.run([GS_solver, G_loss_S], feed_dict={Z: Z_mb, X: X_mb, T: T_mb})       
+      # Checkpoint
+      if itt % 100 == 0:
+        print('step: '+ str(itt)  + '/' + str(iterations) +', s_loss: ' + str(np.round(np.sqrt(step_g_loss_s),4)) )
+        
+    print('Finish Training with Supervised Loss Only')
+      
+    # 3. Joint Training
+    print('Start Joint Training')
+    
+    for itt in range(iterations):
+      # Generator training (twice more than discriminator training)
+      for kk in range(2):
+        # Set mini-batch
+        X_mb, T_mb = batch_generator(ori_data, ori_time, batch_size)               
+        # Random vector generation
+        Z_mb = random_generator(batch_size, z_dim, T_mb, max_seq_len)
+        # Train generator
+        _, step_g_loss_u, step_g_loss_s, step_g_loss_v = sess.run([G_solver, G_loss_U, G_loss_S, G_loss_V], feed_dict={Z: Z_mb, X: X_mb, T: T_mb})
+        # Train embedder        
+        _, step_e_loss_t0 = sess.run([E_solver, E_loss_T0], feed_dict={Z: Z_mb, X: X_mb, T: T_mb})   
+            
+      # Discriminator training        
+      # Set mini-batch
+      X_mb, T_mb = batch_generator(ori_data, ori_time, batch_size)           
       # Random vector generation
       Z_mb = random_generator(batch_size, z_dim, T_mb, max_seq_len)
-      # Train generator
-      _, step_g_loss_u, step_g_loss_s, step_g_loss_v = sess.run([G_solver, G_loss_U, G_loss_S, G_loss_V], feed_dict={Z: Z_mb, X: X_mb, T: T_mb})
-       # Train embedder        
-      _, step_e_loss_t0 = sess.run([E_solver, E_loss_T0], feed_dict={Z: Z_mb, X: X_mb, T: T_mb})   
-           
-    # Discriminator training        
-    # Set mini-batch
-    X_mb, T_mb = batch_generator(ori_data, ori_time, batch_size)           
-    # Random vector generation
-    Z_mb = random_generator(batch_size, z_dim, T_mb, max_seq_len)
-    # Check discriminator loss before updating
-    check_d_loss = sess.run(D_loss, feed_dict={X: X_mb, T: T_mb, Z: Z_mb})
-    # Train discriminator (only when the discriminator does not work well)
-    if (check_d_loss > 0.15):        
-      _, step_d_loss = sess.run([D_solver, D_loss], feed_dict={X: X_mb, T: T_mb, Z: Z_mb})
+      # Check discriminator loss before updating
+      check_d_loss = sess.run(D_loss, feed_dict={X: X_mb, T: T_mb, Z: Z_mb})
+      # Train discriminator (only when the discriminator does not work well)
+      if (check_d_loss > 0.15):        
+        _, step_d_loss = sess.run([D_solver, D_loss], feed_dict={X: X_mb, T: T_mb, Z: Z_mb})
+          
+      # Print multiple checkpoints
+      if itt % 100 == 0:
+        print('step: '+ str(itt) + '/' + str(iterations) + 
+              ', d_loss: ' + str(np.round(step_d_loss,4)) + 
+              ', g_loss_u: ' + str(np.round(step_g_loss_u,4)) + 
+              ', g_loss_s: ' + str(np.round(np.sqrt(step_g_loss_s),4)) + 
+              ', g_loss_v: ' + str(np.round(step_g_loss_v,4)) + 
+              ', e_loss_t0: ' + str(np.round(np.sqrt(step_e_loss_t0),4))  )
+    print('Finish Joint Training')
+
+    # Save model
+    if save_model:
+      tf.compat.v1.saved_model.simple_save(
+          sess,
+          export_dir=f'./saved_model_{index}',
+          inputs={"Z": Z, "X": X, "T": T},
+          outputs={"X_hat": X_hat})
+
+    ## Synthetic data generation
+    generated_data = list()
+
+    # Generate 10 times as much synthetic data as original data
+    for i in range(10):
+      Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
+      generated_data_curr = sess.run(X_hat, feed_dict={Z: Z_mb, X: ori_data, T: ori_time})    
         
-    # Print multiple checkpoints
-    if itt % 100 == 0:
-      print('step: '+ str(itt) + '/' + str(iterations) + 
-            ', d_loss: ' + str(np.round(step_d_loss,4)) + 
-            ', g_loss_u: ' + str(np.round(step_g_loss_u,4)) + 
-            ', g_loss_s: ' + str(np.round(np.sqrt(step_g_loss_s),4)) + 
-            ', g_loss_v: ' + str(np.round(step_g_loss_v,4)) + 
-            ', e_loss_t0: ' + str(np.round(np.sqrt(step_e_loss_t0),4))  )
-  print('Finish Joint Training')
-  '''
-
-  #imported = tf.saved_model.load('./saved_model')
-  #z_dim = dim
-
-  #Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
-  #infer = imported.signatures['serving_default']
-  #print(infer.structured_outputs)
-  #print(infer.outputs)
-  #X_hat = infer.outputs[0]
-  #K.clear_session()
-  tf.compat.v1.reset_default_graph()
-  sess = tf.compat.v1.Session()
-  sess.run(tf.compat.v1.global_variables_initializer())
-
-  tf.compat.v1.saved_model.loader.load(sess, ['serve'], './saved_model')
-  Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
-  generated_data_curr = sess.run(X_hat, feed_dict={Z: Z_mb, X: ori_data, T: ori_time})
-  generated_data = list()
-  for i in range(no):
-    temp = generated_data_curr[i,:ori_time[i],:]
-    generated_data.append(temp)
-  return generated_data
-
-
-
-
-  ## Synthetic data generation
-  generated_data = list()
-
-  tf.compat.v1.saved_model.simple_save(
-      sess,
-      export_dir='./saved_model',
-      inputs={"Z": Z, "X": X, "T": T},
-      outputs={"X_hat": X_hat})
-
-
-  # Generate 10 times as much synthetic data as original data
-  for i in range(10):
-    Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
-    generated_data_curr = sess.run(X_hat, feed_dict={Z: Z_mb, X: ori_data, T: ori_time})    
-      
-    for i in range(no):
-      temp = generated_data_curr[i,:ori_time[i],:]
-      generated_data.append(temp)
-        
-  # Renormalization
-  generated_data = generated_data * max_val
-  generated_data = generated_data + min_val
+      for i in range(no):
+        temp = generated_data_curr[i,:ori_time[i],:]
+        generated_data.append(temp)
     
-  return generated_data
+    # Renormalization
+    generated_data = generated_data * max_val
+    generated_data = generated_data + min_val
+    
+    return generated_data
 
+  # -----------------------------------------------------------------------
+  #
+  # Load saved model
+  #
+  # -----------------------------------------------------------------------
+  else: 
+
+    def extract_tensors(signature_def, graph):
+      output = dict()
+
+      for key in signature_def:
+        value = signature_def[key]
+
+        if isinstance(value, tf.compat.v1.TensorInfo):
+          output[key] = graph.get_tensor_by_name(value.name)
+
+      return output
+
+    def extract_input_name(signature_def, graph):
+      input_tensors = extract_tensors(signature_def['serving_default'].inputs, graph)
+
+      keys = list(input_tensors.keys())
+      output = list()
+      for key in keys:
+        output.append(input_tensors.get(key).name)
+      output.sort()
+      return output
+
+    def extract_output_name(signature_def, graph):
+      output_tensors = extract_tensors(signature_def['serving_default'].outputs, graph)
+      #Assuming one output in model.
+      key = list(output_tensors.keys())[0]
+      return output_tensors.get(key).name
+
+    with tf.compat.v1.Session(graph=tf.Graph()) as session:
+      serve = tf.compat.v1.saved_model.loader.load(session, ['serve'], f'./saved_model_{index}')
+
+      input_tensor_names = extract_input_name(serve.signature_def, session.graph)
+      output_tensor_name = extract_output_name(serve.signature_def, session.graph)
+      
+      generated_data = list()
+      for _ in range(10):
+        Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
+        
+        generated_data_curr = session.run(output_tensor_name, feed_dict={input_tensor_names[2]: Z_mb, input_tensor_names[1]: ori_data, input_tensor_names[0]: ori_time})
+        print(generated_data_curr.shape)
+
+        for i in range(no):
+          temp = generated_data_curr[i,:ori_time[i],:]
+          generated_data.append(temp)
+    
+      # Renormalization
+      generated_data = generated_data * max_val
+      generated_data = generated_data + min_val 
+
+      return generated_data

@@ -8,9 +8,8 @@ from utils.Windowizer import Windowizer
 import utils.settings as settings
 import numpy as np
 
-# import TimeGAN.timegan as timegan
-import TimeGAN_gpu.timegan as timegan
-import mtss_gan.mtss_gan as mtss_gan
+import TimeGAN.timegan as timegan
+# import mtss_gan.mtss_gan as mtss_gan
 import gc
 
 from visualization.visualize import plot_pca_distribution, plot_tsne_distribution
@@ -26,14 +25,14 @@ parameters['module'] = 'gru'  # LSTM possible
 parameters['hidden_dim'] = 280  # Paper: 4 times the size of input features
 parameters['num_layer'] = 3
 parameters['iterations'] = 10000  # Paper: 10.000
-parameters['batch_size'] = 128
+parameters['batch_size'] = 32
 
-parameters['seq_len'] = WINDOW_SIZE
-parameters['n_seq'] = 70
-parameters['batch_size'] = 128
-parameters['hidden_dim'] = 280
-parameters['num_layer'] = 3
-parameters['train_steps'] = 10000
+# parameters['seq_len'] = WINDOW_SIZE
+# parameters['n_seq'] = 70
+# parameters['batch_size'] = 128
+# parameters['hidden_dim'] = 280
+# parameters['num_layer'] = 3
+# parameters['train_steps'] = 10000
 
 # Load data
 recordings = load_recordings(settings.sonar_dataset_path)
@@ -89,8 +88,8 @@ for subject in settings.SUBJECTS:
         # Data Augmentation
         ori_data = np.squeeze(activity_group_X, -1)
 
-        # generated_activity_data = timegan.timegan(ori_data, parameters)
-        generated_activity_data = mtss_gan.start_training(ori_data, seq_len=WINDOW_SIZE, num_features=70)
+        generated_activity_data = timegan.timegan(ori_data, parameters, index)
+        # generated_activity_data = mtss_gan.start_training(ori_data, seq_len=WINDOW_SIZE, num_features=70)
 
         generated_activity_labels = np.expand_dims(row, axis=0)
         generated_activity_labels = np.repeat(generated_activity_labels, len(generated_activity_data), axis=0)

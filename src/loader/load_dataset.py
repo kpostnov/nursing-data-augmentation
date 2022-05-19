@@ -112,7 +112,7 @@ def get_activity_dataframe(time_frame, recording_folder_path: str) -> pd.DataFra
         return label_obj
 
     activities_meta = list(map(label_timestamp_to_microseconds, activities_meta))
-    activities_meta = list(map(str_label_to_activity_idx, activities_meta))
+    # activities_meta = list(map(str_label_to_activity_idx, activities_meta))
 
     # Now we have all timesteps in the same format (microseconds), but the label timestamps are still offset by some value
     # To fix / work around that, we always take the duration of one label and add it to the labels current SampleTimeFine
