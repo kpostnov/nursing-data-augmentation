@@ -32,7 +32,7 @@ def count_windows_per_activity(windows: "list[Window]", window_size: int) -> pd.
     return values
 
 
-def count_recordings_per_person(recordings: "list[Recording]"):
+def count_recordings_per_person(recordings: "list[Recording]") -> pd.Series:
     values = pd.Series({recordings[0].subject: 1})
     for rec in recordings[1:]:
         values = values.add(pd.Series({rec.subject: 1}), fill_value=0)
@@ -40,7 +40,7 @@ def count_recordings_per_person(recordings: "list[Recording]"):
     return values
 
 
-def count_activities_per_person(recordings: "list[Recording]"):
+def count_activities_per_person(recordings: "list[Recording]") -> pd.DataFrame:
     values = pd.DataFrame({recordings[0].subject: recordings[0].activities.value_counts()})
     for rec in recordings[1:]:
         values = values.add(pd.DataFrame({rec.subject: rec.activities.value_counts()}), fill_value=0)
@@ -48,7 +48,10 @@ def count_activities_per_person(recordings: "list[Recording]"):
     return values
 
 
-def count_activity_length(recordings: "list[Recording]"):
+def count_activity_length(recordings: "list[Recording]") -> pd.Series:
+    """
+    Returns the total amount of recording time per activity in timesteps.
+    """
     values = recordings[0].activities.value_counts()
     for rec in recordings[1:]:
         values = values.add(rec.activities.value_counts(), fill_value=0)
@@ -56,18 +59,19 @@ def count_activity_length(recordings: "list[Recording]"):
     return values
 
 
-def count_person_length(recordings: "list[Recording]"):
+def count_person_length(recordings: "list[Recording]") -> pd.Series:
+    """
+    Returns the total amount of recording time per person in timesteps.
+    """
     values = pd.Series({recordings[0].subject: recordings[0].activities.count()})
     for rec in recordings[1:]:
         values = values.add(pd.Series({rec.subject: rec.activities.count()}), fill_value=0)
-
+    
     return values
 
 
-def plot_people() -> None:
-    dataset_path = os.path.join(settings.sonar_dataset_path)
+def plot_people(recordings: "list[Recording]") -> None:
 
-    recordings = load_recordings(dataset_path)
     counts = count_person_length(recordings)
 
     # Map the keys to names
@@ -78,7 +82,3 @@ def plot_people() -> None:
 
     plot_distribution_pie_chart(counts)
     plot_distribution_bar_chart(counts)
-    return counts
-
-
-# plot_people()

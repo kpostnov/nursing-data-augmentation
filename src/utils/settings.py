@@ -12,6 +12,8 @@ def init(dataset: str):
         init_opportunity()
     elif dataset == "sonar":
         init_sonar()
+    elif dataset == "sonar_lab":
+        init_sonar_lab()
     elif dataset == "pamap2":
         init_pamap2()
     elif dataset == "nursing":
@@ -54,6 +56,42 @@ def init_sonar():
     # TODO: Convert to numbers
     global SUBJECTS
     SUBJECTS = ["aileen", "alex", "anja", "b2", "brueggemann", "christine", "connie", "florian", "kathi", "mathias", "oli",	"rauche", "trapp", "yvan"]
+
+
+def init_sonar_lab():
+    global sonar_dataset_path
+    sonar_dataset_path = "/dhc/groups/bp2021ba1/data/lab_data_new"
+
+    global LABELS
+    with open("labels_lab.json") as file:
+        categories = json.load(file)["items"]
+        LABELS = list(
+            itertools.chain.from_iterable(
+                category["entries"] for category in categories
+            )
+        )
+
+    global IS_WINDOWS
+    IS_WINDOWS = os.name == "nt"
+
+    global ACTIVITIES
+    ACTIVITIES = {k: v for v, k in enumerate(LABELS)}
+
+    global ACTIVITIES_ID_TO_NAME
+    ACTIVITIES_ID_TO_NAME = {v: k for k, v in ACTIVITIES.items()}
+
+    global activity_initial_num_to_activity_str
+    activity_initial_num_to_activity_str = ACTIVITIES_ID_TO_NAME
+
+    global SENSOR_SUFFIX_ORDER
+    SENSOR_SUFFIX_ORDER = ["LF", "LW", "ST", "RW", "RF"]
+
+    global CSV_HEADER_SIZE
+    CSV_HEADER_SIZE = 8
+
+    # TODO: Convert to numbers
+    global SUBJECTS
+    SUBJECTS = ["orhan", "daniel", "felix", "tobi", "lucas", "kirill", "marco", "valentin", "alex", "franz"]
 
 
 def init_opportunity():
