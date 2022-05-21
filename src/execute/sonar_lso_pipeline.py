@@ -1,10 +1,15 @@
 import os
 import random
+from evaluation.conf_matrix import create_conf_matrix
+from evaluation.metrics import accuracy, f_score
+from evaluation.save_configuration import save_model_configuration
+from evaluation.text_metrics import create_text_metrics
 from loader.preprocessing import preprocess, normalize_standardscaler, interpolate_linear
 from utils.cache_recordings import load_recordings
 from models.AdaptedDeepConvLSTM import AdaptedDeepConvLSTM
 from datatypes.Window import Window
 from utils.Windowizer import Windowizer
+from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
 import numpy as np
 
@@ -27,13 +32,6 @@ parameters['num_layer'] = 3
 parameters['iterations'] = 10000  # Paper: 10.000
 parameters['batch_size'] = 32
 
-# parameters['seq_len'] = WINDOW_SIZE
-# parameters['n_seq'] = 70
-# parameters['batch_size'] = 128
-# parameters['hidden_dim'] = 280
-# parameters['num_layer'] = 3
-# parameters['train_steps'] = 10000
-
 # Load data
 recordings = load_recordings(settings.sonar_dataset_path)
 
@@ -45,7 +43,7 @@ random.seed(1678978086101)
 random.shuffle(recordings)
 
 # Preprocessing (MinMaxScaler is applied in timegan.py)
-recordings = preprocess(recordings, methods=[
+recordings, scaler = preprocess(recordings, methods=[
     interpolate_linear
 ])
 
@@ -76,6 +74,11 @@ for subject in settings.SUBJECTS:
     X_test, y_test = windowizer.windowize_convert(validation_subset)
     # y_test_pred_model_alpha = model_alpha.predict(X_test)
 
+    # experiment_folder_path = new_saved_experiment_folder(f'{subject}_mtss_pipeline_alpha')
+    # create_conf_matrix(experiment_folder_path, y_test_pred_model_alpha, y_test)
+    # create_text_metrics(experiment_folder_path, y_test_pred_model_alpha, y_test, [accuracy, f_score])
+    # save_model_configuration(experiment_folder_path, model_alpha)
+
     # Split recordings data activity-wise for data augmentation
     print("Begin data augmentation")
     activities_one_hot_encoded = np.eye(15, 15)
@@ -101,8 +104,8 @@ for subject in settings.SUBJECTS:
         generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
         # Save generated data
-        np.save(f'data_{subject}_{index}_900', generated_activity_data)
-        np.save(f'labels_{subject}_{index}_900', generated_activity_labels)
+        np.save(f'data_{subject}_{index}_{WINDOW_SIZE}', generated_activity_data)
+        np.save(f'labels_{subject}_{index}_{WINDOW_SIZE}', generated_activity_labels)
 
         # Garbage collection
         del generated_activity_data
@@ -125,6 +128,17 @@ for subject in settings.SUBJECTS:
         plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
         '''
         # exit()
+        # Reshape array fot normalization
+        generated_activity_data = np.squeeze(generated_activity_data, -1)
+        generated_activity_data = generated_activity_data.reshape(-1, 70)
+        # Normalize data
+        generated_activity_data = scaler.transform(generated_activity_data)
+        # Inverse reshape data
+        generated_activity_data = generated_activity_data.reshape(-1, WINDOW_SIZE, 70)
+        generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
+
+        # TODO: For finished pipeline transform original data as well
+
         # Merge augmented data with alpha_subset
         # X_train = np.append(X_train, generated_activity_data, axis=0)
         # y_train = np.append(y_train, generated_activity_labels, axis=0)

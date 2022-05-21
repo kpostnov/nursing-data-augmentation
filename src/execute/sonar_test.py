@@ -19,7 +19,7 @@ from utils.Windowizer import Windowizer
 from models.AdaptedDeepConvLSTM import AdaptedDeepConvLSTM
 from visualization.visualize import plot_pca
 from loader.preprocessing import interpolate_linear, normalize_standardscaler, preprocess
-from scripts.plot_people import count_windows_per_activity, count_person_length, count_activity_length, count_activities_per_person, count_recordings_per_person, count_windows_per_activity_per_person
+from scripts.plot_people import plot_people, count_windows_per_activity, count_person_length, count_activity_length, count_activities_per_person, count_recordings_per_person, count_windows_per_activity_per_person
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -159,7 +159,7 @@ for rec in recordings:
     rec.activities = rec.activities.map(lambda label: settings.ACTIVITIES[label])
 
 # Preprocessing
-recordings = preprocess(recordings, methods=[
+recordings, _ = preprocess(recordings, methods=[
     interpolate_linear,
     normalize_standardscaler
 ])

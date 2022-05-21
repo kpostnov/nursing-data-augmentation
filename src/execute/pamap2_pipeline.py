@@ -1,7 +1,7 @@
 import os
 import random
 from evaluation.conf_matrix import create_conf_matrix
-from evaluation.metrics import accuracy
+from evaluation.metrics import accuracy, f_score
 from evaluation.text_metrics import create_text_metrics
 from evaluation.save_configuration import save_model_configuration
 from loader.preprocessing import interpolate_ffill, normalize_standardscaler, preprocess
@@ -15,7 +15,6 @@ import numpy as np
 from visualization.visualize import plot_pca_distribution, plot_tsne_distribution
 
 import TimeGAN.timegan as timegan
-#import wgan.wgan as wgan
 import gc
 
 
@@ -27,7 +26,7 @@ parameters = dict()
 parameters['module'] = 'gru' # LSTM possible
 parameters['hidden_dim'] = 44 # Paper: 4 times the size of input features
 parameters['num_layer'] = 3
-parameters['iterations'] = 1 # Paper: 10.000
+parameters['iterations'] = 10000 # Paper: 10.000
 parameters['batch_size'] = 128
 
 # Load data
@@ -37,29 +36,17 @@ random.seed(1678978086101)
 random.shuffle(recordings)
 
 # Preprocessing
-recordings = preprocess(recordings, methods=[
+recordings, _ = preprocess(recordings, methods=[
     interpolate_ffill,
 ])
 
 # Windowize all recordings
 windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_sliding)
-X_train, y_train = windowizer.windowize_convert(recordings)
-
-# Train M1 on whole dataset (no normalization)
-# model_m1 = DeepConvLSTM(
-#     window_size=WINDOW_SIZE,
-#     stride_size=STRIDE_SIZE,
-#     n_features=recordings[0].sensor_frame.shape[1],
-#     n_outputs=6,
-#     verbose=1,
-#     n_epochs=200)
-# model_m1.fit(X_train=X_train, y_train=y_train)
 
 # LOSO-folds (alpha-dataset)
 subject_ids = range(1, 9)
 for subject_id in subject_ids:
-    if subject_id < 8:
-        continue
+
     print("LOSO-fold without subject: {}".format(subject_id))
 
     # Remove recordings where recording.subject_id == subject_id
@@ -97,12 +84,11 @@ for subject_id in subject_ids:
         # for matrix in ori_data:
         #     ori_data_list.append(matrix)
 
-        '''
-        # generated_activity_data = timegan.timegan(ori_data, parameters)
-        generated_activity_data = wgan.train(ori_data,
-                                            epochs=10000,
-                                            batch_size=128,
-                                            n_outputs=5000)
+        generated_activity_data = timegan.timegan(ori_data, parameters, index)
+        # generated_activity_data = wgan.train(ori_data,
+        #                                     epochs=10000,
+        #                                     batch_size=128,
+        #                                     n_outputs=5000)
 
         generated_activity_labels = np.expand_dims(row, axis=0)
         generated_activity_labels = np.repeat(generated_activity_labels, len(generated_activity_data), axis=0)
@@ -114,8 +100,8 @@ for subject_id in subject_ids:
         generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
         # Save generated data
-        np.save(f'data_{subject_id}_{index}', generated_activity_data)
-        np.save(f'labels_{subject_id}_{index}', generated_activity_labels)
+        np.save(f'data_{subject_id}_{index}_pamap', generated_activity_data)
+        np.save(f'labels_{subject_id}_{index}_pamap', generated_activity_labels)
 
         # Garbage collection
         del generated_activity_data
@@ -126,8 +112,8 @@ for subject_id in subject_ids:
         gc.collect()
 
         continue
+
         '''
-        
         try:
             generated_activity_data = np.load(f'data_{subject_id}_{index}_pamap.npy')
         except OSError:
@@ -135,7 +121,7 @@ for subject_id in subject_ids:
         print(generated_activity_data.shape)
         plot_pca_distribution(activity_group_X, generated_activity_data, str(subject_id) + "_" + str(index) + "_pamap")
         plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject_id) + "_" + str(index) + "_pamap")
-
+        '''
         # data_path = "D:\dataset\Augmented Data\with_gpu\\"
         # generated_activity_data = np.load(f'{data_path}\data_{subject_id}_{index}.npy')
         # plot_pca_distribution(activity_group_X, generated_activity_data, str(index) + "_with_gpu")
@@ -144,7 +130,7 @@ for subject_id in subject_ids:
         # Merge augmented data with alpha_subset
         # X_train = np.append(X_train, generated_activity_data, axis=0)
         # y_train = np.append(y_train, generated_activity_labels, axis=0)
-    exit()
+
     # TODO: Train beta model on beta_subset
     model_beta = DeepConvLSTM(
         window_size=WINDOW_SIZE,
