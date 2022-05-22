@@ -85,6 +85,25 @@ class RainbowModel(ABC):
                 class_weight=self.class_weight,
             )
 
+    def train_on_batches(self, X_train: np.ndarray, y_train: np.ndarray, batch_size: int = 64) -> None:
+        steps_per_epoch = X_train.shape[0] // batch_size
+        indices = np.arange(X_train.shape[0])
+
+        def get_next_batch(step: int) -> Tuple[np.ndarray, np.ndarray]:
+            start = indices[step] * batch_size
+            end = start + batch_size
+            return X_train[start:end], y_train[start:end]
+
+        for epoch in self.n_epochs:
+            for step in steps_per_epoch:
+                X_batch, y_batch = get_next_batch(step)
+                loss_history = self.model.train_on_batch(X_batch, y_batch)
+                print(loss_history)
+            
+            print(f"Epoch {epoch} finished")    
+            # Shuffle indices after each epoch
+            np.random.shuffle(indices)
+
     # Predict ------------------------------------------------------------------------
 
     def predict(self, X_test: np.ndarray) -> np.ndarray:
