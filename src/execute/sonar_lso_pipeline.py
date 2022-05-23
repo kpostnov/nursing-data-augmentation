@@ -1,155 +1,176 @@
+from distutils.command.build import build
 import os
 import random
+import numpy as np
+import gc
+from sklearn.utils import shuffle
+
 from evaluation.conf_matrix import create_conf_matrix
 from evaluation.metrics import accuracy, f_score
 from evaluation.save_configuration import save_model_configuration
 from evaluation.text_metrics import create_text_metrics
 from loader.preprocessing import preprocess, normalize_standardscaler, interpolate_linear
+from models.RainbowModel import RainbowModel
 from utils.cache_recordings import load_recordings
 from models.AdaptedDeepConvLSTM import AdaptedDeepConvLSTM
 from datatypes.Window import Window
 from utils.Windowizer import Windowizer
 from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
-import numpy as np
-
-import TimeGAN.timegan as timegan
-# import mtss_gan.mtss_gan as mtss_gan
-import gc
-
 from visualization.visualize import plot_pca_distribution, plot_tsne_distribution
 
+import TimeGAN.timegan as timegan
 
-# Leave-subject-out pipeline
-WINDOW_SIZE = 900
-STRIDE_SIZE = 900
 
-# GAN Newtork parameters
-parameters = dict()
-parameters['module'] = 'gru'  # LSTM possible
-parameters['hidden_dim'] = 280  # Paper: 4 times the size of input features
-parameters['num_layer'] = 3
-parameters['iterations'] = 10000  # Paper: 10.000
-parameters['batch_size'] = 32
+def start(generate: bool = True) -> None:
+    # Leave-subject-out pipeline
+    WINDOW_SIZE = 300
+    STRIDE_SIZE = 300
 
-# Load data
-recordings = load_recordings(settings.sonar_dataset_path)
+    def build_model(n_epochs : int, n_features: int) -> RainbowModel:
+        return AdaptedDeepConvLSTM(
+            window_size=WINDOW_SIZE,
+            stride_size=STRIDE_SIZE,
+            n_features=n_features,
+            n_outputs=len(settings.LABELS),
+            verbose=1,
+            n_epochs=n_epochs)
+    
 
-# Activities to number
-for rec in recordings:
-    rec.activities = rec.activities.map(lambda label: settings.ACTIVITIES[label])
+    # GAN Newtork parameters
+    parameters = dict()
+    parameters['module'] = 'gru'  # LSTM possible
+    parameters['hidden_dim'] = 280  # Paper: 4 times the size of input features
+    parameters['num_layer'] = 3
+    parameters['iterations'] = 7500  # Paper: 10.000
+    parameters['batch_size'] = 64
 
-random.seed(1678978086101)
-random.shuffle(recordings)
+    # Load data
+    recordings = load_recordings(settings.sonar_dataset_path)
 
-# Preprocessing (MinMaxScaler is applied in timegan.py)
-recordings, scaler = preprocess(recordings, methods=[
-    interpolate_linear
-])
+    # Activities to number
+    for rec in recordings:
+        rec.activities = rec.activities.map(lambda label: settings.ACTIVITIES[label])
 
-# Windowize all recordings
-windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_jumping, 60)
+    random.seed(1678978086101)
+    random.shuffle(recordings)
 
-# LOSO-folds (alpha-dataset)
-for subject in settings.SUBJECTS:
-    print(f"LOSO-fold without subject: {subject}")
+    # Preprocessing
+    scaler = None
+    if generate:
+        # MinMaxScaler is applied in timegan.py
+        recordings, _ = preprocess(recordings, methods=[
+            interpolate_linear
+        ])
+    else:
+        recordings, scaler = preprocess(recordings, methods=[
+            interpolate_linear,
+            normalize_standardscaler
+        ])
 
-    # Remove recordings where recording.subject_id == subject_id
-    alpha_subset = [recording for recording in recordings if recording.subject != subject]
-    validation_subset = [recording for recording in recordings if recording.subject == subject]
+    # Windowize all recordings
+    windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_jumping, 60)
 
-    # Train alpha model on alpha_subset
-    print("Training alpha model on alpha_subset")
-    # model_alpha = AdaptedDeepConvLSTM(
-    #     window_size=WINDOW_SIZE,
-    #     stride_size=STRIDE_SIZE,
-    #     n_features=recordings[0].sensor_frame.shape[1],
-    #     n_outputs=15,
-    #     verbose=1,
-    #     n_epochs=20)
-    X_train, y_train = windowizer.windowize_convert(alpha_subset)
-    # model_alpha.fit(X_train, y_train)
+    # LOSO-folds (alpha-dataset)
+    for subject in settings.SUBJECTS:
+        print(f"LOSO-fold without subject: {subject}")
 
-    # Test alpha model on validation_subset
-    X_test, y_test = windowizer.windowize_convert(validation_subset)
-    # y_test_pred_model_alpha = model_alpha.predict(X_test)
+        # Remove recordings where recording.subject_id == subject_id
+        alpha_subset = [recording for recording in recordings if recording.subject != subject]
+        validation_subset = [recording for recording in recordings if recording.subject == subject]
 
-    # experiment_folder_path = new_saved_experiment_folder(f'{subject}_mtss_pipeline_alpha')
-    # create_conf_matrix(experiment_folder_path, y_test_pred_model_alpha, y_test)
-    # create_text_metrics(experiment_folder_path, y_test_pred_model_alpha, y_test, [accuracy, f_score])
-    # save_model_configuration(experiment_folder_path, model_alpha)
+        # Train alpha model on alpha_subset
+        print("Training alpha model on alpha_subset")
+        # model_alpha = build_model(n_epochs=10, n_features=recordings[0].sensor_frame.shape[1])
+        X_train, y_train = windowizer.windowize_convert(alpha_subset)
+        # model_alpha.fit(X_train, y_train)
 
-    # Split recordings data activity-wise for data augmentation
-    print("Begin data augmentation")
-    activities_one_hot_encoded = np.eye(15, 15)
-    for (index, row) in enumerate(activities_one_hot_encoded):
-        # Get all indices in y_train where the one-hot-encoded row is equal to row
-        activity_group_indices = np.nonzero(np.all(np.isclose(y_train, row), axis=1))[0]
-        activity_group_X = X_train[activity_group_indices]
-        activity_group_y = y_train[activity_group_indices]
-        
-        # Data Augmentation
-        ori_data = np.squeeze(activity_group_X, -1)
+        # Test alpha model on validation_subset
+        X_test, y_test = windowizer.windowize_convert(validation_subset)
+        # y_test_pred_model_alpha = model_alpha.predict(X_test)
 
-        generated_activity_data = timegan.timegan(ori_data, parameters, index)
-        # generated_activity_data = mtss_gan.start_training(ori_data, seq_len=WINDOW_SIZE, num_features=70)
+        # experiment_folder_path = new_saved_experiment_folder(f'{subject}_mtss_pipeline_alpha')
+        # create_conf_matrix(experiment_folder_path, y_test_pred_model_alpha, y_test)
+        # create_text_metrics(experiment_folder_path, y_test_pred_model_alpha, y_test, [accuracy, f_score])
+        # save_model_configuration(experiment_folder_path, model_alpha)
 
-        generated_activity_labels = np.expand_dims(row, axis=0)
-        generated_activity_labels = np.repeat(generated_activity_labels, len(generated_activity_data), axis=0)
+        # Split recordings data activity-wise for data augmentation
+        print("Begin data augmentation")
+        activities_one_hot_encoded = np.eye(15, 15)
+        for (index, row) in enumerate(activities_one_hot_encoded):
+            # Get all indices in y_train where the one-hot-encoded row is equal to row
+            activity_group_indices = np.nonzero(np.all(np.isclose(y_train, row), axis=1))[0]
+            activity_group_X = X_train[activity_group_indices]
+            activity_group_y = y_train[activity_group_indices]
 
-        print(f'Finish Synthetic Data Generation: {generated_activity_data.shape}')
+            generated_activity_data = None
+            
+            # -------------------------------------------------------------
+            # Data augmentation
+            # -------------------------------------------------------------
+            if generate:
+                ori_data = np.squeeze(activity_group_X, -1)
 
-        # Convert generated data (list) to numpy array
-        generated_activity_data = np.asarray(generated_activity_data)
-        generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
+                generated_activity_data = timegan.timegan(ori_data, parameters, index)
+                
+                print(f'Finish Synthetic Data Generation: {generated_activity_data.shape}')
 
-        # Save generated data
-        np.save(f'data_{subject}_{index}_{WINDOW_SIZE}', generated_activity_data)
-        np.save(f'labels_{subject}_{index}_{WINDOW_SIZE}', generated_activity_labels)
+                # Convert generated data (list) to numpy array
+                generated_activity_data = np.asarray(generated_activity_data)
+                generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
-        # Garbage collection
-        del generated_activity_data
-        del generated_activity_labels
-        del activity_group_X
-        del activity_group_y
-        del ori_data
-        gc.collect()
+                # Save generated data
+                np.save(f'data_{subject}_{index}_{WINDOW_SIZE}', generated_activity_data)
 
-        continue
-        '''
-        data_path = "D:\dataset\Augmented Data\SONAR"
-        try:
-            generated_activity_data = np.load(f'{data_path}\data_{subject}_{index}.npy')
-        except OSError:
-            continue
-        
-        print(generated_activity_data.shape)
-        plot_pca_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
-        plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
-        '''
-        # exit()
-        # Reshape array fot normalization
-        generated_activity_data = np.squeeze(generated_activity_data, -1)
-        generated_activity_data = generated_activity_data.reshape(-1, 70)
-        # Normalize data
-        generated_activity_data = scaler.transform(generated_activity_data)
-        # Inverse reshape data
-        generated_activity_data = generated_activity_data.reshape(-1, WINDOW_SIZE, 70)
-        generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
+                # Garbage collection
+                del generated_activity_data
+                del activity_group_X
+                del activity_group_y
+                del ori_data
+                gc.collect()
 
-        # TODO: For finished pipeline transform original data as well
+                continue
+            
+            # -------------------------------------------------------------
+            # Loading synthetic data
+            # -------------------------------------------------------------
+            else:
+                try:
+                    generated_activity_data = np.load(f'data_{subject}_{index}.npy')
+                except OSError:
+                    continue
+                
+                print(generated_activity_data.shape)
+                plot_pca_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
+                plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
+                
+                # exit()
 
-        # Merge augmented data with alpha_subset
-        # X_train = np.append(X_train, generated_activity_data, axis=0)
-        # y_train = np.append(y_train, generated_activity_labels, axis=0)
+            # Reshape array for normalization
+            generated_activity_data = np.squeeze(generated_activity_data, -1)
+            generated_activity_data = generated_activity_data.reshape(-1, 70)
+            # Normalize data
+            generated_activity_data = scaler.transform(generated_activity_data)
+            # Inverse reshape data
+            generated_activity_data = generated_activity_data.reshape(-1, WINDOW_SIZE, 70)
+            generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
-    # TODO: Train beta model on beta_subset
-    model_beta = AdaptedDeepConvLSTM(
-        window_size=WINDOW_SIZE,
-        stride_size=STRIDE_SIZE,
-        n_features=recordings[0].sensor_frame.shape[1],
-        n_outputs=15,
-        verbose=1,
-        n_epochs=20)
-    # model_beta.fit(X_train, y_train)
-    # y_test_pred_model_beta = model_beta.predict(X_test)
+            # Merge augmented data with alpha_subset
+            generated_activity_labels = np.expand_dims(row, axis=0)
+            generated_activity_labels = np.repeat(generated_activity_labels, len(generated_activity_data), axis=0)
+
+            X_train = np.append(X_train, generated_activity_data, axis=0)
+            y_train = np.append(y_train, generated_activity_labels, axis=0)
+
+        # Shuffle X_train and y_train
+        X_train, y_train = shuffle(X_train, y_train)
+
+        # Train beta model on beta_subset
+        model_beta = build_model(n_epochs=10, n_features=recordings[0].sensor_frame.shape[1])
+        # model_beta.fit(X_train, y_train)
+        # y_test_pred_model_beta = model_beta.predict(X_test)
+
+        # TODO: RANDOMIZE FIT ON BATCHES --> METHOD: LOAD NPY OR ABOVE -> FUNCTION
+        # CROSSING OF NPYs
+
+start(generate=True)

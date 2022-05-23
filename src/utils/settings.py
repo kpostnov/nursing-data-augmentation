@@ -55,8 +55,12 @@ def init_sonar():
 
     # TODO: Convert to numbers
     global SUBJECTS
+    # all
     # SUBJECTS = ["aileen", "alex", "anja", "b2", "brueggemann", "christine", "connie", "florian", "kathi", "mathias", "oli",	"rauche", "trapp", "yvan"]
+    # reduced
     SUBJECTS = ["aileen", "alex", "anja", "b2", "brueggemann", "connie", "florian", "kathi", "oli",	"rauche", "trapp", "yvan"]
+    # rare
+    # SUBJECTS = ["aileen", "alex", "anja", "b2", "brueggemann", "connie", "florian", "kathi", "mathias", "oli", "rauche", "trapp", "yvan"]
 
 
 def init_sonar_lab():
