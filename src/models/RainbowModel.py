@@ -51,6 +51,7 @@ class RainbowModel(ABC):
             self,
             X_train: np.ndarray,
             y_train: np.ndarray,
+            ignore_epochs: bool = False,
             include_val_set: bool = None,
             val_set: Tuple[np.ndarray, np.ndarray] = None) -> None:
         """
@@ -69,7 +70,7 @@ class RainbowModel(ABC):
                 X_train,
                 y_train,
                 validation_data=(val_set[0], val_set[1]),
-                epochs=self.n_epochs,
+                epochs= 1 if ignore_epochs else self.n_epochs,
                 batch_size=self.batch_size,
                 verbose=self.verbose,
                 class_weight=self.class_weight,
@@ -79,30 +80,11 @@ class RainbowModel(ABC):
                 X_train,
                 y_train,
                 validation_split=0.2,
-                epochs=self.n_epochs,
+                epochs= 1 if ignore_epochs else self.n_epochs,
                 batch_size=self.batch_size,
                 verbose=self.verbose,
                 class_weight=self.class_weight,
-            )
-
-    def train_on_batches(self, X_train: np.ndarray, y_train: np.ndarray, batch_size: int = 64) -> None:
-        steps_per_epoch = X_train.shape[0] // batch_size
-        indices = np.arange(X_train.shape[0])
-
-        def get_next_batch(step: int) -> Tuple[np.ndarray, np.ndarray]:
-            start = indices[step] * batch_size
-            end = start + batch_size
-            return X_train[start:end], y_train[start:end]
-
-        for epoch in self.n_epochs:
-            for step in steps_per_epoch:
-                X_batch, y_batch = get_next_batch(step)
-                loss_history = self.model.train_on_batch(X_batch, y_batch)
-                print(loss_history)
-            
-            print(f"Epoch {epoch} finished")    
-            # Shuffle indices after each epoch
-            np.random.shuffle(indices)
+            ) 
 
     # Predict ------------------------------------------------------------------------
 

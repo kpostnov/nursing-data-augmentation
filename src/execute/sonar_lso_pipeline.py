@@ -1,9 +1,11 @@
-from distutils.command.build import build
 import os
+import psutil
 import random
 import numpy as np
 import gc
 from sklearn.utils import shuffle
+import warnings
+warnings.filterwarnings("ignore")
 
 from evaluation.conf_matrix import create_conf_matrix
 from evaluation.metrics import accuracy, f_score
@@ -18,6 +20,8 @@ from utils.Windowizer import Windowizer
 from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
 from visualization.visualize import plot_pca_distribution, plot_tsne_distribution
+from utils.chunk_generation import chunk_generator
+from tensorflow.keras.utils import to_categorical
 
 import TimeGAN.timegan as timegan
 
@@ -35,6 +39,57 @@ def start(generate: bool = True) -> None:
             n_outputs=len(settings.LABELS),
             verbose=1,
             n_epochs=n_epochs)
+
+
+    def preprocess_generated_array(generated_activity_data: np.ndarray, scaler) -> np.ndarray:
+        # Reshape array for normalization
+        generated_activity_data = np.squeeze(generated_activity_data, -1)
+        generated_activity_data = generated_activity_data.reshape(-1, 70)
+        # Normalize data
+        generated_activity_data = scaler.transform(generated_activity_data)
+        # Inverse reshape data
+        generated_activity_data = generated_activity_data.reshape(-1, WINDOW_SIZE, 70)
+        generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
+
+        return generated_activity_data
+
+
+    def model_training(model: RainbowModel, synth_files: list, X_train: np.ndarray, y_train: np.ndarray, scaler):
+        process = psutil.Process(os.getpid())
+        
+        for epoch in range(model.n_epochs):
+            print(f"Epoch {epoch} / {model.n_epochs}")
+
+            unused_tenths = [i for i in range(10)]
+            X_train_size = X_train.shape[0]
+            X_train_chunk_size = X_train_size // 10
+
+            for X_chunk, y_chunk in chunk_generator(synth_files):
+                # Get the tenths that haven't been yielded yet
+                random_tenth = random.choice(unused_tenths)
+
+                X_train_chunk = X_train[random_tenth * X_train_chunk_size : (random_tenth + 1) * X_train_chunk_size]
+                y_train_chunk = y_train[random_tenth * X_train_chunk_size : (random_tenth + 1) * X_train_chunk_size]
+                
+                # Remove used tenth
+                unused_tenths.remove(random_tenth)
+                
+                if X_chunk:
+                    X_chunk = preprocess_generated_array(X_chunk, scaler)
+
+                X_chunk = np.append(X_chunk, X_train_chunk, axis=0)
+                y_chunk = np.append(y_chunk, y_train_chunk, axis=0)
+
+                print(f"{process.memory_info().rss / 1000000} MB memory used")
+
+                # Shuffle data
+                X_train_chunk, y_train_chunk = shuffle(X_train_chunk, y_train_chunk)
+
+                model.fit(X_chunk, y_chunk, ignore_epochs=True)
+
+                # Garbage collection
+                del X_chunk, y_chunk, X_train_chunk, y_train_chunk
+                gc.collect()            
     
 
     # GAN Newtork parameters
@@ -146,19 +201,13 @@ def start(generate: bool = True) -> None:
                 
                 # exit()
 
-            # Reshape array for normalization
-            generated_activity_data = np.squeeze(generated_activity_data, -1)
-            generated_activity_data = generated_activity_data.reshape(-1, 70)
-            # Normalize data
-            generated_activity_data = scaler.transform(generated_activity_data)
-            # Inverse reshape data
-            generated_activity_data = generated_activity_data.reshape(-1, WINDOW_SIZE, 70)
-            generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
+            generated_activity_data = preprocess_generated_array(generated_activity_data, scaler)
 
-            # Merge augmented data with alpha_subset
+            # Create labels for generated data
             generated_activity_labels = np.expand_dims(row, axis=0)
             generated_activity_labels = np.repeat(generated_activity_labels, len(generated_activity_data), axis=0)
-
+            
+            # Merge augmented data with alpha_subset
             X_train = np.append(X_train, generated_activity_data, axis=0)
             y_train = np.append(y_train, generated_activity_labels, axis=0)
 
@@ -169,8 +218,5 @@ def start(generate: bool = True) -> None:
         model_beta = build_model(n_epochs=10, n_features=recordings[0].sensor_frame.shape[1])
         # model_beta.fit(X_train, y_train)
         # y_test_pred_model_beta = model_beta.predict(X_test)
-
-        # TODO: RANDOMIZE FIT ON BATCHES --> METHOD: LOAD NPY OR ABOVE -> FUNCTION
-        # CROSSING OF NPYs
 
 start(generate=True)
