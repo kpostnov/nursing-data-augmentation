@@ -74,18 +74,18 @@ def start(generate: bool = True) -> None:
                 # Remove used tenth
                 unused_tenths.remove(random_tenth)
                 
-                if X_chunk:
+                # Append synthetic data if available
+                if X_chunk is not None:
                     X_chunk = preprocess_generated_array(X_chunk, scaler)
-
-                X_chunk = np.append(X_chunk, X_train_chunk, axis=0)
-                y_chunk = np.append(y_chunk, y_train_chunk, axis=0)
+                    X_train_chunk = np.append(X_train_chunk, X_chunk, axis=0)
+                    y_train_chunk = np.append(y_train_chunk, y_chunk, axis=0)
 
                 print(f"{process.memory_info().rss / 1000000} MB memory used")
 
                 # Shuffle data
                 X_train_chunk, y_train_chunk = shuffle(X_train_chunk, y_train_chunk)
 
-                model.fit(X_chunk, y_chunk, ignore_epochs=True)
+                model.fit(X_train_chunk, y_train_chunk, ignore_epochs=True)
 
                 # Garbage collection
                 del X_chunk, y_chunk, X_train_chunk, y_train_chunk
