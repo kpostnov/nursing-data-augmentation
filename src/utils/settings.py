@@ -65,7 +65,7 @@ def init_sonar():
 
 def init_sonar_lab():
     global sonar_dataset_path
-    sonar_dataset_path = "/dhc/groups/bp2021ba1/data/lab_data_new"
+    sonar_dataset_path = "/dhc/groups/bp2021ba1/data/lab_data_filtered_without_null"
 
     global LABELS
     with open("labels_lab.json") as file:

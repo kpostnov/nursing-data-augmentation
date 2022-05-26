@@ -9,7 +9,7 @@ from evaluation.text_metrics import create_text_metrics
 from loader.load_dataset import load_dataset
 from datatypes.Recording import Recording
 from utils.array_operations import split_list_by_percentage
-from utils.filter_activities import filter_activities, filter_activities_negative
+from utils.filter_activities import filter_activities, filter_activities_negative, rename_activities
 from utils.folder_operations import new_saved_experiment_folder
 from utils.save_all_recordings import save_all_recordings
 from utils.cache_recordings import save_recordings, load_recordings
@@ -78,12 +78,6 @@ values2 = count_activity_length(recordings)
 values3 = count_activities_per_person(recordings)
 values4 = count_recordings_per_person(recordings)
 
-windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_jumping)
-windows = windowizer.windowize_windowize(recordings)
-
-values5 = count_windows_per_activity(windows, WINDOW_SIZE)
-values6 = count_windows_per_activity_per_person(windows, WINDOW_SIZE)
-
 plt.figure()
 values1.to_csv("person_length.csv")
 values1.plot.bar(figsize=(22,16))
@@ -119,6 +113,15 @@ plt.xlabel("x")
 plt.ylabel("y")
 plt.savefig('recordings_per_person.png')
 plt.close()
+
+for rec in recordings:
+        rec.activities = rec.activities.map(lambda label: settings.ACTIVITIES[label])
+        
+windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_jumping)
+windows = windowizer.windowize_windowize(recordings)
+
+values5 = count_windows_per_activity(windows, WINDOW_SIZE)
+values6 = count_windows_per_activity_per_person(windows, WINDOW_SIZE)
 
 plt.figure()
 values5.to_csv("windows_per_activity.csv")
@@ -206,3 +209,80 @@ print(f"F1-score: {f_scores}")
 # create_conf_matrix(experiment_folder_path, y_test_pred, y_test_true)
 # create_text_metrics(experiment_folder_path, y_test_pred, y_test_true, [accuracy, f_score])
 # save_model_configuration(experiment_folder_path, model)
+
+
+# Convert lab data to .csv anf apply filters
+def rewrite_activities(recordings):
+    recordings = rename_activities(recordings, {
+        'bett hoch/runterstellen': 'null - activity',
+        'rollstuhl modifizieren': 'null - activity',
+        'assistieren - laufen': 'null - activity',
+        'telefonieren': 'null - activity',
+        'ikp-versorgung': 'umkleiden',
+        'ikp versorgung': 'umkleiden',
+        'verband anlegen': 'umkleiden',
+        'pflastern': 'umkleiden',
+        'medikamente geben': 'essen reichen',
+        'getränk geben': 'essen reichen',
+        'getrÃ¤nk geben': 'essen reichen',
+        'getrÃ¤nke ausschenken': 'getränke ausschenken',
+        'haare kÃ¤mmen': 'haare kämmen',
+        'fÃ¶hnen': 'föhnen',
+        'bett beziehen': 'bett machen',
+        'rücken waschen': 'waschen am waschbecken',
+        'rÃ¼cken waschen': 'waschen am waschbecken',
+        'hautpflege': 'waschen am waschbecken',
+        'wasser holen': 'bad vorbereiten',
+        'assistieren - hinsetzen': 'rollstuhl transfer',
+        'assistieren - aufstehen': 'rollstuhl transfer',
+        'lätzchen anlegen': 'accessoires anlegen',
+        'lÃ¤tzchen anlegen': 'accessoires anlegen',
+        'accessoires (parfÃ¼m) anlegen': 'accessoires anlegen',
+        'accessoires (parfüm) anlegen': 'accessoires anlegen',
+        'wagen schieben': 'rollstuhl schieben',
+        'kaffee kochen': 'küchenvorbereitung',
+        'küche aufräumen': 'küchenvorbereitung',
+        'kÃ¼che aufrÃ¤umen': 'küchenvorbereitung',
+        'kÃ¼chenvorbereitungen': 'küchenvorbereitung',
+        'küchenvorbereitungen': 'küchenvorbereitung',
+        'schrank aufrÃ¤umen': 'aufräumen',
+        'schrank aufräumen': 'aufräumen',
+        'aufrÃ¤umen': 'aufräumen',
+        'wäsche zusammenlegen': 'aufräumen',
+        'wÃ¤sche zusammenlegen': 'aufräumen',
+        'wÃ¤sche umrÃ¤umen': 'aufräumen',
+        'wäsche umrÃ¤umen': 'aufräumen',
+        'wäsche umräumen': 'aufräumen',
+        'tablett tragen': 'essen austragen',
+        'geschirr austeilen': 'essen austragen',
+        'geschirr austragen': 'essen austragen',  # might not be in the labels
+        'gegenstand waschen': 'haare waschen',
+        'rasieren': 'mundpflege',
+        'arbeiten am computer': 'null - activity',
+        'kateterleerung': 'aufräumen',
+    })
+
+    recordings = filter_activities_negative(recordings, activities_to_remove=[
+        'unbekannt',
+        'invalid',
+        'corona test',
+        'patient umlagern (lagerung)',
+        'toilettengang',
+        'nÃ¤gel schneiden',
+        'nägel schneiden',
+        'insulingabe',
+        'kateterwechsel',
+        'arm halten',
+        'duschen',
+        'accessoires anlegen',
+        'essen auf teller geben'
+    ])
+
+    return recordings
+
+# load dataset was modified to include folder names in .csv files
+recordings = load_dataset("/dhc/groups/bp2021ba1/data/lab_data")
+recordings = rewrite_activities(recordings)
+save_recordings(recordings, "/dhc/groups/bp2021ba1/data/lab_data_filtered")
+
+# save_recordings(recordings, "/dhc/groups/bp2021ba1/data/lab_data_filtered_without_null")
