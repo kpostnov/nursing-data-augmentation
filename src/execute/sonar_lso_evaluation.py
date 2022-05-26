@@ -94,14 +94,6 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True)
                 gc.collect()            
     
 
-    # GAN Newtork parameters
-    parameters = dict()
-    parameters['module'] = 'gru'  # LSTM possible
-    parameters['hidden_dim'] = 280  # Paper: 4 times the size of input features
-    parameters['num_layer'] = 3
-    parameters['iterations'] = 7500  # Paper: 10.000
-    parameters['batch_size'] = 64
-
     synth_data_path = "/dhc/groups/bp2021ba1/kirill/nursing-data-augmentation/src/mtss_data"
     files = get_file_paths_in_folder(synth_data_path)
 
@@ -162,20 +154,13 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True)
             print("Evaluation 2: TSTR / TRTS")
             print("Training on synthetic data, testing on real data")
             model_tstr = build_model(n_epochs=10, n_features=recordings[0].sensor_frame.shape[1])
-            X_test_trts = None
-            y_test_trts = None
-            for X_chunk, y_chunk in chunk_generator(files):
-                X_chunk = preprocess_generated_array(X_chunk, scaler)
 
-                if isinstance(X_test_trts, np.ndarray):
-                    X_test_trts = np.append(X_test_trts, X_chunk, axis=0)
-                    y_test_trts = np.append(y_test_trts, y_chunk, axis=0)
-                else:
-                    X_test_trts = X_chunk
-                    y_test_trts = y_chunk
-
-                X_test_trts, y_test_trts = shuffle(X_test_trts, y_test_trts)
-                model_tstr.fit(X_test_trts, y_test_trts, ignore_epochs=True)
+            # Train model
+            for epoch in range(model_tstr.n_epochs):
+                print(f"Epoch {epoch} / {model_tstr.n_epochs}")
+                for X_chunk, y_chunk in chunk_generator(files):
+                    X_chunk = preprocess_generated_array(X_chunk, scaler)
+                    model_tstr.fit(X_chunk, y_chunk, ignore_epochs=True)
 
             # Choose one thousand random values from X_train for testing
             random_indices = random.sample(range(X_train.shape[0]), 1000)
@@ -194,6 +179,8 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True)
             print("Training on real data, testing on synthetic data")
             model_trts = build_model(n_epochs=10, n_features=recordings[0].sensor_frame.shape[1])
             model_trts.fit(X_train, y_train)
+
+            # Build test set
             X_test_trts = None
             y_test_trts = None
             for X_chunk, y_chunk in chunk_generator(files):
@@ -240,12 +227,13 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True)
             model_training(model_beta, files, X_train, y_train, scaler)
             y_test_pred_model_beta = model_beta.predict(X_test)
 
-            print(f"alpha_beta f_score: {f_score(y_test, y_test_pred_model_beta)}")
+            print(f"beta_model f_score: {f_score(y_test, y_test_pred_model_beta)}")
 
             experiment_folder_path = new_saved_experiment_folder(f'{subject}_beta')
             create_conf_matrix(experiment_folder_path, y_test_pred_model_beta, y_test)
             create_text_metrics(experiment_folder_path, y_test_pred_model_beta, y_test, [accuracy, f_score])
             save_model_configuration(experiment_folder_path, model_beta)
 
-
+        exit()
+        
 start()
