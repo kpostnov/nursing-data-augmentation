@@ -30,7 +30,7 @@ def start(generate: bool = True) -> None:
             window_size=WINDOW_SIZE,
             stride_size=STRIDE_SIZE,
             n_features=n_features,
-            n_outputs=len(settings.LABELS),
+            n_outputs=len(settings.ACTIVITIES),
             verbose=1,
             n_epochs=n_epochs)
 

@@ -157,9 +157,15 @@ recordings = load_recordings(settings.sonar_dataset_path, limit=10)
 random.seed(1678978086101)
 random.shuffle(recordings)
 
+cols_to_remove = ["Quat_W_LF","Quat_W_LW","Quat_W_RF","Quat_W_RW","Quat_W_ST","Quat_X_LF","Quat_X_LW","Quat_X_RF","Quat_X_RW","Quat_X_ST","Quat_Y_LF","Quat_Y_LW","Quat_Y_RF","Quat_Y_RW","Quat_Y_ST","Quat_Z_LF","Quat_Z_LW","Quat_Z_RF","Quat_Z_RW","Quat_Z_ST"]
+print(len(cols_to_remove))
+
 # Activities to number
 for rec in recordings:
+    rec.sensor_frame = rec.sensor_frame.drop(cols_to_remove, axis=1)
     rec.activities = rec.activities.map(lambda label: settings.ACTIVITIES[label])
+
+print(recordings[0].sensor_frame.shape)
 
 # Preprocessing
 recordings, _ = preprocess(recordings, methods=[

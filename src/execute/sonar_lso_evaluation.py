@@ -24,7 +24,7 @@ from visualization.visualize import plot_pca_distribution, plot_tsne_distributio
 from utils.chunk_generation import chunk_generator
 
 
-def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True) -> None:
+def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True, eval_four: bool = True) -> None:
     WINDOW_SIZE = 300
     STRIDE_SIZE = 300
 
@@ -100,9 +100,14 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True)
     # Load data
     recordings = load_recordings(settings.sonar_dataset_path)
 
-    # Activities to number
+    cols_to_remove = ["Quat_W_LF","Quat_W_LW","Quat_W_RF","Quat_W_RW","Quat_W_ST","Quat_X_LF","Quat_X_LW","Quat_X_RF","Quat_X_RW","Quat_X_ST","Quat_Y_LF","Quat_Y_LW","Quat_Y_RF","Quat_Y_RW","Quat_Y_ST","Quat_Z_LF","Quat_Z_LW","Quat_Z_RF","Quat_Z_RW","Quat_Z_ST"]
+
+    # Activities to number, Remove quat columns
     for rec in recordings:
+        rec.sensor_frame = rec.sensor_frame.drop(cols_to_remove, axis=1)
         rec.activities = rec.activities.map(lambda label: settings.ACTIVITIES[label])
+
+    print(recordings[0].sensor_frame.shape)
 
     random.seed(1678978086101)
     random.shuffle(recordings)
@@ -147,9 +152,17 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True)
                 plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
 
         # -------------------------------------------------------------
-        # Evaluation 2: TSTR / TRTS
+        # Evaluation 2: Maximum Mean Discrepancy
         # -------------------------------------------------------------
         if eval_two:
+            pass
+        
+        
+        
+        # -------------------------------------------------------------
+        # Evaluation 3: TSTR / TRTS
+        # -------------------------------------------------------------
+        if eval_three:
             # Train on synthetic data, test on real data
             print("Evaluation 2: TSTR / TRTS")
             print("Training on synthetic data, testing on real data")
@@ -166,6 +179,10 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True)
             random_indices = random.sample(range(X_train.shape[0]), 1000)
             X_subset = X_train[random_indices]
             y_subset = y_train[random_indices]
+
+            # random_indices = random.sample(range(X_test.shape[0]), 1000)
+            # X_subset = X_test[random_indices]
+            # y_subset = y_test[random_indices]
 
             y_predict_tstr = model_tstr.predict(X_subset)
             print(f"TSTR f_score: {f_score(y_subset, y_predict_tstr)}")
@@ -206,9 +223,9 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True)
             gc.collect()
 
         # -------------------------------------------------------------
-        # Evaluation 3: Train model with additional synthetic data
+        # Evaluation 4: Train model with additional synthetic data
         # -------------------------------------------------------------
-        if eval_three:
+        if eval_four:
             # Train alpha model on alpha_subset
             print("Evaluation 3: Train model with additional synthetic data")
             model_alpha = build_model(n_epochs=10, n_features=recordings[0].sensor_frame.shape[1])
@@ -235,5 +252,5 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True)
             save_model_configuration(experiment_folder_path, model_beta)
 
         exit()
-        
+
 start()
