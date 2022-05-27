@@ -38,17 +38,30 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True,
             n_epochs=n_epochs)
 
 
+    def remove_quat_columns(array: np.ndarray) -> np.ndarray:
+        """
+        Removes the quaternion columns (15:35 in SONAR) from the array. New shape is (n_windows, WINDOW_SIZE, 50, 1).
+        """
+        if array.shape[2] == 50:
+            return array
+        X_sq = np.squeeze(array, -1)
+        X_del = np.delete(X_sq, np.s_[15:35], axis=2)
+        X_del = np.expand_dims(X_del, axis=-1)
+
+        return X_del
+
+
     def preprocess_generated_array(generated_activity_data: np.ndarray, scaler) -> np.ndarray:
         """
         Preprocess the generated data the same way as the real training data.
         """
         # Reshape array for normalization
         generated_activity_data = np.squeeze(generated_activity_data, -1)
-        generated_activity_data = generated_activity_data.reshape(-1, 70)
+        generated_activity_data = generated_activity_data.reshape(-1, 50)
         # Normalize data
         generated_activity_data = scaler.transform(generated_activity_data)
         # Inverse reshape data
-        generated_activity_data = generated_activity_data.reshape(-1, WINDOW_SIZE, 70)
+        generated_activity_data = generated_activity_data.reshape(-1, WINDOW_SIZE, 50)
         generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
         return generated_activity_data
@@ -94,7 +107,7 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True,
                 gc.collect()            
     
 
-    synth_data_path = "/dhc/groups/bp2021ba1/kirill/nursing-data-augmentation/src/mtss_data"
+    synth_data_path = "/dhc/groups/bp2021ba1/kirill/nursing-data-augmentation/src"
     files = get_file_paths_in_folder(synth_data_path)
 
     # Load data
@@ -135,7 +148,7 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True,
         # Evaluation 1: Plotting PCA / tSNE distribution
         # -------------------------------------------------------------
         if eval_one:
-            print("Evaluation 1: Plotting PCA / tSNE distributio")
+            print("Evaluation 1: Plotting PCA / tSNE distribution")
             activities_one_hot_encoded = np.eye(15, 15)
             for (index, row) in enumerate(activities_one_hot_encoded):
                 # Get all indices in y_train where the one-hot-encoded row is equal to row
@@ -147,6 +160,8 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True,
                 except OSError:
                     continue
                 
+                generated_activity_data = remove_quat_columns(generated_activity_data)
+                generated_activity_data = preprocess_generated_array(generated_activity_data, scaler)
                 print(generated_activity_data.shape)
                 plot_pca_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
                 plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))

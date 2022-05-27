@@ -53,6 +53,19 @@ def start(generate: bool = True) -> None:
 
         return generated_activity_data
 
+    
+    def remove_quat_columns(array: np.ndarray) -> np.ndarray:
+        """
+        Removes the quaternion columns (15:35 in SONAR) from the array. New shape is (n_samples, 300, 50, 1).
+        """
+        if array.shape[2] == 50:
+            return array
+        X_sq = np.squeeze(array, -1)
+        X_del = np.delete(X_sq, np.s_[15:35], axis=2)
+        X_del = np.expand_dims(X_del, axis=-1)
+
+        return X_del
+
 
     def model_training(model: RainbowModel, synth_files: list, X_train: np.ndarray, y_train: np.ndarray, scaler):
         process = psutil.Process(os.getpid())
@@ -95,9 +108,9 @@ def start(generate: bool = True) -> None:
     # GAN Newtork parameters
     parameters = dict()
     parameters['module'] = 'gru'  # LSTM possible
-    parameters['hidden_dim'] = 280  # Paper: 4 times the size of input features
+    parameters['hidden_dim'] = 200  # Paper: 4 times the size of input features
     parameters['num_layer'] = 3
-    parameters['iterations'] = 7500  # Paper: 10.000
+    parameters['iterations'] = 8000  # Paper: 10.000
     parameters['batch_size'] = 64
 
     # Load data

@@ -20,9 +20,9 @@ def start() -> None:
     # GAN Newtork parameters
     parameters = dict()
     parameters['module'] = 'gru'  # LSTM possible
-    parameters['hidden_dim'] = 280  # Paper: 4 times the size of input features
+    parameters['hidden_dim'] = 200  # Paper: 4 times the size of input features
     parameters['num_layer'] = 3
-    parameters['iterations'] = 7500  # Paper: 10.000
+    parameters['iterations'] = 8000  # Paper: 10.000
     parameters['batch_size'] = 64
 
     # Load data
