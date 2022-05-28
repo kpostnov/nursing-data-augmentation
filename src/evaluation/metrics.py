@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, pairwise
 
 
 def f_score(prediction_vectors: np.ndarray, y_test: np.ndarray) -> float:
@@ -37,3 +37,28 @@ def average_failure_rate(prediction_vectors: np.ndarray, y_test: np.ndarray) -> 
 
     average_failure_rate = failure_sum / len(label_indices)
     return average_failure_rate
+
+
+# Code (modified) taken from: https://github.com/jindongwang/transferlearning/blob/master/code/distance/mmd_numpy_sklearn.py
+def mmd_rbf(X, Y, gamma=1.0):
+    """
+    MMD using rbf (gaussian) kernel (i.e., k(x,y) = exp(-gamma * ||x-y||^2 / 2), for EVERY x in X, y in Y).
+    Because rbf_kernel takes matrices as arguments, we have to flatten the tensors.
+    As a result, we get the Frobenius norm of the flattened tensor.
+    Arguments:
+        X {[n_sample1, timesteps, n_features]} -- [X matrix]
+        Y {[n_sample2, timesteps, n_features]} -- [Y matrix]
+    Keyword Arguments:
+        gamma {float} -- [kernel parameter] (default: {1.0})
+    Returns:
+        [scalar] -- [MMD value] (0 equals same distribution)
+    """
+    
+    # Reshape tensors to 2D matrices e.g. (10, 300, 50) -> (10, 300 * 50)
+    X = X.reshape(-1, X.shape[1]*X.shape[2])
+    Y = Y.reshape(-1, Y.shape[1]*Y.shape[2])
+
+    XX = pairwise.rbf_kernel(X, X, gamma)
+    YY = pairwise.rbf_kernel(Y, Y, gamma)
+    XY = pairwise.rbf_kernel(X, Y, gamma)
+    return XX.mean() + YY.mean() - 2 * XY.mean()

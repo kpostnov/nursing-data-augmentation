@@ -44,11 +44,12 @@ def start(generate: bool = True) -> None:
     def preprocess_generated_array(generated_activity_data: np.ndarray, scaler) -> np.ndarray:
         # Reshape array for normalization
         generated_activity_data = np.squeeze(generated_activity_data, -1)
-        generated_activity_data = generated_activity_data.reshape(-1, 70)
+        # e.g. (10, 300, 50) -> (3000, 50)
+        generated_activity_data = generated_activity_data.reshape(-1, 50)
         # Normalize data
         generated_activity_data = scaler.transform(generated_activity_data)
         # Inverse reshape data
-        generated_activity_data = generated_activity_data.reshape(-1, WINDOW_SIZE, 70)
+        generated_activity_data = generated_activity_data.reshape(-1, WINDOW_SIZE, 50)
         generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
         return generated_activity_data

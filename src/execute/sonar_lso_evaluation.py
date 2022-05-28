@@ -8,7 +8,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 from evaluation.conf_matrix import create_conf_matrix
-from evaluation.metrics import accuracy, f_score
+from evaluation.metrics import accuracy, f_score, mmd_rbf
 from evaluation.save_configuration import save_model_configuration
 from evaluation.text_metrics import create_text_metrics
 from loader.preprocessing import preprocess, normalize_standardscaler, interpolate_linear
@@ -145,10 +145,12 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True,
         X_test, y_test = windowizer.windowize_convert(validation_subset)
 
         # -------------------------------------------------------------
-        # Evaluation 1: Plotting PCA / tSNE distribution
+        # Evaluation 1 / Evaluation 2
         # -------------------------------------------------------------
-        if eval_one:
-            print("Evaluation 1: Plotting PCA / tSNE distribution")
+        if eval_one or eval_two: 
+            random_mmd_scores = []
+            generated_mmd_scores = []
+
             activities_one_hot_encoded = np.eye(15, 15)
             for (index, row) in enumerate(activities_one_hot_encoded):
                 # Get all indices in y_train where the one-hot-encoded row is equal to row
@@ -163,16 +165,46 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True,
                 generated_activity_data = remove_quat_columns(generated_activity_data)
                 generated_activity_data = preprocess_generated_array(generated_activity_data, scaler)
                 print(generated_activity_data.shape)
-                plot_pca_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
-                plot_tsne_distribution(activity_group_X, generated_activity_data, str(subject) + "_" + str(index))
+                
+                # -------------------------------------------------------------
+                # Evaluation 1: Plotting PCA / tSNE distribution
+                # -------------------------------------------------------------
+                print(f"Evaluation 1: Plotting PCA / tSNE distribution for activity {index}")
+                if eval_one: 
+                    plot_pca_distribution(activity_group_X, generated_activity_data, f"{subject}_{index}")
+                    plot_tsne_distribution(activity_group_X, generated_activity_data, f"{subject}_{index}")
 
-        # -------------------------------------------------------------
-        # Evaluation 2: Maximum Mean Discrepancy
-        # -------------------------------------------------------------
-        if eval_two:
-            pass
-        
-        
+                # -------------------------------------------------------------
+                # Evaluation 2: Maximum Mean Discrepancy
+                # -------------------------------------------------------------
+                if eval_two:
+                    print(f"Evaluation 2: Calculating MMD for activity {index}")
+
+                    # Random distribution
+                    random_distribution = np.load(f'{synth_data_path}/random_data/random_data_{subject}_0_{WINDOW_SIZE}.npy')
+
+                    # Take random samples from all datasets
+                    n_samples = min(activity_group_X.shape[0], generated_activity_data.shape[0], random_distribution.shape[0])
+                    activity_group_X = activity_group_X[np.random.choice(activity_group_X.shape[0], n_samples, replace=False)]
+                    generated_activity_data = generated_activity_data[np.random.choice(generated_activity_data.shape[0], n_samples, replace=False)]
+                    random_distribution = random_distribution[np.random.choice(random_distribution.shape[0], n_samples, replace=False)]
+
+                    activity_group_X = np.squeeze(activity_group_X, -1)
+                    generated_activity_data = np.squeeze(generated_activity_data, -1)
+                    random_distribution = np.squeeze(random_distribution, -1)
+
+                    # Calculate MMD
+                    mmd_random = mmd_rbf(activity_group_X, random_distribution)
+                    mmd_generated = mmd_rbf(activity_group_X, generated_activity_data)
+
+                    print(f"MMD random: {mmd_random}")
+                    print(f"MMD generated: {mmd_generated}")
+
+                    random_mmd_scores.append(mmd_random)
+                    generated_mmd_scores.append(mmd_generated)
+            
+            print(f"Random MMD scores: {random_mmd_scores}")
+            print(f"Generated MMD scores: {generated_mmd_scores}")
         
         # -------------------------------------------------------------
         # Evaluation 3: TSTR / TRTS
@@ -256,6 +288,7 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True,
 
             # Train beta model on beta_subset
             model_beta = build_model(n_epochs=10, n_features=recordings[0].sensor_frame.shape[1])
+            # TODO: Train on different proportions of generated activity data (5k, 5k - most ...)
             model_training(model_beta, files, X_train, y_train, scaler)
             y_test_pred_model_beta = model_beta.predict(X_test)
 
