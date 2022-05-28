@@ -158,7 +158,7 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True,
                 activity_group_X = X_train[activity_group_indices]
                 
                 try:
-                    generated_activity_data = np.load(f'{synth_data_path}/data_{subject}_{index}.npy')
+                    generated_activity_data = np.load(f'{synth_data_path}/data_{subject}_{index}_{WINDOW_SIZE}.npy')
                 except OSError:
                     continue
                 
@@ -182,6 +182,8 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True,
 
                     # Random distribution
                     random_distribution = np.load(f'{synth_data_path}/random_data/random_data_{subject}_0_{WINDOW_SIZE}.npy')
+                    random_distribution = remove_quat_columns(random_distribution)
+                    random_distribution = preprocess_generated_array(random_distribution, scaler)
 
                     # Take random samples from all datasets
                     n_samples = min(activity_group_X.shape[0], generated_activity_data.shape[0], random_distribution.shape[0])
