@@ -24,7 +24,7 @@ from visualization.visualize import plot_pca_distribution, plot_tsne_distributio
 from utils.chunk_generation import chunk_generator
 
 
-def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True, eval_four: bool = True) -> None:
+def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = False, eval_four: bool = False) -> None:
     WINDOW_SIZE = 300
     STRIDE_SIZE = 300
 
@@ -36,6 +36,24 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True,
             n_outputs=len(settings.LABELS),
             verbose=1,
             n_epochs=n_epochs)
+
+
+    def get_mean_array(data: np.ndarray) -> np.ndarray:
+        '''
+        Calculate the mean of each time step over all sensor channels and return a 2D array (n_samples, window_size).
+        '''
+        assert(data.ndim == 3), 'data must be a 3D array'
+
+        seq_len = data.shape[1]
+        array = data
+
+        for i in range(data.shape[0]):
+            if (i == 0):
+                array = np.reshape(np.mean(data[0,:,:], 1), [1, seq_len])
+            else:
+                array = np.concatenate((array, np.reshape(np.mean(data[i,:,:], 1), [1, seq_len])))
+
+        return array
 
 
     def remove_quat_columns(array: np.ndarray) -> np.ndarray:
@@ -169,8 +187,8 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True,
                 # -------------------------------------------------------------
                 # Evaluation 1: Plotting PCA / tSNE distribution
                 # -------------------------------------------------------------
-                print(f"Evaluation 1: Plotting PCA / tSNE distribution for activity {index}")
                 if eval_one: 
+                    print(f"Evaluation 1: Plotting PCA / tSNE distribution for activity {index}")
                     plot_pca_distribution(activity_group_X, generated_activity_data, f"{subject}_{index}")
                     plot_tsne_distribution(activity_group_X, generated_activity_data, f"{subject}_{index}")
 
@@ -194,6 +212,10 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True,
                     activity_group_X = np.squeeze(activity_group_X, -1)
                     generated_activity_data = np.squeeze(generated_activity_data, -1)
                     random_distribution = np.squeeze(random_distribution, -1)
+
+                    activity_group_X = get_mean_array(activity_group_X)
+                    generated_activity_data = get_mean_array(generated_activity_data)
+                    random_distribution = get_mean_array(random_distribution)
 
                     # Calculate MMD
                     mmd_random = mmd_rbf(activity_group_X, random_distribution)
@@ -303,4 +325,4 @@ def start(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True,
 
         exit()
 
-start()
+start(eval_two = True)
