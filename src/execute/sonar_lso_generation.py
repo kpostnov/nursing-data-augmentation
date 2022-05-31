@@ -59,7 +59,7 @@ def start() -> None:
         
         # Split recordings data activity-wise for data augmentation
         print("Begin data augmentation")
-        activities_one_hot_encoded = np.eye(15, 15)
+        activities_one_hot_encoded = np.eye(len(settings.LABELS), len(settings.LABELS))
         for (index, row) in enumerate(activities_one_hot_encoded):
             # Get all indices in y_train where the one-hot-encoded row is equal to row
             activity_group_indices = np.nonzero(np.all(np.isclose(y_train, row), axis=1))[0]
@@ -71,7 +71,7 @@ def start() -> None:
             # -------------------------------------------------------------
             ori_data = np.squeeze(activity_group_X, -1)
 
-            generated_activity_data = timegan.timegan(ori_data, parameters, index)
+            generated_activity_data = timegan.timegan(ori_data, parameters, index, compute_gan = True)
             
             print(f'Finish Synthetic Data Generation: {generated_activity_data.shape}')
 

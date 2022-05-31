@@ -21,7 +21,6 @@ from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
 from visualization.visualize import plot_pca_distribution, plot_tsne_distribution
 from utils.chunk_generation import chunk_generator
-from tensorflow.keras.utils import to_categorical
 
 import TimeGAN.timegan as timegan
 
@@ -170,7 +169,7 @@ def start(generate: bool = True) -> None:
 
         # Split recordings data activity-wise for data augmentation
         print("Begin data augmentation")
-        activities_one_hot_encoded = np.eye(15, 15)
+        activities_one_hot_encoded = np.eye(len(settings.LABELS), len(settings.LABELS))
         for (index, row) in enumerate(activities_one_hot_encoded):
             # Get all indices in y_train where the one-hot-encoded row is equal to row
             activity_group_indices = np.nonzero(np.all(np.isclose(y_train, row), axis=1))[0]

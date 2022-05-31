@@ -369,7 +369,6 @@ def timegan (ori_data, parameters, index, compute_gan = True, save_model = True)
         Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
         
         generated_data_curr = session.run(output_tensor_name, feed_dict={input_tensor_names[2]: Z_mb, input_tensor_names[1]: ori_data, input_tensor_names[0]: ori_time})
-        print(generated_data_curr.shape)
 
         for i in range(no):
           temp = generated_data_curr[i,:ori_time[i],:]

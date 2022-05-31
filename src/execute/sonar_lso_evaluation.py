@@ -169,7 +169,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             random_mmd_scores = []
             generated_mmd_scores = []
 
-            activities_one_hot_encoded = np.eye(15, 15)
+            activities_one_hot_encoded = np.eye(len(settings.LABELS), len(settings.LABELS))
             for (index, row) in enumerate(activities_one_hot_encoded):
                 # Get all indices in y_train where the one-hot-encoded row is equal to row
                 activity_group_indices = np.nonzero(np.all(np.isclose(y_train, row), axis=1))[0]
