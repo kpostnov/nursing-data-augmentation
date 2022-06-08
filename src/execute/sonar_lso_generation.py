@@ -22,7 +22,7 @@ def start() -> None:
     parameters['module'] = 'gru'  # LSTM possible
     parameters['hidden_dim'] = 200  # Paper: 4 times the size of input features
     parameters['num_layer'] = 3
-    parameters['iterations'] = 8000  # Paper: 10.000
+    parameters['iterations'] = 8250  # Paper: 10.000
     parameters['batch_size'] = 128
 
     # Load data
