@@ -19,10 +19,15 @@ def plot_distribution_pie_chart(distribution: "dict[str, int]", display_n: int =
         data.append(others)
         labels.append('others')
 
-    plt.figure(figsize=(12, 10))
-    plt.pie(data, labels=labels, startangle=180, labeldistance=1.05, pctdistance=0.92, autopct='%1.1f%%')
-    plt.suptitle("People Distribution", y=0.95)
-    plt.title(f"{len(activity_dict)} people – {round(sum(data))} minutes", y=1.04)
+    plt.rcParams.update({'font.size': 25})
+    cmap = plt.get_cmap('jet')
+    colors = [cmap(1. * (i+1) / len(labels)) for i in range(len(labels))]
+
+    plt.figure(figsize=(18, 14))
+    plt.pie(data, colors=colors, labels=labels, startangle=180, labeldistance=1.05, pctdistance=0.92, 
+        autopct='%1.1f%%', wedgeprops={"edgecolor":"1", 'linewidth': 1, 'linestyle': 'solid', 'antialiased': True})
+    plt.suptitle("People Distribution")
+    plt.title(f"{len(activity_dict)} people – {round(sum(data))} minutes")
     plt.axis('equal')
     plt.savefig("distribution_pie_chart.png")
 
@@ -33,10 +38,21 @@ def plot_distribution_bar_chart(distribution: "dict[str, int]"):
     steps_per_minute = 60 * 60
     activity_dict = {k: round(v / steps_per_minute, 2) for k, v in activity_dict.items()}
 
-    plt.figure(figsize=(12, 10))
-    pd.Series(activity_dict).plot(kind="bar")
-    plt.title("Activity Distribution")
-    plt.ylabel("Minutes")
+    plt.rcParams.update({'font.size': 22})
+    plt.grid(linewidth=0.5, axis='y', alpha=0.8, zorder=0)
+    plt.figure(figsize=(18, 12))
+    pd.Series(activity_dict).plot(kind="bar", zorder=3, color='royalblue')
+    
+    # Remove borders
+    ax = plt.gca()
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)    
+    ax.spines['left'].set_visible(False)
+
+    #plt.suptitle("Activity Distribution")
+    plt.ylabel("Total recording time in minutes")
+    plt.xlabel("Subjects")
     plt.xticks(rotation=45, ha="right")
     plt.subplots_adjust(bottom=0.2)
     plt.savefig("distribution_bar_chart.png")

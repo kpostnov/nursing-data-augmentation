@@ -74,5 +74,6 @@ def read_recording_from_csv(data: 'tuple[int, str]') -> Recording:
     sensor_frame = recording_dataframe.loc[:, recording_dataframe.columns.difference(['SampleTimeFine', 'activity'])]
     filename = os.path.basename(file)
     subject = filename.split('_')[1].split('.')[0]
+    id = filename.split('_')[0]
 
-    return Recording(sensor_frame, time_frame, activities, subject)
+    return Recording(sensor_frame, time_frame, activities, subject, id)

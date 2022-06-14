@@ -30,6 +30,7 @@ def get_averaged_dataframes(original_data: np.ndarray, generated_data: np.ndarra
 
     seq_len = original_data.shape[1]
 
+    # np.mean(original_data, axis=2)?
     for i in range(number_samples):
         if (i == 0):
             original_array = np.reshape(np.mean(original_data[0,:,:], 1), [1, seq_len])
@@ -179,4 +180,36 @@ def plot_tsne_distribution(original_data: np.ndarray, generated_data: np.ndarray
     plt.title('t-SNE visualization of activity: ' + activity)
     plt.savefig(f'visualization/plots/tsne_distribution_{activity}.png')
     
-    print(f'Plotting t-SNE visualization of activity {activity} finished') 
+    print(f'Plotting t-SNE visualization of activity {activity} finished')
+
+
+def plot_time_series_alpha(original_data: np.ndarray, generated_data: np.ndarray, activity: str, columns: list, random_select: bool = True) -> None:
+    '''
+    Plot a window of the original data and ten windows of the generated data per column.
+    '''
+    assert(original_data.shape[2] == generated_data.shape[2])
+
+    fig, ax = plt.subplots(1, figsize=(20, 10))
+    ax.set_title(f'Time series window of activity {activity}')
+    ax.set_xlabel('Time steps')
+    ax.set_ylabel('value')
+
+    # Select random sample from the original data
+    # random_sample_original = np.random.randint(0, original_data.shape[0])  
+
+    x = np.arange(original_data.shape[1])
+    for column in columns:
+        
+
+        for _ in range(25):
+            random_sample_original = np.random.randint(0, original_data.shape[0])  
+            y_original = original_data[random_sample_original, :, column]
+            ax.plot(x, y_original, label='Original', c='blue')
+            random_sample_generated = np.random.randint(0, generated_data.shape[0])
+            y_generated = generated_data[random_sample_generated, :, column]
+            ax.plot(x, y_generated, label='Synthetic', alpha=0.5, c='red')
+
+    # ax.legend()
+    plt.show()
+    #plt.savefig(f'visualization/plots/time_series_{activity}.png')
+    print(f'Saved time_series_{activity}.png')

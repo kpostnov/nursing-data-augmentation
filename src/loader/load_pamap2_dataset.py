@@ -14,7 +14,6 @@ def load_pamap2_dataset(
     NOTE: Returns only those subjects and recordings that were mentioned in the paper. (Hoelzmann et al., 2021)
     """
     print("Reading the PAMAP2 dataset...")
-    pamap2_dataset_path += "/Protocol"
     subject_ids = range(1, 9)
 
     # acc_x_6, acc_y_6, acc_z_6 will be filtered out as they contain faulty data
@@ -61,7 +60,8 @@ def load_pamap2_dataset(
             activities=df.loc[:, "activity_id"].map(
                 lambda label: settings.pamap2_initial_num_to_activity_idx[label]
             ),
-            subject=str(subject_id)
+            subject=str(subject_id),
+            id=int(subject_id)
         ))
 
     print(f"\n => Total {len(recordings)} recordings read.")

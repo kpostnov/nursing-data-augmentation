@@ -17,6 +17,7 @@ class Recording:
         time_frame: pd.Series,
         activities: pd.Series,
         subject: str,
+        id: str,
     ) -> None:
         assert_type(
             [
@@ -33,3 +34,4 @@ class Recording:
         self.time_frame = time_frame
         self.activities = activities
         self.subject = subject
+        self.id = id

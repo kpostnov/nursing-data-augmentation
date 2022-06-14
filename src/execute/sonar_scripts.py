@@ -5,6 +5,7 @@ from evaluation.conf_matrix import create_conf_matrix
 from evaluation.metrics import accuracy, f_score
 from evaluation.save_configuration import save_model_configuration
 from evaluation.text_metrics import create_text_metrics
+from loader.load_pamap2_dataset import load_pamap2_dataset
 
 from loader.load_dataset import load_dataset
 from datatypes.Recording import Recording
@@ -68,10 +69,19 @@ recordings = preprocess(recordings, methods=[
 ])
 '''
 
-WINDOW_SIZE = 600
-STRIDE_SIZE = 600
+WINDOW_SIZE = 300
+STRIDE_SIZE = 300
 
-recordings = load_recordings(settings.sonar_lab_dataset_path)
+#recordings = load_recordings(settings.sonar_dataset_path)
+recordings = load_pamap2_dataset(settings.pamap2_dataset_path)
+
+for rec in recordings:
+    # rec.subject = settings.subj_to_numbers[rec.subject]
+    rec.activities = rec.activities.map(lambda label: settings.pamap2_str_to_id[label])
+    #print(rec.activities.head())
+
+plot_people(recordings)
+
 
 values1 = count_person_length(recordings)
 values2 = count_activity_length(recordings)
