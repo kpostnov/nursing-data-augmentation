@@ -11,7 +11,7 @@ from evaluation.conf_matrix import create_conf_matrix
 from evaluation.metrics import accuracy, f_score, mmd_rbf
 from evaluation.save_configuration import save_model_configuration
 from evaluation.text_metrics import create_text_metrics
-from loader.preprocessing import interpolate_ffill, preprocess, normalize_standardscaler, interpolate_linear
+from loader.preprocessing import interpolate_ffill, preprocess, normalize_standardscaler
 from utils.file_functions import get_file_paths_in_folder
 from models.RainbowModel import RainbowModel
 from loader.load_pamap2_dataset import load_pamap2_dataset
@@ -69,10 +69,50 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
         generated_activity_data = generated_activity_data.reshape(-1, WINDOW_SIZE, 11)
         generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
-        return generated_activity_data        
+        return generated_activity_data
+
+
+    def model_training(model: RainbowModel, synth_files: list, X_train: np.ndarray, y_train: np.ndarray, scaler) -> None:
+        """
+        Train the model on real and synthetic data chunk-wise. This is done due to memory constraints.
+        """
+        process = psutil.Process(os.getpid())
+        
+        for epoch in range(model.n_epochs):
+            print(f"Epoch {epoch} / {model.n_epochs}")
+
+            unused_tenths = [i for i in range(10)]
+            X_train_size = X_train.shape[0]
+            X_train_chunk_size = X_train_size // 10
+
+            for X_chunk, y_chunk in chunk_generator(synth_files):
+                # Get the tenths from original data that haven't been used yet
+                random_tenth = random.choice(unused_tenths)
+                X_train_chunk = X_train[random_tenth * X_train_chunk_size : (random_tenth + 1) * X_train_chunk_size]
+                y_train_chunk = y_train[random_tenth * X_train_chunk_size : (random_tenth + 1) * X_train_chunk_size]
+                
+                # Remove used tenth
+                unused_tenths.remove(random_tenth)
+                
+                # Append synthetic data if available
+                if isinstance(X_chunk, np.ndarray):
+                    X_chunk = preprocess_generated_array(X_chunk, scaler)
+                    X_train_chunk = np.append(X_train_chunk, X_chunk, axis=0)
+                    y_train_chunk = np.append(y_train_chunk, y_chunk, axis=0)
+
+                print(f"{process.memory_info().rss / 1000000} MB memory used")
+
+                # Shuffle data
+                X_train_chunk, y_train_chunk = shuffle(X_train_chunk, y_train_chunk)
+
+                model.fit(X_train_chunk, y_train_chunk, ignore_epochs=True)
+
+                # Garbage collection
+                del X_chunk, y_chunk, X_train_chunk, y_train_chunk
+                gc.collect()                
     
 
-    synth_data_path = "/dhc/groups/bp2021ba1/kirill/nursing-data-augmentation/src/pamap2"
+    synth_data_path = "/dhc/groups/bp2021ba1/kirill/nursing-data-augmentation/src/pamap2_100_data"
     files = get_file_paths_in_folder(synth_data_path)
 
     # Load data
@@ -88,14 +128,13 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
     ])
 
     # Windowize all recordings
-    windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_sliding, 60)
+    windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_sliding, 100)
 
     # LOSO-folds
     subject_ids = range(1, 9)
     for subject_id in subject_ids:
         print(f"LOSO-fold without subject: {subject_id}")
 
-        # Remove recordings where recording.subject_id == subject_id
         # Remove recordings where recording.subject_id == subject_id
         alpha_subset = [recording for recording in recordings if recording.subject != str(subject_id)]
         validation_subset = [recording for recording in recordings if recording.subject == str(subject_id)]
@@ -116,11 +155,10 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                 activity_group_X = X_train[activity_group_indices]
                 
                 try:
-                    generated_activity_data = np.load(f'{synth_data_path}/data_{subject}_{index}_{WINDOW_SIZE}.npy')
+                    generated_activity_data = np.load(f'{synth_data_path}/data_{subject_id}_{index}_{WINDOW_SIZE}.npy')
                 except OSError:
                     continue
                 
-                generated_activity_data = remove_quat_columns(generated_activity_data)
                 generated_activity_data = preprocess_generated_array(generated_activity_data, scaler)
                 print(generated_activity_data.shape)
                 
@@ -129,8 +167,8 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                 # -------------------------------------------------------------
                 if eval_one: 
                     print(f"Evaluation 1: Plotting PCA / tSNE distribution for activity {index}")
-                    plot_pca_distribution(activity_group_X, generated_activity_data, f"{subject}_{index}")
-                    plot_tsne_distribution(activity_group_X, generated_activity_data, f"{subject}_{index}")
+                    plot_pca_distribution(activity_group_X, generated_activity_data, f"{subject_id}_{index}")
+                    plot_tsne_distribution(activity_group_X, generated_activity_data, f"{subject_id}_{index}")
 
                 # -------------------------------------------------------------
                 # Evaluation 2: Maximum Mean Discrepancy
@@ -139,8 +177,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                     print(f"Evaluation 2: Calculating MMD for activity {index}")
 
                     # Random distribution
-                    random_distribution = np.load(f'{synth_data_path}/random_data/random_data_{subject}_0_{WINDOW_SIZE}.npy')
-                    random_distribution = remove_quat_columns(random_distribution)
+                    random_distribution = np.load(f'{synth_data_path}/../random_data/random_data_pamap.npy')
                     random_distribution = preprocess_generated_array(random_distribution, scaler)
 
                     # Take random samples from all datasets
@@ -177,7 +214,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             # Train on synthetic data, test on real data
             print("Evaluation 2: TSTR / TRTS")
             print("Training on synthetic data, testing on real data")
-            model_tstr = build_model(n_epochs=10, n_features=recordings[0].sensor_frame.shape[1])
+            model_tstr = build_model(n_epochs=3, n_features=recordings[0].sensor_frame.shape[1])
 
             # Train model
             for epoch in range(model_tstr.n_epochs):
@@ -191,6 +228,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             X_subset = X_train[random_indices]
             y_subset = y_train[random_indices]
 
+            # Original implementation
             # random_indices = random.sample(range(X_test.shape[0]), 1000)
             # X_subset = X_test[random_indices]
             # y_subset = y_test[random_indices]
@@ -205,7 +243,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
 
             # Train on real data, test on synthetic data
             print("Training on real data, testing on synthetic data")
-            model_trts = build_model(n_epochs=10, n_features=recordings[0].sensor_frame.shape[1])
+            model_trts = build_model(n_epochs=3, n_features=recordings[0].sensor_frame.shape[1])
             model_trts.fit(X_train, y_train)
 
             # Build test set
@@ -239,26 +277,26 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
         if eval_four:
             # Train alpha model on alpha_subset
             print("Evaluation 3: Train model with additional synthetic data")
-            model_alpha = build_model(n_epochs=10, n_features=recordings[0].sensor_frame.shape[1])
+            model_alpha = build_model(n_epochs=3, n_features=recordings[0].sensor_frame.shape[1])
             model_alpha.fit(X_train, y_train)
             y_test_pred_model_alpha = model_alpha.predict(X_test)
 
             print(f"alpha_model f_score: {f_score(y_test, y_test_pred_model_alpha)}")
 
-            experiment_folder_path = new_saved_experiment_folder(f'{subject}_alpha')
+            experiment_folder_path = new_saved_experiment_folder(f'pamap2_{subject_id}_alpha')
             create_conf_matrix(experiment_folder_path, y_test_pred_model_alpha, y_test)
             create_text_metrics(experiment_folder_path, y_test_pred_model_alpha, y_test, [accuracy, f_score])
             save_model_configuration(experiment_folder_path, model_alpha)
 
             # Train beta model on beta_subset
-            model_beta = build_model(n_epochs=10, n_features=recordings[0].sensor_frame.shape[1])
-            # TODO: Train on different proportions of generated activity data (5k, 5k - most ...)
+            model_beta = build_model(n_epochs=1, n_features=recordings[0].sensor_frame.shape[1])
+            # TODO: Different oversampling strategies
             model_training(model_beta, files, X_train, y_train, scaler)
             y_test_pred_model_beta = model_beta.predict(X_test)
 
             print(f"beta_model f_score: {f_score(y_test, y_test_pred_model_beta)}")
 
-            experiment_folder_path = new_saved_experiment_folder(f'{subject}_beta')
+            experiment_folder_path = new_saved_experiment_folder(f'pamap2_{subject_id}_beta')
             create_conf_matrix(experiment_folder_path, y_test_pred_model_beta, y_test)
             create_text_metrics(experiment_folder_path, y_test_pred_model_beta, y_test, [accuracy, f_score])
             save_model_configuration(experiment_folder_path, model_beta)

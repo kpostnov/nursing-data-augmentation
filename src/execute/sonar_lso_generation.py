@@ -64,7 +64,6 @@ def start() -> None:
             # Get all indices in y_train where the one-hot-encoded row is equal to row
             activity_group_indices = np.nonzero(np.all(np.isclose(y_train, row), axis=1))[0]
             activity_group_X = X_train[activity_group_indices]
-            activity_group_y = y_train[activity_group_indices]
 
             # -------------------------------------------------------------
             # Data augmentation
@@ -85,7 +84,6 @@ def start() -> None:
             # Garbage collection
             del generated_activity_data
             del activity_group_X
-            del activity_group_y
             del ori_data
             gc.collect()
 

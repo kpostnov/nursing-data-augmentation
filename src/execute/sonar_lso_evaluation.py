@@ -99,7 +99,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             X_train_chunk_size = X_train_size // 10
 
             for X_chunk, y_chunk in chunk_generator(synth_files):
-                # Get the tenths that haven't been yielded yet
+                # Get the tenths from original data that haven't been used yet
                 random_tenth = random.choice(unused_tenths)
                 X_train_chunk = X_train[random_tenth * X_train_chunk_size : (random_tenth + 1) * X_train_chunk_size]
                 y_train_chunk = y_train[random_tenth * X_train_chunk_size : (random_tenth + 1) * X_train_chunk_size]
@@ -199,7 +199,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                     print(f"Evaluation 2: Calculating MMD for activity {index}")
 
                     # Random distribution
-                    random_distribution = np.load(f'{synth_data_path}/random_data/random_data_{subject}_0_{WINDOW_SIZE}.npy')
+                    random_distribution = np.load(f'{synth_data_path}/../random_data/random_data_sonar.npy')
                     random_distribution = remove_quat_columns(random_distribution)
                     random_distribution = preprocess_generated_array(random_distribution, scaler)
 
@@ -251,6 +251,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             X_subset = X_train[random_indices]
             y_subset = y_train[random_indices]
 
+            # Original implementation
             # random_indices = random.sample(range(X_test.shape[0]), 1000)
             # X_subset = X_test[random_indices]
             # y_subset = y_test[random_indices]
@@ -312,7 +313,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
 
             # Train beta model on beta_subset
             model_beta = build_model(n_epochs=10, n_features=recordings[0].sensor_frame.shape[1])
-            # TODO: Train on different proportions of generated activity data (5k, 5k - most ...)
+            # TODO: Different oversampling strategies
             model_training(model_beta, files, X_train, y_train, scaler)
             y_test_pred_model_beta = model_beta.predict(X_test)
 
