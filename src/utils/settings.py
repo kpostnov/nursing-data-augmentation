@@ -167,7 +167,7 @@ def init_sonar_lab():
 
 def init_pamap2():
     global pamap2_dataset_path
-    pamap2_dataset_path = "../../datasets/PAMAP2_Dataset"
+    pamap2_dataset_path = "../../datasets/PAMAP2_Dataset/Protocol"
 
     global pamap2_initial_num_to_activity_idx
     pamap2_initial_num_to_activity_idx = {

@@ -2,21 +2,11 @@ import os
 import random
 import numpy as np
 import gc
-from sklearn.utils import shuffle
 
-from evaluation.conf_matrix import create_conf_matrix
-from evaluation.metrics import accuracy, f_score, mmd_rbf
-from evaluation.text_metrics import create_text_metrics
-from evaluation.save_configuration import save_model_configuration
-from loader.preprocessing import interpolate_ffill, normalize_standardscaler, preprocess
+from loader.preprocessing import interpolate_ffill, preprocess
 from loader.load_pamap2_dataset import load_pamap2_dataset
-from models.AdaptedDeepConvLSTM import AdaptedDeepConvLSTM
-from datatypes.Window import Window
-from models.RainbowModel import RainbowModel
 from utils.Windowizer import Windowizer
-from utils.folder_operations import new_saved_experiment_folder
 import utils.settings as settings
-from visualization.visualize import plot_pca_distribution, plot_tsne_distribution, plot_time_series_alpha
 
 import TimeGAN.timegan as timegan
 
@@ -24,59 +14,6 @@ import TimeGAN.timegan as timegan
 def start() -> None:
     WINDOW_SIZE = 100
     STRIDE_SIZE = 100
-
-    def get_averaged_dataframes(original_data: np.ndarray, generated_data: np.ndarray):
-        '''
-        Calculate the mean of each time step over all sensor channels and return the dataframes.
-        '''
-
-        assert(original_data.ndim == 3), 'original_data must be a 3D array'
-        assert(generated_data.ndim == 3), 'generated_data must be a 3D array'
-
-        number_samples = min(original_data.shape[0], 2000)
-        idx = np.random.permutation(number_samples)
-
-        original_data = original_data[idx]
-        generated_data = generated_data[idx]
-
-        seq_len = original_data.shape[1]
-
-        for i in range(number_samples):
-            if (i == 0):
-                original_array = np.reshape(np.mean(original_data[0, :, :], 1), [1, seq_len])
-                generated_array = np.reshape(np.mean(generated_data[0, :, :], 1), [1, seq_len])
-            else:
-                original_array = np.concatenate((original_array,
-                                                 np.reshape(np.mean(original_data[i, :, :], 1), [1, seq_len])))
-                generated_array = np.concatenate((generated_array,
-                                                  np.reshape(np.mean(generated_data[i, :, :], 1), [1, seq_len])))
-
-        # Returns 2d array (num_samples, window_size) --> Verify that!
-        return original_array, generated_array
-
-    def build_model(n_epochs: int, n_features: int) -> RainbowModel:
-        return AdaptedDeepConvLSTM(
-            window_size=WINDOW_SIZE,
-            stride_size=STRIDE_SIZE,
-            n_features=n_features,
-            n_outputs=len(settings.ACTIVITIES),
-            verbose=1,
-            n_epochs=n_epochs)
-
-    def preprocess_generated_array(generated_activity_data: np.ndarray, scaler) -> np.ndarray:
-        """
-        Preprocess the generated data the same way as the real training data.
-        """
-        # Reshape array for normalization
-        generated_activity_data = np.squeeze(generated_activity_data, -1)
-        generated_activity_data = generated_activity_data.reshape(-1, 11)
-        # Normalize data
-        generated_activity_data = scaler.transform(generated_activity_data)
-        # Inverse reshape data
-        generated_activity_data = generated_activity_data.reshape(-1, WINDOW_SIZE, 11)
-        generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
-
-        return generated_activity_data
 
     # GAN Newtork parameters
     parameters = dict()
@@ -112,7 +49,7 @@ def start() -> None:
 
         # Split recordings data activity-wise for data augmentation
         print("Begin data augmentation")
-        activities_one_hot_encoded = np.eye(len(settings.LABELS), len(settings.LABELS))
+        activities_one_hot_encoded = np.eye(len(settings.ACTIVITIES), len(settings.ACTIVITIES))
         for (index, row) in enumerate(activities_one_hot_encoded):
             # Get all indices in y_train where the one-hot-encoded row is equal to row
             activity_group_indices = np.nonzero(np.all(np.isclose(y_train, row), axis=1))[0]

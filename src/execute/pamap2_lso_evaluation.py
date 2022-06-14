@@ -148,14 +148,14 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             random_mmd_scores = []
             generated_mmd_scores = []
 
-            activities_one_hot_encoded = np.eye(len(settings.LABELS), len(settings.LABELS))
+            activities_one_hot_encoded = np.eye(len(settings.ACTIVITIES), len(settings.ACTIVITIES))
             for (index, row) in enumerate(activities_one_hot_encoded):
                 # Get all indices in y_train where the one-hot-encoded row is equal to row
                 activity_group_indices = np.nonzero(np.all(np.isclose(y_train, row), axis=1))[0]
                 activity_group_X = X_train[activity_group_indices]
                 
                 try:
-                    generated_activity_data = np.load(f'{synth_data_path}/data_{subject_id}_{index}_{WINDOW_SIZE}.npy')
+                    generated_activity_data = np.load(f'{synth_data_path}/data_{subject_id}_{index}.npy')
                 except OSError:
                     continue
                 
@@ -300,7 +300,5 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             create_conf_matrix(experiment_folder_path, y_test_pred_model_beta, y_test)
             create_text_metrics(experiment_folder_path, y_test_pred_model_beta, y_test, [accuracy, f_score])
             save_model_configuration(experiment_folder_path, model_beta)
-
-        exit()
 
 start(eval_two = True)
