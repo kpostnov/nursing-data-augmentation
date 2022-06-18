@@ -125,7 +125,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                 gc.collect()            
     
 
-    synth_data_path = "/dhc/groups/bp2021ba1/kirill/nursing-data-augmentation/src"
+    synth_data_path = "/dhc/groups/bp2021ba1/kirill/nursing-data-augmentation/src/sonar_300_data"
     files = get_file_paths_in_folder(synth_data_path)
 
     # Load data
@@ -235,9 +235,9 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
         # -------------------------------------------------------------
         if eval_three:
             # Train on synthetic data, test on real data
-            print("Evaluation 2: TSTR / TRTS")
+            print("Evaluation 3: TSTR / TRTS")
             print("Training on synthetic data, testing on real data")
-            model_tstr = build_model(n_epochs=10, n_features=recordings[0].sensor_frame.shape[1])
+            model_tstr = build_model(n_epochs=1, n_features=recordings[0].sensor_frame.shape[1])
 
             # Train model
             for epoch in range(model_tstr.n_epochs):
@@ -299,7 +299,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
         # -------------------------------------------------------------
         if eval_four:
             # Train alpha model on alpha_subset
-            print("Evaluation 3: Train model with additional synthetic data")
+            print("Evaluation 4: Train model with additional synthetic data")
             model_alpha = build_model(n_epochs=10, n_features=recordings[0].sensor_frame.shape[1])
             model_alpha.fit(X_train, y_train)
             y_test_pred_model_alpha = model_alpha.predict(X_test)
@@ -312,7 +312,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             save_model_configuration(experiment_folder_path, model_alpha)
 
             # Train beta model on beta_subset
-            model_beta = build_model(n_epochs=10, n_features=recordings[0].sensor_frame.shape[1])
+            model_beta = build_model(n_epochs=2, n_features=recordings[0].sensor_frame.shape[1])
             # TODO: Different oversampling strategies
             model_training(model_beta, files, X_train, y_train, scaler)
             y_test_pred_model_beta = model_beta.predict(X_test)
@@ -326,4 +326,4 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
 
         exit()
 
-start(eval_two = True)
+start(eval_one = False, eval_two = False, eval_three = True, eval_four = False)

@@ -19,29 +19,31 @@ def plot_distribution_pie_chart(distribution: "dict[str, int]", display_n: int =
         data.append(others)
         labels.append('others')
 
-    plt.rcParams.update({'font.size': 25})
+    plt.rcParams.update({'font.size': 32})
     cmap = plt.get_cmap('jet')
     colors = [cmap(1. * (i+1) / len(labels)) for i in range(len(labels))]
 
     plt.figure(figsize=(18, 14))
-    plt.pie(data, colors=colors, labels=labels, startangle=180, labeldistance=1.05, pctdistance=0.92, 
+    plt.pie(data, colors=colors, labels=labels, startangle=180, labeldistance=1.05, pctdistance=0.85,
         autopct='%1.1f%%', wedgeprops={"edgecolor":"1", 'linewidth': 1, 'linestyle': 'solid', 'antialiased': True})
-    plt.suptitle("People Distribution")
-    plt.title(f"{len(activity_dict)} people – {round(sum(data))} minutes")
+    # plt.suptitle("People Distribution")
+    # plt.title(f"{len(activity_dict)} people – {round(sum(data))} minutes")
     plt.axis('equal')
-    plt.savefig("distribution_pie_chart.png")
+    plt.rcParams['svg.fonttype'] = 'none' # Display text as text (not strokes)
+    plt.savefig("distribution_pie_chart.svg")
 
 
 def plot_distribution_bar_chart(distribution: "dict[str, int]"):
     activity_dict = dict(sorted(distribution.items(), key=lambda item: item[1], reverse=True))
+    activity_dict = distribution
     # Convert to minutes & round to 2 decimal places
     steps_per_minute = 60 * 60
     activity_dict = {k: round(v / steps_per_minute, 2) for k, v in activity_dict.items()}
 
     plt.rcParams.update({'font.size': 22})
-    plt.grid(linewidth=0.5, axis='y', alpha=0.8, zorder=0)
     plt.figure(figsize=(18, 12))
     pd.Series(activity_dict).plot(kind="bar", zorder=3, color='royalblue')
+    plt.grid(linewidth=0.5, axis='y', alpha=0.8, zorder=1)
     
     # Remove borders
     ax = plt.gca()
@@ -53,6 +55,6 @@ def plot_distribution_bar_chart(distribution: "dict[str, int]"):
     #plt.suptitle("Activity Distribution")
     plt.ylabel("Total recording time in minutes")
     plt.xlabel("Subjects")
-    plt.xticks(rotation=45, ha="right")
-    plt.subplots_adjust(bottom=0.2)
-    plt.savefig("distribution_bar_chart.png")
+    plt.xticks(rotation=0, ha="right")
+    plt.rcParams['svg.fonttype'] = 'none' # Display text as text (not strokes)
+    plt.savefig("distribution_bar_chart.svg")

@@ -191,12 +191,12 @@ def init_pamap2():
 
     global pamap2_str_to_id
     pamap2_str_to_id = {
-        0: "lying",
-        1: "sitting",
-        2: "standing",
-        3: "walking",
-        4: "vacuum cleaning",
-        5: "ironing",
+        "lying": 0,
+        "sitting": 1,
+        "standing": 2,
+        "walking": 3,
+        "vacuum cleaning": 4,
+        "ironing": 5,
     }
 
     global pamap2_activity_map
@@ -209,5 +209,5 @@ def init_pamap2():
         17: "ironing"
     }
 
-    global ACTIVITIES
-    ACTIVITIES = list(pamap2_activity_map.values())
+    global LABELS
+    LABELS = list(pamap2_activity_map.values())

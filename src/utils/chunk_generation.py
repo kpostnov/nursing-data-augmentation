@@ -13,7 +13,7 @@ def get_activity_from_file_path(file_path: str) -> int:
     # Get file name from file path
     file_name = os.path.basename(file_path)
     # Get activity from file name
-    activity = int(file_name.split('_')[2])
+    activity = int(file_name.split('_')[2].split('.')[0])
 
     return activity
 
@@ -28,7 +28,7 @@ def chunk_generator(synth_files: list):
 
     # Initialize dictionary that maps each .npy to its parts (tenths) that haven't been yielded yet
     file_tenths_map = {file: [i for i in range(10)] for file in synth_files}
-   
+
     for i in range(10):
         print(f'Chunk: {i} / 10')
 
@@ -39,11 +39,11 @@ def chunk_generator(synth_files: list):
             # Get the tenths that haven't been yielded yet
             random_tenth = random.choice(file_tenths_map[file])
 
-            # Get length of numpy data in order to determine 1/10 
+            # Get length of numpy data in order to determine 1/10
             gen_data_size = np.load(file).shape[0]
             gen_data_chunk_size = gen_data_size // 10
             # Load 1/10 of numpy data
-            chunk = np.load(file, mmap_mode='r')[random_tenth * gen_data_chunk_size : (random_tenth+1) * gen_data_chunk_size].copy()
+            chunk = np.load(file, mmap_mode='r')[random_tenth * gen_data_chunk_size: (random_tenth+1) * gen_data_chunk_size].copy()
 
             # Remove used tenths from list
             file_tenths_map[file].remove(random_tenth)
@@ -61,9 +61,9 @@ def chunk_generator(synth_files: list):
             else:
                 X_chunk = np.append(X_chunk, chunk, axis=0)
                 y_chunk = np.append(y_chunk, activity_chunk, axis=0)
-        
+
         # Shuffle X_chunk and y_chunk
-        if len(synth_files) != 0: 
+        if len(synth_files) != 0:
             X_chunk, y_chunk = shuffle(X_chunk, y_chunk)
 
         yield X_chunk, y_chunk

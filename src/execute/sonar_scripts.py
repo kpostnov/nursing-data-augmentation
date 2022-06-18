@@ -76,13 +76,15 @@ STRIDE_SIZE = 300
 recordings = load_pamap2_dataset(settings.pamap2_dataset_path)
 
 for rec in recordings:
-    # rec.subject = settings.subj_to_numbers[rec.subject]
-    rec.activities = rec.activities.map(lambda label: settings.pamap2_str_to_id[label])
+    rec.subject = settings.subj_to_numbers[rec.subject]
+    #rec.activities = rec.activities.map(lambda label: settings.pamap2_str_to_id[label])
+    rec.activities = rec.activities.map(lambda label: settings.ger_to_en[label])
     #print(rec.activities.head())
+
 
 plot_people(recordings)
 
-
+'''
 values1 = count_person_length(recordings)
 values2 = count_activity_length(recordings)
 values3 = count_activities_per_person(recordings)
@@ -302,3 +304,4 @@ recordings = rewrite_activities(recordings)
 save_recordings(recordings, "/dhc/groups/bp2021ba1/data/lab_data_filtered")
 
 # save_recordings(recordings, "/dhc/groups/bp2021ba1/data/lab_data_filtered_without_null")
+'''
