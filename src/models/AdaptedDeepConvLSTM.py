@@ -1,5 +1,3 @@
-import numpy as np
-from tensorflow import keras
 from models.RainbowModel import RainbowModel
 from keras.models import Model
 from keras.initializers import Orthogonal
@@ -15,6 +13,9 @@ from keras.layers import (
 
 
 class AdaptedDeepConvLSTM(RainbowModel):
+    """
+    We adapt the DeepConvLSTM model to perform better on our data.
+    """
 
     # General
     batch_size = 100
@@ -32,24 +33,25 @@ class AdaptedDeepConvLSTM(RainbowModel):
             f"Building model for {self.window_size} timesteps (window_size) and {kwargs['n_features']} features."
         )
 
-
     def _create_model(self):
 
         initializer = Orthogonal()
-        conv_layer = lambda n_filters: lambda the_input: Conv2D(
+
+        def conv_layer(n_filters): return lambda the_input: Conv2D(
             filters=n_filters,
             strides=(5, 1),
             kernel_size=(5, 1),
             activation="relu",
             kernel_initializer=initializer,
         )(the_input)
-        lstm_layer = lambda the_input: LSTM(
+
+        def lstm_layer(the_input): return LSTM(
             units=32, dropout=0.1, return_sequences=True, kernel_initializer=initializer
         )(the_input)
 
         i = Input(shape=(self.window_size, self.n_features, 1))
 
-        # Adding 4 CNN layers.
+        # Adding 2 CNN layers.
         x = Reshape(target_shape=(self.window_size, self.n_features, 1))(i)
         conv_n_filters = [32, 64]
         for n_filters in conv_n_filters:

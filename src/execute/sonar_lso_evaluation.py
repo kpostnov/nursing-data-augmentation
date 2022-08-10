@@ -221,9 +221,6 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                     mmd_random = mmd_rbf(activity_group_X, random_distribution)
                     mmd_generated = mmd_rbf(activity_group_X, generated_activity_data)
 
-                    print(f"MMD random: {mmd_random}")
-                    print(f"MMD generated: {mmd_generated}")
-
                     random_mmd_scores.append(mmd_random)
                     generated_mmd_scores.append(mmd_generated)
             
@@ -246,15 +243,10 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                     X_chunk = preprocess_generated_array(X_chunk, scaler)
                     model_tstr.fit(X_chunk, y_chunk, ignore_epochs=True)
 
-            # Choose one thousand random values from X_train for testing
-            random_indices = random.sample(range(X_train.shape[0]), 1000)
-            X_subset = X_train[random_indices]
-            y_subset = y_train[random_indices]
-
-            # Original implementation
-            # random_indices = random.sample(range(X_test.shape[0]), 1000)
-            # X_subset = X_test[random_indices]
-            # y_subset = y_test[random_indices]
+            # Choose one thousand random values from X_test for testing
+            random_indices = random.sample(range(X_test.shape[0]), min(1000, X_test.shape[0]))
+            X_subset = X_test[random_indices]
+            y_subset = y_test[random_indices]
 
             y_predict_tstr = model_tstr.predict(X_subset)
             print(f"TSTR f_score: {f_score(y_subset, y_predict_tstr)}")
@@ -274,7 +266,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             y_test_trts = None
             for X_chunk, y_chunk in chunk_generator(files):
                 # Choose one hundred random values from chunks
-                random_indices = random.sample(range(X_chunk.shape[0]), 100)
+                random_indices = random.sample(range(X_chunk.shape[0]), min(100, X_chunk.shape[0]))
                 X_chunk = X_chunk[random_indices]
                 y_chunk = y_chunk[random_indices]
 
@@ -304,8 +296,6 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             model_alpha.fit(X_train, y_train)
             y_test_pred_model_alpha = model_alpha.predict(X_test)
 
-            print(f"alpha_model f_score: {f_score(y_test, y_test_pred_model_alpha)}")
-
             experiment_folder_path = new_saved_experiment_folder(f'{subject}_alpha')
             create_conf_matrix(experiment_folder_path, y_test_pred_model_alpha, y_test)
             create_text_metrics(experiment_folder_path, y_test_pred_model_alpha, y_test, [accuracy, f_score])
@@ -317,6 +307,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             model_training(model_beta, files, X_train, y_train, scaler)
             y_test_pred_model_beta = model_beta.predict(X_test)
 
+            print(f"alpha_model f_score: {f_score(y_test, y_test_pred_model_alpha)}")
             print(f"beta_model f_score: {f_score(y_test, y_test_pred_model_beta)}")
 
             experiment_folder_path = new_saved_experiment_folder(f'{subject}_beta')
@@ -326,4 +317,4 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
 
         exit()
 
-start(eval_one = False, eval_two = False, eval_three = True, eval_four = False)
+start(eval_one = True, eval_two = True, eval_three = True, eval_four = True)

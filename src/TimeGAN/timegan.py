@@ -313,7 +313,7 @@ def timegan (ori_data, parameters, index, compute_gan = True, save_model = True)
     for i in range(10):
       Z_mb = random_generator(no, z_dim, ori_time, max_seq_len)
       generated_data_curr = sess.run(X_hat, feed_dict={Z: Z_mb, X: ori_data, T: ori_time})    
-        
+
       for i in range(no):
         temp = generated_data_curr[i,:ori_time[i],:]
         generated_data.append(temp)

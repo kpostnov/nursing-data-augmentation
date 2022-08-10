@@ -22,8 +22,8 @@ def start() -> None:
     parameters['module'] = 'gru'  # LSTM possible
     parameters['hidden_dim'] = 200  # Paper: 4 times the size of input features
     parameters['num_layer'] = 3
-    parameters['iterations'] = 8250  # Paper: 10.000
-    parameters['batch_size'] = 128
+    parameters['iterations'] = 10000  # Paper: 10.000
+    parameters['batch_size'] = 64
 
     # Load data
     recordings = load_recordings(settings.sonar_dataset_path)

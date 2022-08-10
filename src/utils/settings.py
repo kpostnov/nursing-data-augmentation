@@ -49,52 +49,9 @@ def init_sonar():
     global CSV_HEADER_SIZE
     CSV_HEADER_SIZE = 8
 
-    # TODO: Convert to numbers
     global SUBJECTS
-    # reduced
-    SUBJECTS = ["aileen", "alex", "anja", "b2", "brueggemann", "connie", "florian", "kathi", "oli",	"rauche", "trapp", "yvan"]
-    # rare
-    # SUBJECTS = ["aileen", "alex", "anja", "b2", "brueggemann", "connie", "florian", "kathi", "mathias", "oli", "rauche", "trapp", "yvan"]
-
-    global subj_to_numbers
-    subj_to_numbers = {
-        "aileen": "100",
-        "alex": "101",
-        "anja": "102",
-        "b2": "103",
-        "brueggemann": "104",
-        "christine": "105",
-        "connie": "106",
-        "florian": "107",
-        "kathi": "108",
-        "mathias": "109",
-        "oli": "110",
-        "rauche": "111",
-        "trapp": "112",
-        "yvan" : "113"
-    }
-
-    global ger_to_en
-    ger_to_en = {
-        "aufräumen": "clean",
-        "bad vorbereiten": "prepare bathroom",
-        "bett machen": "make bed",
-        "haare kämmen": "comb hair",
-        "mundpflege": "oral care",
-        "umkleiden": "dress",
-        "gesamtwaschen im bett": "cleaning routine in bed",
-        "waschen am waschbecken": "cleaning routine in bathroom",
-        "essen auf teller geben": "put food on plate",
-        "essen austragen": "bring food",
-        "geschirr einsammeln": "collect dishes",
-        "getränke ausschenken": "pour drinks",
-        "rollstuhl schieben": "push wheelchair",
-        "rollstuhl transfer": "wheelchair transfer",
-        "dokumentation": "documentation",
-        "essen reichen": "serve food",
-        "küchenvorbereitung": "kitchen preparation",
-        "medikamente stellen": "prepare medicine",
-    }
+    # reduced dataset
+    SUBJECTS = ["100", "101", "102", "103", "104", "106", "107", "108", "110", "111", "112", "113"]
 
 
 def init_sonar_lab():
@@ -128,41 +85,8 @@ def init_sonar_lab():
     global CSV_HEADER_SIZE
     CSV_HEADER_SIZE = 8
 
-    # TODO: Convert to numbers
     global SUBJECTS
-    SUBJECTS = ["orhan", "daniel", "felix", "tobi", "lucas", "kirill", "marco", "valentin", "alex", "franz"]
-
-    global subj_to_numbers
-    subj_to_numbers = {
-        "orhan": "200", 
-        "daniel": "201", 
-        "felix": "202", 
-        "tobi": "203", 
-        "lucas": "204", 
-        "kirill": "205", 
-        "marco": "206", 
-        "valentin": "207", 
-        "alex": "208", 
-        "franz": "209",
-    }
-
-    global ger_to_en
-    ger_to_en = {
-        "aufräumen": "clean",
-        "aufwischen (staub)": "wipe dust",
-        "bett machen": "make bed",
-        "dokumentation": "documentation",
-        "essen reichen": "serve food",
-        "gesamtwaschen im bett": "cleaning routine in bed",
-        "getränke ausschenken": "pour drinks",
-        "haare kämmen": "comb hair",
-        "medikamente stellen": "prepare medicine",
-        "rollstuhl schieben": "push wheelchair",
-        "rollstuhl transfer": "wheelchair transfer",
-        "umkleiden": "dress",
-        "waschen am waschbecken": "skin care",
-        "null - activity": "null - activity"
-    }
+    SUBJECTS = ["200", "201", "202", "203", "204", "205", "206", "207", "208", "209"]
 
 
 def init_pamap2():

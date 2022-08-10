@@ -1,10 +1,4 @@
-# pylint: disable=locally-disabled, multiple-statements, fixme, line-too-long, no-name-in-module, wrong-import-order, bad-option-value
-
-from abc import abstractmethod
 from models.RainbowModel import RainbowModel
-import numpy as np
-import matplotlib.pyplot as plt
-
 from tensorflow import keras
 from keras.models import Sequential
 from keras import layers

@@ -165,8 +165,8 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                 # -------------------------------------------------------------
                 if eval_one:
                     print(f"Evaluation 1: Plotting PCA / tSNE distribution for activity {index}")
-                    plot_pca_distribution(activity_group_X, generated_activity_data, f"{subject_id}_{index}")
-                    plot_tsne_distribution(activity_group_X, generated_activity_data, f"{subject_id}_{index}")
+                    plot_pca_distribution(activity_group_X, generated_activity_data, f"{subject_id}_{settings.pamap2_id_to_str[index]}")
+                    plot_tsne_distribution(activity_group_X, generated_activity_data, f"{subject_id}_{settings.pamap2_id_to_str[index]}")
 
                 # -------------------------------------------------------------
                 # Evaluation 2: Maximum Mean Discrepancy
@@ -196,9 +196,6 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                     mmd_random = mmd_rbf(activity_group_X, random_distribution)
                     mmd_generated = mmd_rbf(activity_group_X, generated_activity_data)
 
-                    print(f"MMD random: {mmd_random}")
-                    print(f"MMD generated: {mmd_generated}")
-
                     random_mmd_scores.append(mmd_random)
                     generated_mmd_scores.append(mmd_generated)
 
@@ -221,15 +218,10 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                     X_chunk = preprocess_generated_array(X_chunk, scaler)
                     model_tstr.fit(X_chunk, y_chunk, ignore_epochs=True)
 
-            # Choose one thousand random values from X_train for testing
-            random_indices = random.sample(range(X_train.shape[0]), 1000)
-            X_subset = X_train[random_indices]
-            y_subset = y_train[random_indices]
-
-            # Original implementation
-            # random_indices = random.sample(range(X_test.shape[0]), 1000)
-            # X_subset = X_test[random_indices]
-            # y_subset = y_test[random_indices]
+            # Choose one thousand random values from X_test for testing
+            random_indices = random.sample(range(X_test.shape[0]), min(1000, X_test.shape[0]))
+            X_subset = X_test[random_indices]
+            y_subset = y_test[random_indices]
 
             y_predict_tstr = model_tstr.predict(X_subset)
             print(f"TSTR f_score: {f_score(y_subset, y_predict_tstr)}")
@@ -247,8 +239,8 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             X_test_trts = None
             y_test_trts = None
             for X_chunk, y_chunk in chunk_generator(files):
-                # Choose one hundred random values from chunks
-                random_indices = random.sample(range(X_chunk.shape[0]), 100)
+                # Choose 100 random values from chunks
+                random_indices = random.sample(range(X_chunk.shape[0]), min(100, X_chunk.shape[0]))
                 X_chunk = X_chunk[random_indices]
                 y_chunk = y_chunk[random_indices]
 
@@ -276,9 +268,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             print("Evaluation 4: Train model with additional synthetic data")
             model_alpha = build_model(n_epochs=3, n_features=recordings[0].sensor_frame.shape[1])
             model_alpha.fit(X_train, y_train)
-            y_test_pred_model_alpha = model_alpha.predict(X_test)
-
-            print(f"alpha_model f_score: {f_score(y_test, y_test_pred_model_alpha)}")
+            y_test_pred_model_alpha = model_alpha.predict(X_test)            
 
             experiment_folder_path = new_saved_experiment_folder(f'pamap2_{subject_id}_alpha')
             create_conf_matrix(experiment_folder_path, y_test_pred_model_alpha, y_test)
@@ -287,10 +277,10 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
 
             # Train beta model on beta_subset
             model_beta = build_model(n_epochs=1, n_features=recordings[0].sensor_frame.shape[1])
-            # TODO: Different oversampling strategies
             model_training(model_beta, files, X_train, y_train, scaler)
             y_test_pred_model_beta = model_beta.predict(X_test)
 
+            print(f"alpha_model f_score: {f_score(y_test, y_test_pred_model_alpha)}")
             print(f"beta_model f_score: {f_score(y_test, y_test_pred_model_beta)}")
 
             experiment_folder_path = new_saved_experiment_folder(f'pamap2_{subject_id}_beta')
@@ -299,4 +289,4 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             save_model_configuration(experiment_folder_path, model_beta)
 
 
-start(eval_one = False, eval_two = True, eval_three = True, eval_four = True))
+start(eval_one = True, eval_two = True, eval_three = True, eval_four = True)

@@ -73,8 +73,6 @@ def normalize_minmaxscaler(recordings: "list[Recording]") -> "list[Recording]":
     assert_type([(recordings[0], Recording)])
 
     scaler = MinMaxScaler()
-    # complete_sensor_frame = pd.concat([recording.sensor_frame for recording in recordings])
-    # scaler.fit(complete_sensor_frame)
     for recording in recordings:
         scaler.partial_fit(recording.sensor_frame)
 

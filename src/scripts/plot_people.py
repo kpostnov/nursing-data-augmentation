@@ -70,7 +70,7 @@ def count_person_length(recordings: "list[Recording]") -> pd.Series:
     return values
 
 
-def plot_people(recordings: "list[Recording]") -> None:
+def plot_data(recordings: "list[Recording]") -> None:
 
     # counts = count_activity_length(recordings)
     counts = count_person_length(recordings)

@@ -3,19 +3,20 @@
     {
       "category": "Others",
       "entries": [
-        "aufräumen",
-        "aufwischen (staub)",
-        "bett machen",
-        "dokumentation",
-        "essen reichen",
-        "gesamtwaschen im bett",
-        "getränke ausschenken",
-        "haare kämmen",
-        "medikamente stellen",
-        "rollstuhl schieben",
-        "rollstuhl transfer",
-        "umkleiden",
-        "waschen am waschbecken"
+        "clean",
+        "wipe dust",
+        "make bed",
+        "documentation",
+        "serve food",
+        "cleaning routine in bed",
+        "pour drinks",
+        "comb hair",
+        "prepare medicine",
+        "push wheelchair",
+        "wheelchair transfer",
+        "dress",
+        "skin care",
+        "null - activity"
       ]
     }
   ]
