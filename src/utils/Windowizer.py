@@ -154,6 +154,7 @@ class Windowizer:
         """
         Shuffles the windows
         """
+        print(f'Window Size: {self.window_size}')
         windows_train = self.windowize(self, recordings_train)
         random.shuffle(windows_train)  # many running windows in a row?, one batch too homogenous?, lets shuffle
         X_train, y_train = self.convert(windows_train)

@@ -19,11 +19,14 @@ if __name__ == '__main__':
                         help="Dataset to use")                 
     parser.add_argument("--mode", choices=['gen', 'eval'], type=str, default="gen", help="Mode to use")
     parser.add_argument("--data_path", type=str, default="", help="Path to the dataset directory")
-    parser.add_argument("--synth_data_path", type=str, default="", help="Path to directory where the generated data is stored")
+    parser.add_argument("--synth_data_path", 
+                        type=str, 
+                        default="", 
+                        help="Path to directory where the generated data is stored (used for evaluation only)")
     parser.add_argument("--random_data_path", 
                         type=str, 
                         default="", 
-                        help="Path to random data file (used for evaluation)")
+                        help="Path to random data file (used for evaluation only)")
     parser.add_argument("--window_size", type=int, help="Window size")
     parser.add_argument("--stride_size", type=int, help="Stride size")
 
