@@ -25,12 +25,10 @@ The pipelines can be extended to include further HAR datasets provided that they
 
 ### Dependencies
 
-All requirements are listed in `requirements.txt`. 
-Use 
+All requirements are listed in `requirements.txt`. Use the following command to install all dependencies automatically.
 ```
 pip install -r requirements.txt
 ``` 
-to install all dependencies automatically.
 
 ### Code Explanation
 
