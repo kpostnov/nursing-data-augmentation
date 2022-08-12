@@ -19,9 +19,9 @@ The evaluation of the generated data is done in four ways:
 Three different datasets are used as benchmarks, two of which were recorded in the course of this work.
 * [PAMAP2](https://archive.ics.uci.edu/ml/datasets/pamap2+physical+activity+monitoring) contains simple activities of daily living
 * SONAR/SONAR-LAB contain a variety of complex nursing activities with a high number of sensor channels
-    * Link to datasets will be added once published
+    * *Link to datasets will be added once published*
 
-The pipelines can be extended to include further HAR datasets, provided that they can be integrated into the [*Recording*](#code-explanation) structure
+The pipelines can be extended to include further HAR datasets, provided that they can be integrated into the [*Recording*](#code-explanation) structure.
 
 
 ## Getting Started
