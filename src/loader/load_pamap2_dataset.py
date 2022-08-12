@@ -6,7 +6,7 @@ import utils.settings as settings
 
 
 def load_pamap2_dataset(
-        pamap2_dataset_path: str,
+        dataset_path: str,
         include_heart_rate: bool = True) -> "list[Recording]":
     """
     Returns a list of Recordings from the PAMAP2 dataset. 
@@ -39,10 +39,14 @@ def load_pamap2_dataset(
     recordings = []
     for subject_id in subject_ids:
         file_name = f"subject10{subject_id}.dat"
-        file_path = os.path.join(os.path.dirname(__file__), pamap2_dataset_path, file_name)
+        file_path = os.path.join(os.path.dirname(__file__), dataset_path, file_name)
 
         print(f"Reading {file_name}")
-        df = pd.read_csv(file_path, sep=" ", header=None)
+        try:
+            df = pd.read_csv(file_path, sep=" ", header=None)
+        except FileNotFoundError:
+            print(f"File {file_name} not found. Wrong or no dataset path entered.")
+            exit(1)
 
         df = df.iloc[:, :16]
         df.columns = col_names

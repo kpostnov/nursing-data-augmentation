@@ -23,14 +23,12 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = False, eval_four: bool = False) -> None:
-    WINDOW_SIZE = 100
-    STRIDE_SIZE = 100
+def start_evaluation(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True, eval_four: bool = True) -> None:
 
     def build_model(n_epochs: int, n_features: int) -> RainbowModel:
         return AdaptedDeepConvLSTM(
-            window_size=WINDOW_SIZE,
-            stride_size=STRIDE_SIZE,
+            window_size=settings.WINDOW_SIZE,
+            stride_size=settings.STRIDE_SIZE,
             n_features=n_features,
             n_outputs=len(settings.LABELS),
             verbose=0,
@@ -63,7 +61,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
         # Normalize data
         generated_activity_data = scaler.transform(generated_activity_data)
         # Inverse reshape data
-        generated_activity_data = generated_activity_data.reshape(-1, WINDOW_SIZE, 11)
+        generated_activity_data = generated_activity_data.reshape(-1, settings.WINDOW_SIZE, 11)
         generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
         return generated_activity_data
@@ -107,11 +105,10 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                 del X_chunk, y_chunk, X_train_chunk, y_train_chunk
                 gc.collect()
 
-    synth_data_path = "/dhc/groups/bp2021ba1/kirill/nursing-data-augmentation/src/pamap2_100_data"
-    all_files = get_file_paths_in_folder(synth_data_path)
+    all_files = get_file_paths_in_folder(settings.synth_data_path)
 
     # Load data
-    recordings = load_pamap2_dataset(settings.pamap2_dataset_path)
+    recordings = load_pamap2_dataset(settings.dataset_path)
 
     random.seed(1678978086101)
     random.shuffle(recordings)
@@ -123,7 +120,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
     ])
 
     # Windowize all recordings
-    windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_sliding, 100)
+    windowizer = Windowizer(settings.WINDOW_SIZE, settings.STRIDE_SIZE, Windowizer.windowize_sliding, settings.FREQUENCY)
 
     # LOSO-folds
     subject_ids = range(1, 9)
@@ -153,7 +150,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                 activity_group_X = X_train[activity_group_indices]
 
                 try:
-                    generated_activity_data = np.load(f'{synth_data_path}/data_{subject_id}_{index}.npy')
+                    generated_activity_data = np.load(f'{settings.synth_data_path}/data_{subject_id}_{index}.npy')
                 except OSError:
                     continue
 
@@ -175,7 +172,11 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                     print(f"Evaluation 2: Calculating MMD for activity {index}")
 
                     # Random distribution
-                    random_distribution = np.load(f'{synth_data_path}/../random_data/random_data_pamap.npy')
+                    try:
+                        random_distribution = np.load(settings.random_data_path)
+                    except OSError:
+                        print("File for random distribution not found. If no random distribution is available, set eval_two to False.")
+                        exit(1)
                     random_distribution = preprocess_generated_array(random_distribution, scaler)
 
                     # Take random samples from all datasets
@@ -287,6 +288,3 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             create_conf_matrix(experiment_folder_path, y_test_pred_model_beta, y_test)
             create_text_metrics(experiment_folder_path, y_test_pred_model_beta, y_test, [accuracy, f_score])
             save_model_configuration(experiment_folder_path, model_beta)
-
-
-start(eval_one = True, eval_two = True, eval_three = True, eval_four = True)

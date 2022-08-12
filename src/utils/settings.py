@@ -3,24 +3,40 @@ import json
 import os
 
 
-def init(dataset: str):
+def init(args):
+    global IS_WINDOWS
+    IS_WINDOWS = os.name == "nt"
+
     global saved_experiments_path
     saved_experiments_path = os.path.dirname(os.path.abspath(__file__)) + "/../../saved_experiments"
 
-    # Model / Dataset specific configuration
-    if dataset == "sonar":
+    global dataset_path
+    dataset_path = args.data_path
+
+    global synth_data_path 
+    synth_data_path = args.synth_data_path
+
+    global random_data_path
+    random_data_path = args.random_data_path
+
+    global WINDOW_SIZE 
+    WINDOW_SIZE = args.window_size
+
+    global STRIDE_SIZE
+    STRIDE_SIZE = args.stride_size
+
+    # Dataset-specific configuration
+    if args.dataset == "sonar":
         init_sonar()
-    elif dataset == "sonar_lab":
+    elif args.dataset == "sonar_lab":
         init_sonar_lab()
-    elif dataset == "pamap2":
+    elif args.dataset == "pamap2":
         init_pamap2()
     else:
         raise Exception("Unknown dataset")
 
 
 def init_sonar():
-    global sonar_dataset_path
-    sonar_dataset_path = "/dhc/groups/bp2021ba1/data/reduced_data"
 
     global LABELS
     with open("labels_reduced.json") as file:
@@ -31,8 +47,8 @@ def init_sonar():
             )
         )
 
-    global IS_WINDOWS
-    IS_WINDOWS = os.name == "nt"
+    global FREQUENCY
+    FREQUENCY = 60
 
     global ACTIVITIES
     ACTIVITIES = {k: v for v, k in enumerate(LABELS)}
@@ -55,8 +71,6 @@ def init_sonar():
 
 
 def init_sonar_lab():
-    global sonar_dataset_path
-    sonar_dataset_path = "/dhc/groups/bp2021ba1/data/lab_data_filtered_without_null"
 
     global LABELS
     with open("labels_lab.json") as file:
@@ -67,8 +81,8 @@ def init_sonar_lab():
             )
         )
 
-    global IS_WINDOWS
-    IS_WINDOWS = os.name == "nt"
+    global FREQUENCY
+    FREQUENCY = 60
 
     global ACTIVITIES
     ACTIVITIES = {k: v for v, k in enumerate(LABELS)}
@@ -90,8 +104,9 @@ def init_sonar_lab():
 
 
 def init_pamap2():
-    global pamap2_dataset_path
-    pamap2_dataset_path = "../../datasets/PAMAP2_Dataset/Protocol"
+
+    global FREQUENCY
+    FREQUENCY = 100
 
     global pamap2_initial_num_to_activity_idx
     pamap2_initial_num_to_activity_idx = {

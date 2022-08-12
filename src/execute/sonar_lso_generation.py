@@ -5,7 +5,7 @@ import gc
 import warnings
 warnings.filterwarnings("ignore")
 
-from loader.preprocessing import preprocess, normalize_standardscaler, interpolate_linear
+from loader.preprocessing import preprocess, interpolate_linear
 from utils.cache_recordings import load_recordings
 from utils.Windowizer import Windowizer
 import utils.settings as settings
@@ -13,9 +13,7 @@ import utils.settings as settings
 import TimeGAN.timegan as timegan
 
 
-def start() -> None:
-    WINDOW_SIZE = 300
-    STRIDE_SIZE = 300
+def start_generation() -> None:
     
     # GAN Newtork parameters
     parameters = dict()
@@ -26,7 +24,7 @@ def start() -> None:
     parameters['batch_size'] = 64
 
     # Load data
-    recordings = load_recordings(settings.sonar_dataset_path)
+    recordings = load_recordings(settings.dataset_path)
 
     cols_to_remove = ["Quat_W_LF","Quat_W_LW","Quat_W_RF","Quat_W_RW","Quat_W_ST","Quat_X_LF","Quat_X_LW","Quat_X_RF","Quat_X_RW","Quat_X_ST","Quat_Y_LF","Quat_Y_LW","Quat_Y_RF","Quat_Y_RW","Quat_Y_ST","Quat_Z_LF","Quat_Z_LW","Quat_Z_RF","Quat_Z_RW","Quat_Z_ST"]
 
@@ -47,7 +45,7 @@ def start() -> None:
     ])
 
     # Windowize all recordings
-    windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_jumping, 60)
+    windowizer = Windowizer(settings.WINDOW_SIZE, settings.STRIDE_SIZE, Windowizer.windowize_jumping, 60)
 
     # LOSO-folds
     for subject in settings.SUBJECTS:
@@ -79,13 +77,11 @@ def start() -> None:
             generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
             # Save generated data (unnormalized)
-            np.save(f'data_{subject}_{index}_{WINDOW_SIZE}', generated_activity_data)
+            np.save(f'data_{subject}_{index}_{settings.WINDOW_SIZE}', generated_activity_data)
 
             # Garbage collection
             del generated_activity_data
             del activity_group_X
             del ori_data
             gc.collect()
-
-
-start()
+            

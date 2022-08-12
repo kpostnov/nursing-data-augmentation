@@ -11,9 +11,7 @@ import utils.settings as settings
 import TimeGAN.timegan as timegan
 
 
-def start() -> None:
-    WINDOW_SIZE = 100
-    STRIDE_SIZE = 100
+def start_generation() -> None:
 
     # GAN Newtork parameters
     parameters = dict()
@@ -24,7 +22,7 @@ def start() -> None:
     parameters['batch_size'] = 128
 
     # Load data
-    recordings = load_pamap2_dataset(settings.pamap2_dataset_path)
+    recordings = load_pamap2_dataset(settings.dataset_path)
 
     random.seed(1678978086101)
     random.shuffle(recordings)
@@ -36,7 +34,7 @@ def start() -> None:
     ])
 
     # Windowize all recordings
-    windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_sliding)
+    windowizer = Windowizer(settings.WINDOW_SIZE, settings.STRIDE_SIZE, Windowizer.windowize_sliding)
 
     # LOSO-folds (alpha-dataset)
     subject_ids = range(1, 9)
@@ -69,13 +67,10 @@ def start() -> None:
             generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
             # Save generated data
-            np.save(f'data_{subject_id}_{index}_pamap', generated_activity_data)
+            np.save(f'data_{subject_id}_{index}', generated_activity_data)
 
             # Garbage collection
             del generated_activity_data
             del activity_group_X
             del ori_data
             gc.collect()
-
-
-start()

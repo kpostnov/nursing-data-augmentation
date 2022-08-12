@@ -24,14 +24,12 @@ from visualization.visualize import plot_pca_distribution, plot_tsne_distributio
 from utils.chunk_generation import chunk_generator
 
 
-def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = False, eval_four: bool = False) -> None:
-    WINDOW_SIZE = 300
-    STRIDE_SIZE = 300
+def start_evaluation(eval_one: bool = True, eval_two: bool = True, eval_three: bool = True, eval_four: bool = True) -> None:
 
     def build_model(n_epochs : int, n_features: int) -> RainbowModel:
         return AdaptedDeepConvLSTM(
-            window_size=WINDOW_SIZE,
-            stride_size=STRIDE_SIZE,
+            window_size=settings.WINDOW_SIZE,
+            stride_size=settings.STRIDE_SIZE,
             n_features=n_features,
             n_outputs=len(settings.LABELS),
             verbose=1,
@@ -58,7 +56,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
 
     def remove_quat_columns(array: np.ndarray) -> np.ndarray:
         """
-        Removes the quaternion columns (15:35 in SONAR) from the array. New shape is (n_windows, WINDOW_SIZE, 50, 1).
+        Removes the quaternion columns (15:35 in SONAR) from the array. New shape is (n_windows, settings.WINDOW_SIZE, 50, 1).
         """
         if array.shape[2] == 50:
             return array
@@ -79,7 +77,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
         # Normalize data
         generated_activity_data = scaler.transform(generated_activity_data)
         # Inverse reshape data
-        generated_activity_data = generated_activity_data.reshape(-1, WINDOW_SIZE, 50)
+        generated_activity_data = generated_activity_data.reshape(-1, settings.WINDOW_SIZE, 50)
         generated_activity_data = np.expand_dims(generated_activity_data, axis=-1)
 
         return generated_activity_data
@@ -125,11 +123,10 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                 gc.collect()            
     
 
-    synth_data_path = "/dhc/groups/bp2021ba1/kirill/nursing-data-augmentation/src/sonar_300_data"
-    files = get_file_paths_in_folder(synth_data_path)
+    files = get_file_paths_in_folder(settings.synth_data_path)
 
     # Load data
-    recordings = load_recordings(settings.sonar_dataset_path)
+    recordings = load_recordings(settings.dataset_path)
 
     cols_to_remove = ["Quat_W_LF","Quat_W_LW","Quat_W_RF","Quat_W_RW","Quat_W_ST","Quat_X_LF","Quat_X_LW","Quat_X_RF","Quat_X_RW","Quat_X_ST","Quat_Y_LF","Quat_Y_LW","Quat_Y_RF","Quat_Y_RW","Quat_Y_ST","Quat_Z_LF","Quat_Z_LW","Quat_Z_RF","Quat_Z_RW","Quat_Z_ST"]
 
@@ -150,7 +147,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
     ])
 
     # Windowize all recordings
-    windowizer = Windowizer(WINDOW_SIZE, STRIDE_SIZE, Windowizer.windowize_jumping, 60)
+    windowizer = Windowizer(settings.WINDOW_SIZE, settings.STRIDE_SIZE, Windowizer.windowize_jumping, settings.FREQUENCY)
 
     # LOSO-folds
     for subject in settings.SUBJECTS:
@@ -176,7 +173,7 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                 activity_group_X = X_train[activity_group_indices]
                 
                 try:
-                    generated_activity_data = np.load(f'{synth_data_path}/data_{subject}_{index}_{WINDOW_SIZE}.npy')
+                    generated_activity_data = np.load(f'{settings.synth_data_path}/data_{subject}_{index}_{settings.WINDOW_SIZE}.npy')
                 except OSError:
                     continue
                 
@@ -199,7 +196,11 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
                     print(f"Evaluation 2: Calculating MMD for activity {index}")
 
                     # Random distribution
-                    random_distribution = np.load(f'{synth_data_path}/../random_data/random_data_sonar.npy')
+                    try:
+                        random_distribution = np.load(settings.random_data_path)
+                    except OSError:
+                        print("File for random distribution not found. If no random distribution is available, set eval_two to False.")
+                        exit(1)
                     random_distribution = remove_quat_columns(random_distribution)
                     random_distribution = preprocess_generated_array(random_distribution, scaler)
 
@@ -303,7 +304,6 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
 
             # Train beta model on beta_subset
             model_beta = build_model(n_epochs=2, n_features=recordings[0].sensor_frame.shape[1])
-            # TODO: Different oversampling strategies
             model_training(model_beta, files, X_train, y_train, scaler)
             y_test_pred_model_beta = model_beta.predict(X_test)
 
@@ -314,7 +314,3 @@ def start(eval_one: bool = False, eval_two: bool = False, eval_three: bool = Fal
             create_conf_matrix(experiment_folder_path, y_test_pred_model_beta, y_test)
             create_text_metrics(experiment_folder_path, y_test_pred_model_beta, y_test, [accuracy, f_score])
             save_model_configuration(experiment_folder_path, model_beta)
-
-        exit()
-
-start(eval_one = True, eval_two = True, eval_three = True, eval_four = True)
